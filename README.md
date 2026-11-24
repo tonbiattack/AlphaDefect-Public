@@ -27,6 +27,7 @@ In 866 runs of the released game, played through a mod on a public livestream (t
 | `game-v0.111.0/` | the system for game **v0.111.0** (the Defect, the Regent, the Silent), including the rollout search on sts2-sim (called PIMC in the code) ([README](game-v0.111.0/README.md)) |
 | `rust-engine/` | our Rust reimplementation of the combat rules, used briefly and then withdrawn (paper, Section 4) |
 | `weights/` | model card, manifests and checksums; the network files are release assets ([README](weights/README.md)) |
+| `local/` | the local runner: `python -m local` detects the Steam install and the game version, fetches and verifies the weights, prepares the game files, builds and selfchecks the engine, plays one run (greedy or with search) and gives the shared inference API ([Japanese guide](docs/ja/local-run.md)) |
 | `seeds/` | the test seed lists of the paper's tables |
 | `results/` | per-seed results behind Tables 3–7, Sections 3.2 and 3.5 and Appendices B (the distilled students against their starting checkpoints) and E (the Silent's network on v0.113.1), with scripts that recount them |
 | `paper/` | scripts that regenerate the paper's figures and appendix tables, with their inputs ([README](paper/README.md)) |
@@ -36,7 +37,16 @@ In 866 runs of the released game, played through a mod on a public livestream (t
 
 ## Quick start: play a released network
 
-Requirements: your own copy of Slay the Spire 2 on the matching public-beta branch (v0.113.1 or v0.111.0), the .NET 9 SDK, Python 3.12 with NumPy and PyTorch (a CPU is enough for greedy play). The repository contains no game files.
+Requirements: your own copy of Slay the Spire 2 on the matching public-beta branch (v0.113.1 or v0.111.0; the local runner below also accepts the v0.111.1 patch), the .NET 9 SDK, Python 3.12 with NumPy and PyTorch (a CPU is enough for greedy play). The repository contains no game files.
+
+The commands below are the paper's evaluation path. If you only want to watch one network play a run on your own machine, the local runner does the same steps for you:
+
+```bash
+./setup.sh                                            # game files, .NET 9, Python/PyTorch, weights (SHA-256 checked), engine, selfcheck
+./play.sh --character DEFECT --seed ABC123 --asc 10    # one Ascension-10 run on the CPU, with its result and elapsed time
+```
+
+[`docs/ja/local-run.md`](docs/ja/local-run.md) is the step-by-step guide (Japanese), including the supported game versions, the characters each one can run, the inference API for downstream tools and the troubleshooting table. Windows users can call `setup.cmd` / `play.cmd` instead.
 
 ```bash
 # 1. game files (example for a Steam install seen from WSL; adjust the paths)
