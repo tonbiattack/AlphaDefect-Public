@@ -37,6 +37,7 @@ C_DONE = "done"          # 1 ラン終了（勝敗つき）
 C_PROBE = "probe"        # MOD が読める公開状態の要約（観測フレームを送る前段）
 C_LOG = "log"
 C_BYE = "bye"
+S_SPEED = "speed"         # ゲーム側の演出速度（Godot の TimeScale）
 S_START = "start"         # ゲーム側で 1 局を始める（観戦の起動を簡単にする）
 S_WELCOME = "welcome"
 S_ACTION = "action"
@@ -162,6 +163,11 @@ def start(character: str, ascension: int = 0, seed: str = "ALPHADEFECT", encount
         "seed": seed,
         "encounter": encounter,
     }
+
+
+def speed(scale: float) -> dict:
+    """ゲーム側の演出速度。MOD は Godot の Engine.TimeScale にそのまま入れる。"""
+    return {"t": S_SPEED, "scale": round(float(scale), 3)}
 
 
 def control(state_name: str, reason: str = "") -> dict:

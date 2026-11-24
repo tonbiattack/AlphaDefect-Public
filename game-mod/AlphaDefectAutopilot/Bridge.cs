@@ -59,6 +59,7 @@ internal static class Bridge
         try
         {
             ApplyFormat();
+            Overlay.Tick();
             Launcher.Tick();
             CombatDriver.Tick();
         }
@@ -88,6 +89,29 @@ internal static class Bridge
         if (_stream == null) return;
         RunReported = true;
         Outbox.Enqueue("{\"t\":\"done\",\"win\":" + (win ? "true" : "false") + ",\"floor\":" + floor + ",\"act\":" + act + "}");
+    }
+
+    /// <summary>返ってきた行動を画面に出す（候補は candidates から素朴に読む）。</summary>
+    static void ShowAction(int index, string label, string prob, string line)
+    {
+        var top = new List<string>();
+        int at = line.IndexOf("\"candidates\":[[", StringComparison.Ordinal);
+        if (at >= 0)
+        {
+            string body = line[(at + "\"candidates\":[[".Length)..];
+            foreach (var part in body.Split("],["))
+            {
+                var bits = part.Split(',');
+                if (bits.Length < 3) continue;
+                string num = bits[0].Trim(' ', '[', ']', '{', '}');
+                string name = bits[1].Trim().Trim('"');
+                string p = bits[2].Trim(' ', ']', '}', '"');
+                top.Add($"{num}:{name} {p}");
+                if (top.Count >= 4) break;
+            }
+        }
+        double.TryParse(prob, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double pv);
+        Overlay.SetAction(index, label, pv, string.Join("  ", top));
     }
 
     static void ApplyFormat()
@@ -186,6 +210,7 @@ internal static class Bridge
             {
                 case "welcome":
                     LogLine($"welcome: run={Field(line, "run")} obs_format={Field(line, "obs_format")}");
+                    Overlay.SetStatus($"観戦中（観測形式 {Field(line, "obs_format")}）");
                     if (int.TryParse(Field(line, "obs_format"), out int fmt)) _obsFormat = fmt;
                     break;
                 case "control":
@@ -207,6 +232,15 @@ internal static class Bridge
                 case "error":
                     LogLine("server error: " + Field(line, "msg"));
                     break;
+                case "speed":
+                    if (double.TryParse(Field(line, "scale"), System.Globalization.NumberStyles.Float,
+                                        System.Globalization.CultureInfo.InvariantCulture, out double scale))
+                    {
+                        Godot.Engine.TimeScale = Math.Clamp(scale, 0.1, 20.0);
+                        LogLine("game speed set to " + Godot.Engine.TimeScale);
+                        Overlay.SetStatus($"速度 {Godot.Engine.TimeScale:0.##}x");
+                    }
+                    break;
                 case "start":
                     Launcher.Request(Field(line, "character") + "|" + Field(line, "ascension") + "|"
                                      + Field(line, "seed") + "|" + Field(line, "encounter"));
@@ -217,6 +251,7 @@ internal static class Bridge
                     {
                         Interlocked.Exchange(ref _pendingAction, idx);
                         LogLine($"action: index={idx} p={Field(line, "prob")} {Field(line, "label")}");
+                        ShowAction(idx, Field(line, "label"), Field(line, "prob"), line);
                     }
                     break;
             }
