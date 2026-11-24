@@ -80,9 +80,9 @@ internal static class CombatDriver
         {
             if (_wasInCombat && !me.Creature.IsDead) UiFlows.CombatsWon++;
             _wasInCombat = false;
-            _awaiting = false;
-            _decision = null;
-            if (run.IsGameOver) ReportRunEnd(run, me);
+            if (run.IsGameOver) { ReportRunEnd(run, me); return; }
+            // 戦闘の外（報酬・経路）。判断できる局面だけ扱い、それ以外はプレイヤーに任せる
+            DriveOutOfCombat(run, me, now);
             return;
         }
         _wasInCombat = true;
@@ -134,6 +134,40 @@ internal static class CombatDriver
         catch (Exception e)
         {
             Bridge.LogLine("build/encode failed: " + e.GetType().Name + ": " + e.Message);
+            _nextAt = now + 1000;
+        }
+    }
+
+    /// <summary>報酬・経路の決定を送って実行する（戦闘外）。</summary>
+    static void DriveOutOfCombat(RunState run, Player me, long now)
+    {
+        if (_awaiting)
+        {
+            int idx = Bridge.TakeAction();
+            if (idx >= 0) { Execute(idx); return; }
+            if (now > _deadline) { _awaiting = false; }
+            return;
+        }
+        if (now < _nextAt) return;
+        try
+        {
+            var d = OutOfCombat.Build(run, me);
+            if (d == null || d.Choices.Count == 0)
+            {
+                _decision = null;
+                if (d == null) _nextAt = now + 500;        // 未対応の画面: 少し待ってから再確認
+                return;
+            }
+            var session = new RunSession { Steps = _steps };
+            var frame = Observation.Build(session, d, labels: true).Serialize();
+            Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            _decision = d;
+            _awaiting = true;
+            _deadline = now + ActionTimeoutMs;
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("out-of-combat build failed: " + e.GetType().Name + ": " + e.Message);
             _nextAt = now + 1000;
         }
     }
