@@ -10,11 +10,13 @@ MOD（ゲーム側）が 127.0.0.1:<port> に接続してくるのを待ち、1 
 
 from __future__ import annotations
 
+import json
 import socket
 import sys
 import threading
 import time
 from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import protocol as P
 from .autopilot import Autopilot
@@ -33,6 +35,7 @@ HELP = """操作:
 class ServerConfig:
     host: str = "127.0.0.1"
     port: int = 18765
+    control_port: int = 18766      # 操作（pause/resume/stop/speed/status）を HTTP で受ける。0 で無効
     idle_timeout: float = 300.0      # これだけ無通信なら止める（既定 5 分）
     exit_on_done: bool = True        # 1 ラン終わったら受け口も閉じる
     stdin: bool = True
@@ -127,6 +130,55 @@ def _status_text(ap: Autopilot) -> str:
             f" / 状態 {s.states} / 行動 {s.actions} / 重複 {s.duplicates} / {s.seconds:.0f} 秒{result}")
 
 
+def _control_server(ap: Autopilot, controls: _Controls, port: int, log) -> ThreadingHTTPServer:
+    """HTTP の操作口。/status は状態、/control は {"command": "pause"|"resume"|"stop"|"speed N"}。
+
+    端末の無い環境（バックグラウンド起動）でも一時停止・再開・停止ができるようにするため。
+    """
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, fmt, *args):        # 既定のログはうるさいので黙らせる
+            return
+
+        def _send(self, code: int, body: dict) -> None:
+            data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def do_GET(self):
+            if self.path.rstrip("/") in ("/status", ""):
+                self._send(200, ap.summary())
+            else:
+                self._send(404, {"error": "use /status or POST /control"})
+
+        def do_POST(self):
+            if self.path.rstrip("/") != "/control":
+                self._send(404, {"error": "use /control"})
+                return
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                payload = json.loads(self.rfile.read(n) or b"{}")
+                command = str(payload.get("command") or "").strip()
+            except (ValueError, OSError) as e:
+                self._send(400, {"error": f"bad body: {e}"})
+                return
+            try:
+                controls.apply(command)
+            except Exception as e:                # noqa: BLE001 - 操作の失敗はそのまま返す
+                self._send(400, {"error": str(e)})
+                return
+            self._send(200, {"ok": True, "command": command, "state": ap.state, "steps": ap.stats.steps})
+
+    srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    srv.daemon_threads = True
+    threading.Thread(target=srv.serve_forever, name="autopilot-control", daemon=True).start()
+    log("control", {"url": f"http://127.0.0.1:{port}/status"})
+    return srv
+
+
 def serve(ap: Autopilot, cfg: ServerConfig, log=None) -> int:
     """接続を待って 1 ランを付き合う。戻り値は終了コード。"""
     event = log or ap.log
@@ -144,6 +196,13 @@ def serve(ap: Autopilot, cfg: ServerConfig, log=None) -> int:
 
     if cfg.stdin:
         threading.Thread(target=controls.read_loop, daemon=True, name="autopilot-stdin").start()
+    control_srv = None
+    if cfg.control_port:
+        try:
+            control_srv = _control_server(ap, controls, cfg.control_port, event)
+            print(f"[autopilot] 操作は http://127.0.0.1:{cfg.control_port}/status と POST /control", flush=True)
+        except OSError as e:
+            print(f"[autopilot] 操作口を開けませんでした（{e}）", file=sys.stderr, flush=True)
 
     try:
         while not stop_event.is_set():
@@ -166,6 +225,8 @@ def serve(ap: Autopilot, cfg: ServerConfig, log=None) -> int:
                 stop_event.set()
     finally:
         srv.close()
+        if control_srv is not None:
+            control_srv.shutdown()
         controls.attach(None)
 
     code = 0 if ap.state in ("stopped", "error") else 1

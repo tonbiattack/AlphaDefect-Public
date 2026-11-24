@@ -114,7 +114,19 @@ internal static class LiveCardSelect
         if (!_logged.Contains(pc))
         {
             _logged.Add(pc);
-            Bridge.LogLine($"card select prompt: options={pc.Options.Count} min={pc.Min} max={pc.Max} cancelable={pc.Cancelable} method={pc.Info?.Method}");
+            // 誰が選牌を求めているか（繰り返しの原因を追う）。スタックの上位数フレームだけ。
+            string where = "";
+            try
+            {
+                var st = new System.Diagnostics.StackTrace(true);
+                where = string.Join(" < ", st.GetFrames()
+                    .Where(f => f.GetMethod()?.DeclaringType?.Assembly == typeof(LiveCardSelect).Assembly
+                             || f.GetMethod()?.DeclaringType?.Namespace?.StartsWith("MegaCrit") == true)
+                    .Take(4)
+                    .Select(f => $"{f.GetMethod()?.DeclaringType?.Name}.{f.GetMethod()?.Name}"));
+            }
+            catch { }
+            Bridge.LogLine($"card select prompt: options={pc.Options.Count} min={pc.Min} max={pc.Max} cancelable={pc.Cancelable} method={pc.Info?.Method} caller={where}");
         }
         bool upgradeAny = pc.Info?.Method is { } meth && meth.Contains("ForUpgrade");
         for (int i = 0; i < pc.Options.Count; i++)
