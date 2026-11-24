@@ -60,7 +60,7 @@ def run(
                            "labels": labels, "snapshots": False, **_extra(ap)})
         obs = parse(raw)
         last_obs = obs
-        replies = ap.handle(P.state(raw, seq, **frame_meta(obs)))
+        replies = ap.handle(P.state(raw, seq, character=cfg.character, **frame_meta(obs)))
         while True:
             if time.time() - t0 > cfg.time_cap:
                 raise TimeoutError(f"シミュレーションが {cfg.time_cap:.0f} 秒を超えました")
@@ -83,7 +83,7 @@ def run(
                 break
             if steps >= cfg.max_steps:
                 raise TimeoutError(f"{cfg.max_steps} 歩で終わりませんでした")
-            replies = ap.handle(P.state(raw, seq, **frame_meta(obs)))
+            replies = ap.handle(P.state(raw, seq, character=cfg.character, **frame_meta(obs)))
     finally:
         try:
             env.close()

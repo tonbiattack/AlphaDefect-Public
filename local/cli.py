@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
 
     p = sub.add_parser("play", help="1 局打って結果と所要時間を出す")
-    p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER")
+    p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER、または auto（ゲーム側の選択に合わせる）")
     p.add_argument("--seed", help="ゲームのシード（例: ABC123）。省略するとランダム")
     p.add_argument("--seeds", help="複数シード（カンマ区切り）")
     p.add_argument("--runs", type=int, help="局数（--seed も --seeds も無いときはランダムなシードをこの数だけ作る）")
@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
 
     p = sub.add_parser("autopilot", help="ゲーム側 MOD とつないで AI に 1 ラン打たせる（観戦用）")
-    p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER")
+    p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER、または auto（ゲーム側の選択に合わせる）")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=18765)
     p.add_argument("--speed", type=float, default=1.0, help="速度倍率（MOD に渡す待ち時間が 1/N になる）")
@@ -97,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--keep-listening", dest="exit_on_done", action="store_false", help="1 ランの後も次の接続を待つ")
     p.add_argument("--no-stdin", dest="stdin", action="store_false", help="標準入力からの操作を受け付けない")
     p.add_argument("--log", help="JSONL のログの出力先（既定 ~/.local/share/sls2/logs/autopilot-<日時>.jsonl）")
+    p.add_argument("--autostart", help='接続時にゲーム側で 1 局始める（"DEFECT|0|ABC123|regular"。encounter は weak/regular/elite/boss）')
     p.add_argument("--simulate", action="store_true", help="ゲームを使わず、無頭エンジンの実フレームで通し試験する")
     p.add_argument("--seed", default="ABC123", help="--simulate のシード")
     p.add_argument("--asc", type=int, default=10, help="--simulate のアセンション")
@@ -379,8 +380,14 @@ def cmd_autopilot(a) -> int:
     assert st.install is not None and st.line is not None
     line = st.line
     character = (a.character or _default_character(line)).upper()
-    require_character(line, character, allow_untested=True)
-    decider = ModelDecider.load(character, device=a.device, install=st.install, top=a.top, merge=a.merge)
+    if character != "AUTO":
+        require_character(line, character, allow_untested=True)
+    if character == "AUTO":
+        from .bridge.agent import AutoDecider
+
+        decider = AutoDecider(install=st.install, device=a.device, top=a.top, merge=a.merge)
+    else:
+        decider = ModelDecider.load(character, device=a.device, install=st.install, top=a.top, merge=a.merge)
     stamp = _time.strftime("%Y%m%d-%H%M%S")
     log_path = Path(a.log) if a.log else paths.home() / "logs" / f"autopilot-{stamp}_{character}.jsonl"
     log = SessionLog(log_path)
@@ -394,6 +401,7 @@ def cmd_autopilot(a) -> int:
         max_states=a.max_states,
         merge=a.merge,
         obs_format=decider.obs_format,
+        autostart=a.autostart,
     )
     print(f"[autopilot] キャラ {character} / ゲーム {st.install.version} / 形式 {decider.obs_format} / ログ {log_path}", flush=True)
     try:
@@ -412,7 +420,10 @@ def _run_simulation(ap, line, a, log_path: Path) -> int:
     """無頭エンジンの実フレームで、ブリッジ越しに 1 局打つ（ゲーム不要の通し試験）。"""
     from .bridge.sim import SimConfig, run
 
-    cfg = SimConfig(character=ap.character, seed=a.seed, ascension=a.asc, stop_after=a.stop_after)
+    sim_character = ap.character
+    if sim_character == "AUTO":
+        sim_character = _default_character(line)   # 通し試験では具体キャラを使う
+    cfg = SimConfig(character=sim_character, seed=a.seed, ascension=a.asc, stop_after=a.stop_after)
     print(f"[autopilot] ゲームを使わずに通し試験します（seed {cfg.seed} / A{cfg.ascension}）", flush=True)
     ap.start()
     try:

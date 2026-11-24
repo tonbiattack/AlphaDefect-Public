@@ -59,6 +59,7 @@ internal static class Bridge
         ApplyFormat();
         try
         {
+            Launcher.Tick();
             CombatDriver.Tick();
         }
         catch (Exception e)
@@ -205,6 +206,11 @@ internal static class Bridge
                     break;
                 case "error":
                     LogLine("server error: " + Field(line, "msg"));
+                    break;
+                case "start":
+                    Launcher.Request(Field(line, "character") + "|" + Field(line, "ascension") + "|"
+                                     + Field(line, "seed") + "|" + Field(line, "encounter"));
+                    LogLine("start requested: " + Field(line, "character") + " seed=" + Field(line, "seed"));
                     break;
                 case "action":
                     if (int.TryParse(Field(line, "index"), out int idx))

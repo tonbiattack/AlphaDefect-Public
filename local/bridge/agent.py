@@ -52,6 +52,13 @@ class ModelDecider:
                 "観測フレームを読めませんでした。MOD 側の観測形式とネットワークの学習形式が"
                 f"食い違っている可能性があります（{e}）"
             ) from e
+        character = str(frame.meta.get("character") or "").upper()
+        if character and character != self.policy.character:
+            raise LocalError(
+                f"ゲームのキャラが違います（ゲーム {character} / このサーバ {self.policy.character}）。"
+                f"{self.policy.character} のランを始めるか、サーバを --character {character} で立て直してください。"
+                "別のキャラの数字をそのままネットワークに読ませないため、ここで止めます。"
+            )
         frame_format = int(obs.header[0])
         if frame_format != self.policy.asset.obs_format:
             raise LocalError(
@@ -79,6 +86,36 @@ class ModelDecider:
             candidates=[[i, labels[i], round(float(probs[i]), 4)] for i in order],
             value=value,
         )
+
+
+class AutoDecider:
+    """`--character auto` 用: 最初のフレームの meta.character を見て、そのキャラの重みを読む。
+
+    どのキャラのランを始めるかを事前に決めなくてよい（ゲーム側の選択に合わせる）。
+    obs_format は分からないので welcome では送らず、MOD はキャラ既定の形式で符号化する
+    （v0.111.x では Defect 19・Regent 20・Silent 23 がそのまま重みと一致する）。
+    """
+
+    def __init__(self, install=None, device: str = "cpu", top: int = 5, merge: bool = False):
+        self.install = install or find_install()
+        self.device = device
+        self.top = top
+        self.merge = merge
+        self._inner: ModelDecider | None = None
+        self.character = "AUTO"
+
+    @property
+    def obs_format(self):
+        return None if self._inner is None else self._inner.obs_format
+
+    def __call__(self, frame: P.Frame) -> Decision:
+        if self._inner is None:
+            ch = str(frame.meta.get("character") or "").upper()
+            if not ch:
+                raise LocalError("フレームにキャラが入っていません（MOD が古い可能性があります）")
+            self._inner = ModelDecider.load(ch, device=self.device, install=self.install, top=self.top, merge=self.merge)
+            self.character = ch
+        return self._inner(frame)
 
 
 def frame_meta(obs) -> dict:

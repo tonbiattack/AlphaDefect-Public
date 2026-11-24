@@ -86,6 +86,7 @@ class Autopilot:
         max_states: int | None = None,
         merge: bool = False,
         obs_format: int | None = None,
+        autostart: str | None = None,
     ):
         self.decider = decider
         self.character = character.upper()
@@ -95,6 +96,7 @@ class Autopilot:
         self.max_states = max_states
         self.merge = merge
         self.obs_format = obs_format
+        self.autostart = autostart            # "DEFECT|0|SEED|regular" 形式（接続時に start を送る）
 
         self.state = "idle"          # idle / running / paused / stopped / error
         self.speed = 1.0
@@ -161,7 +163,19 @@ class Autopilot:
         if self.state in ("idle", "stopped"):
             self.state = "running"
         self.log("start", {"character": self.character, "run": self.run_id})
-        return [P.welcome(self.run_id, P.PROTOCOL_VERSION, self.character, self.speed, self.obs_format)]
+        out = [P.welcome(self.run_id, P.PROTOCOL_VERSION, self.character, self.speed, self.obs_format)]
+        if self.autostart:
+            out.append(self._start_message(self.autostart))
+        return out
+
+    def _start_message(self, spec: str) -> dict:
+        parts = spec.split("|")
+        ch = (parts[0] or self.character).upper() if parts else self.character
+        asc = int(parts[1]) if len(parts) > 1 and parts[1] else 0
+        seed = parts[2] if len(parts) > 2 and parts[2] else "ALPHADEFECT"
+        enc = parts[3] if len(parts) > 3 and parts[3] else "regular"
+        self.log("start-request", {"character": ch, "ascension": asc, "seed": seed, "encounter": enc})
+        return P.start(ch, asc, seed, enc)
 
     def handle(self, msg: dict) -> list[dict]:
         """MOD からの 1 メッセージを処理し、返すメッセージの列を返す。"""
