@@ -25,6 +25,10 @@ namespace AlphaDefectAutopilot;
 internal static class OutOfCombat
 {
     static bool _installed;
+    static bool _chestOpened;
+    static bool _relicDecided;
+    static bool _shopLeft;
+    static object? _lastRoom;
 
     public static void Install()
     {
@@ -39,12 +43,30 @@ internal static class OutOfCombat
     /// <summary>いま判断すべき戦闘外の決定。無ければ null。</summary>
     public static Decision? Build(RunState run, Player me)
     {
+        // 部屋が変わったら「この部屋ではもう用は済んだ」系のフラグを戻す（エンジンと同じ）
+        if (!ReferenceEquals(run.CurrentRoom, _lastRoom))
+        {
+            _lastRoom = run.CurrentRoom;
+            _shopLeft = false;
+            _chestOpened = false;
+            _relicDecided = false;
+        }
         if (LiveCardReward.Active && LiveCardReward.Build() is { } cardReward) return cardReward;
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
         if (RewardsFlow.Pending is { } pr) return RewardsDecision(me, pr);
-        if (run.CurrentRoom is EventRoom && EventDecision(run, me) is { } ev) return ev;
+        if (run.CurrentRoom is EventRoom)
+        {
+            if (EventDecision(run, me) is { } ev) return ev;
+            // イベントが終わったのに部屋が残っている: 画面の「続ける」は押さず、地図の判断で抜ける
+            return MapDecision(run, me);
+        }
         // 戦闘が終わって報酬も閉じたあとは、部屋のオブジェクトがまだ CombatRoom のことがある。
         // エンジンと同じく、他にすることが無ければ地図の選択に落とす。
+        if (run.CurrentRoom is RestSiteRoom) return RestDecision(me);
+        if (run.CurrentRoom is TreasureRoom tr) return TreasureDecision(tr, me);
+        if (run.CurrentRoom is MerchantRoom)
+            // 店を出たあとは地図（NMerchantRoom.HideScreen が地図を開く）を選ぶ
+            return _shopLeft ? MapDecision(run, me) : ShopDecision(run, me);
         if (run.CurrentRoom is MapRoom or CombatRoom || run.CurrentRoom is null) return MapDecision(run, me);
         return null;
     }
@@ -94,6 +116,135 @@ internal static class OutOfCombat
 
     /// <summary>選ばない選択肢（エンジンと同じ。TRIAL の DOUBLE_DOWN は放棄確認だけなので出さない）。</summary>
     static readonly HashSet<string> ExcludedEventOptions = new() { "TRIAL.pages.REJECT.options.DOUBLE_DOWN" };
+
+    /// <summary>休息所: 使える選択肢を候補に（回復・鍛造など）。</summary>
+    static Decision? RestDecision(Player me)
+    {
+        var sync = RunManager.Instance.RestSiteSynchronizer;
+        var opts = sync.GetLocalOptions();
+        var d = new Decision(DecisionKind.RestSite);
+        for (int i = 0; i < opts.Count; i++)
+        {
+            if (!opts[i].IsEnabled) continue;
+            int k = i;
+            d.Add(ActionKind.RestOption, opts[i].OptionId, () => sync.ChooseLocalOption(k), a: opts[i]);
+        }
+        if (d.Choices.Count == 0) return null;
+        AddPotionActions(me, d);
+        return d;
+    }
+
+    /// <summary>宝箱: 開けて、遺物が 1 件なら取り、複数なら選ぶ。</summary>
+    static Decision? TreasureDecision(TreasureRoom room, Player me)
+    {
+        if (!_chestOpened)
+        {
+            _chestOpened = true;
+            try
+            {
+                _ = OpenChest(room);
+            }
+            catch (Exception e)
+            {
+                Bridge.LogLine("open chest failed: " + e.GetType().Name);
+            }
+            return null;                       // 開けた次のフレームで判断
+        }
+        var sync = RunManager.Instance.TreasureRoomRelicSynchronizer;
+        var relics = sync.CurrentRelics;
+        if (relics == null || relics.Count == 0)
+        {
+            _relicDecided = true;
+            return null;
+        }
+        var d = new Decision(DecisionKind.Treasure);
+        for (int i = 0; i < relics.Count; i++)
+        {
+            int k = i;
+            d.Add(ActionKind.PickRelic, "拿 " + relics[i].Id.Entry, () => PickRelic(k), a: relics[i]);
+        }
+        d.Add(ActionKind.SkipRelic, "跳过", () => SkipRelic(), key: "SKIP");
+        return d;
+    }
+
+    static async Task OpenChest(TreasureRoom room)
+    {
+        await room.DoNormalRewards();
+        await room.DoExtraRewardsIfNeeded();
+        Bridge.LogLine("chest opened");
+    }
+
+    static void PickRelic(int index)
+    {
+        _relicDecided = true;
+        _ = PickRelicAsync(index);
+    }
+
+    static async Task PickRelicAsync(int index)
+    {
+        try
+        {
+            var sync = RunManager.Instance.TreasureRoomRelicSynchronizer;
+            sync.PickRelicLocally(index);
+            await RunManager.Instance.ProceedFromTerminalRewardsScreen();
+            Bridge.LogLine($"picked treasure relic {index}");
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("pick relic failed: " + e.GetType().Name + ": " + e.Message);
+        }
+    }
+
+    static void SkipRelic()
+    {
+        _relicDecided = true;
+        try
+        {
+            RunManager.Instance.TreasureRoomRelicSynchronizer.CompleteWithNoRelics();
+            _ = RunManager.Instance.ProceedFromTerminalRewardsScreen();
+            Bridge.LogLine("skipped treasure relic");
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("skip relic failed: " + e.GetType().Name);
+        }
+    }
+
+    /// <summary>店: いまは「出る」だけ（買い物は次の作業）。</summary>
+    static Decision? ShopDecision(RunState run, Player me)
+    {
+        var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
+        d.Add(ActionKind.Leave, "离开", () => LeaveShop());
+        return d;
+    }
+
+    static void LeaveShop()
+    {
+        _shopLeft = true;
+        try
+        {
+            // 部屋のノードは「進むボタンを持つ部屋」として取れる（IRoomWithProceedButton）。
+            // そのボタンにクリックと同じ Released 信号を送る。
+            var scene = MegaCrit.Sts2.Core.Nodes.NGame.Instance?.RootSceneContainer?.CurrentScene;
+            if (scene != null)
+            {
+                foreach (var node in scene.FindChildren("*", "", true, false))
+                {
+                    if (node is not MegaCrit.Sts2.Core.Nodes.Rooms.IRoomWithProceedButton holder) continue;
+                    var button = holder.ProceedButton;
+                    if (button == null || !Godot.GodotObject.IsInstanceValid(button)) continue;
+                    button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
+                    Bridge.LogLine("left the shop");
+                    return;
+                }
+            }
+            Bridge.LogLine("shop leave button not found; the game will wait for the player");
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("leave shop failed: " + e.GetType().Name + ": " + e.Message);
+        }
+    }
 
     static Decision MapDecision(RunState run, Player me)
     {

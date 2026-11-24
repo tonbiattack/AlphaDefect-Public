@@ -35,6 +35,8 @@ internal static class LiveRewards
         Bridge.LogLine($"reward screen: {set.Rewards.Count} rewards (terminal={isTerminal})");
     }
 
+    static readonly HashSet<object> _logged = new();
+
     public static void Forget()
     {
         Set = null;
@@ -59,6 +61,11 @@ internal static class LiveRewards
         // 「進む」は、取り残しが無いときだけ候補にする。まだ取れる報酬があるうちは
         // 画面のボタンが無効なことがあり、押しても閉じない（同じ手の繰り返しになる）。
         bool nothingLeft = set.Rewards.All(r => r.SuccessfullySelected);
+        if (!_logged.Contains(set))
+        {
+            _logged.Add(set);
+            Bridge.LogLine("reward candidates: " + string.Join(", ", set.Rewards.Select(r => (r.SuccessfullySelected ? "*" : "") + Label(r))));
+        }
         if (nothingLeft) d.Add(ActionKind.Leave, "离开", Leave);
         return d;
     }

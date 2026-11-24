@@ -66,6 +66,12 @@ internal static class CombatDriver
         var me = run.Players[0];
         var pcs = me.PlayerCombatState;
         long now = Environment.TickCount64;
+        // 選牌待ち（捨てる・強化する等）は戦闘の内外を問わず先に片付ける
+        if (LiveCardSelect.Active)
+        {
+            DriveCardSelect(run, me, now);
+            return;
+        }
         // 戦闘中かどうかは CombatManager で決める。報酬画面の間も PlayerCombatState は
         // 残っていることがあるので、それで判断すると戦闘外の判断に降りられない。
         bool inCombat = SafeInCombat();
@@ -195,6 +201,34 @@ internal static class CombatDriver
     {
         try { return MegaCrit.Sts2.Core.Combat.CombatManager.Instance.IsInProgress; }
         catch { return false; }
+    }
+
+    /// <summary>選牌の決定を送って実行する（1 枚ずつ選び、最後に確定）。</summary>
+    static void DriveCardSelect(RunState run, Player me, long now)
+    {
+        if (_awaiting)
+        {
+            int idx = Bridge.TakeAction();
+            if (idx >= 0) { Execute(idx); return; }
+            if (now > _deadline) _awaiting = false;
+            return;
+        }
+        if (now < _nextAt) return;
+        try
+        {
+            var d = LiveCardSelect.Build(run);
+            if (d == null) { _nextAt = now + 200; return; }     // 自動解決した等
+            var frame = Observation.Build(new RunSession { Steps = _steps }, d, labels: true).Serialize();
+            Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            _decision = d;
+            _awaiting = true;
+            _deadline = now + ActionTimeoutMs;
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("card select build failed: " + e.GetType().Name + ": " + e.Message);
+            _nextAt = now + 1000;
+        }
     }
 
     static void Execute(int idx)

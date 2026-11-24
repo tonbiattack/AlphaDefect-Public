@@ -173,7 +173,7 @@ class Autopilot:
         ch = (parts[0] or self.character).upper() if parts else self.character
         asc = int(parts[1]) if len(parts) > 1 and parts[1] else 0
         seed = parts[2] if len(parts) > 2 and parts[2] else "ALPHADEFECT"
-        enc = parts[3] if len(parts) > 3 and parts[3] else "regular"
+        enc = parts[3] if len(parts) > 3 else ""      # 空ならゲーム本来の流れ（Neow → マップ）で始める
         self.log("start-request", {"character": ch, "ascension": asc, "seed": seed, "encounter": enc})
         return P.start(ch, asc, seed, enc)
 

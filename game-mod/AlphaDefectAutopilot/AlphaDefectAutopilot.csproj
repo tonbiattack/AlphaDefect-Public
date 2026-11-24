@@ -48,6 +48,7 @@
     <Compile Include="$(ObsTree)/Engine/Observation.cs" Link="Headless/Observation.cs" />
     <Compile Include="$(ObsTree)/Engine/Compat/**/*.cs" LinkBase="Headless/Compat" />
     <Compile Include="$(ObsTree)/Engine/Decision.cs" Link="Headless/Decision.cs" />
+    <Compile Include="$(ObsTree)/AgentCardSelector.cs" Link="Headless/AgentCardSelector.cs" />
     <Compile Include="$(ObsTree)/Engine/Vocab.cs" Link="Headless/Vocab.cs" />
     <Compile Include="$(ObsTree)/Engine/RewardsFlow.cs" Link="Headless/RewardsFlow.cs" />
   </ItemGroup>

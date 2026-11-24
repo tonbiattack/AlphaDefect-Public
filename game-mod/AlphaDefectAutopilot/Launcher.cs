@@ -81,6 +81,7 @@ internal static class Launcher
 
             Bridge.LogLine($"starting run {characterId} A{ascension} seed={seed} encounter={encounter}");
             OutOfCombat.ResetForNewRun();
+            LiveCardSelect.Reset();
             await NGame.Instance!.StartNewSingleplayerRun(character, shouldSave: false, acts,
                 Array.Empty<ModifierModel>(), seed, GameMode.Standard, ascension);
 
