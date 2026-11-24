@@ -52,6 +52,13 @@ class ModelDecider:
                 "観測フレームを読めませんでした。MOD 側の観測形式とネットワークの学習形式が"
                 f"食い違っている可能性があります（{e}）"
             ) from e
+        frame_format = int(obs.header[0])
+        if frame_format != self.policy.asset.obs_format:
+            raise LocalError(
+                f"観測フレームの形式が重みと違います（フレーム {frame_format} / 重み {self.policy.asset.obs_format}）。"
+                f"このゲーム版で動かせるのは {self.policy.character} の学習済み形式のキャラだけです。"
+                "ゲーム側で別のキャラを選んでいないか確認してください。"
+            )
         t0 = time.perf_counter()
         probs, _logits, value = self.policy.score(obs)
         self.seconds += time.perf_counter() - t0

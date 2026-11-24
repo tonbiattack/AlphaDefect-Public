@@ -21,6 +21,8 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <!-- ゲームのアセンブリの場所（local setup が用意するキャッシュ） -->
     <Sts2GameDir Condition="'$(Sts2GameDir)' == ''">$(HOME)/.local/share/sls2/game/v0.111.1</Sts2GameDir>
+    <!-- 観測エンコーダを借りるコードツリー（ゲームの版に合わせる） -->
+    <ObsTree Condition="'$(ObsTree)' == ''">$(MSBuildThisFileDirectory)../../game-v0.111.0/engine/Sts2Headless</ObsTree>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,8 +41,21 @@
     </Reference>
   </ItemGroup>
 
+  <!-- 無頭エンジンの観測エンコーダを共有する（種明かし: 同じ観測フレームを作るため）。
+       engine/Directory.Build.targets が Sts2Bridge 向けにやっているのと同じ組み方。 -->
+  <ItemGroup>
+    <Compile Include="$(ObsTree)/Engine/Obs/**/*.cs" LinkBase="Headless/Obs" />
+    <Compile Include="$(ObsTree)/Engine/Observation.cs" Link="Headless/Observation.cs" />
+    <Compile Include="$(ObsTree)/Engine/Compat/**/*.cs" LinkBase="Headless/Compat" />
+    <Compile Include="$(ObsTree)/Engine/Decision.cs" Link="Headless/Decision.cs" />
+    <Compile Include="$(ObsTree)/Engine/Vocab.cs" Link="Headless/Vocab.cs" />
+    <Compile Include="$(ObsTree)/Engine/RewardsFlow.cs" Link="Headless/RewardsFlow.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="AlphaDefectAutopilot.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- 語彙（観測の数値 → 内容の ID）。エンコーダが読む -->
+    <Content Include="$(ObsTree)/../catalog/vocab.txt" Link="vocab.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
