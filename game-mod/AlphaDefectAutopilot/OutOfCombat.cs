@@ -190,6 +190,13 @@ internal static class OutOfCombat
             }
             return null;                       // 開けた次のフレームで判断
         }
+        if (_relicDecided)
+        {
+            // 遺物は決めたのに部屋が残っている: 部屋の「進む」で出る
+            var leave = new Decision(DecisionKind.Treasure);
+            leave.Add(ActionKind.Leave, "离开", () => PressRoomProceed("NTreasureRoom"));
+            return leave;
+        }
         var sync = RunManager.Instance.TreasureRoomRelicSynchronizer;
         var relics = sync.CurrentRelics;
         if (relics == null || relics.Count == 0)
