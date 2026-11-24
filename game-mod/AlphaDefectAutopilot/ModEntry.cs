@@ -18,6 +18,9 @@ namespace AlphaDefectAutopilot;
 [ModInitializer(nameof(Start))]
 public static class ModEntry
 {
+    /// <summary>SceneTree.ProcessFrame を掴めたか（掴めていれば NRun のパッチは使わない）。</summary>
+    public static bool TreeHooked { get; private set; }
+
     public static void Start()
     {
         try
@@ -31,6 +34,25 @@ public static class ModEntry
             var harmony = new Harmony("alphadefect.autopilot");
             harmony.PatchAll(typeof(ModEntry).Assembly);
             MegaCrit.Sts2.Core.Logging.Log.Info("[AlphaDefect] harmony patches applied");
+            // 実行中の画面に関係なく毎フレーム呼ばれる入口。メニューでも走るので、
+            // サーバからの「ランを始める」指示をゲームの起動直後でも受けられる。
+            try
+            {
+                if (Godot.Engine.GetMainLoop() is Godot.SceneTree tree)
+                {
+                    tree.ProcessFrame += () => Bridge.Tick();
+                    TreeHooked = true;
+                    MegaCrit.Sts2.Core.Logging.Log.Info("[AlphaDefect] scene tree hook installed");
+                }
+                else
+                {
+                    MegaCrit.Sts2.Core.Logging.Log.Warn("[AlphaDefect] no SceneTree yet; relying on NRun._Process");
+                }
+            }
+            catch (Exception e)
+            {
+                MegaCrit.Sts2.Core.Logging.Log.Warn("[AlphaDefect] scene tree hook failed: " + e.GetType().Name);
+            }
             Bridge.Start();
         }
         catch (Exception e)
@@ -54,6 +76,7 @@ internal static class NRunProcessPatch
     [HarmonyPostfix]
     static void Postfix()
     {
+        if (ModEntry.TreeHooked) return;      // SceneTree から毎フレーム呼ばれている
         try
         {
             Bridge.Tick();
