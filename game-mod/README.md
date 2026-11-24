@@ -19,7 +19,12 @@ AlphaDefect inference server in WSL. It is the Windows half of the watch-the-AI-
 - builds the same combat candidates the headless engine builds (hand × target, potions, end turn)
   and, when the server answers with an index, executes it (`CardModel.TryManualPlay`,
   `PotionModel.EnqueueManualUse`, `EndPlayerTurnAction`);
-- obeys `control` messages: `paused`, `running`, `stopped`; logs everything to the game log.
+- obeys `control` messages: `paused`, `running`, `stopped`; logs everything to the game log;
+- can start a run itself on request from the server (`{"t":"start"}`), through the game's own
+  `NGame.StartNewSingleplayerRun`, then enters the first combat directly with
+  `RunManager.EnterRoomDebug` (the server's `--autostart "DEFECT|0|SEED|weak"` does this);
+- runs its tick on the Godot `SceneTree.ProcessFrame` signal, so it also works while the game sits
+  in the main menu (the `NRun._Process` patch remains as a fallback).
 
 ## What it does not do yet
 
