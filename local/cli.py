@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("autopilot", help="ゲーム側 MOD とつないで AI に 1 ラン打たせる（観戦用）")
     p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER")
     p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--port", type=int, default=18765)
     p.add_argument("--speed", type=float, default=1.0, help="速度倍率（MOD に渡す待ち時間が 1/N になる）")
     p.add_argument("--hold-ms", type=int, default=0, help="1 手あたりの待ち時間の基準（ミリ秒、既定 0）")
     p.add_argument("--top", type=int, default=5, help="候補スコアを何件 MOD に渡すか")

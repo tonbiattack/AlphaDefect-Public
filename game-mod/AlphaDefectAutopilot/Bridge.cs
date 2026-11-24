@@ -194,7 +194,7 @@ internal static class Bridge
 
     static int ParsePort(string? raw)
     {
-        return int.TryParse(raw, out int p) && p > 0 && p < 65536 ? p : 8765;
+        return int.TryParse(raw, out int p) && p > 0 && p < 65536 ? p : 18765;
     }
 
     static string Field(string json, string key)

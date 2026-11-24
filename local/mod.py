@@ -117,14 +117,18 @@ def install(install: GameInstall, log=print, force: bool = False, allow_running:
             "ゲームが動いています。いま入っている MOD の DLL を置き換えるには、ゲームを終了してください。\n"
             "  （まだ入っていない MOD を置くだけなら `python -m local mod install --force` で構いません。次の起動から効きます）"
         )
-    if st.installed and not st.stale and not force:
-        log(f"  MOD: 導入済み（{st.path}）")
-        return st.path
+    # ソースを直したら入れ直す必要があるので、スタンプだけでは判断しない。
+    # 毎回ビルド（増分なので速い）し、できた DLL が入っているものと同じなら書き換えない。
     out = build(install, log=log, force=force)
     target = target_dir(install)
     target.mkdir(parents=True, exist_ok=True)
+    same = False
+    if (target / f"{MOD_ID}.dll").is_file():
+        same = _digest(target / f"{MOD_ID}.dll") == _digest(out / f"{MOD_ID}.dll") and \
+               _digest(target / f"{MOD_ID}.json") == _digest(out / f"{MOD_ID}.json")
     for name in (f"{MOD_ID}.dll", f"{MOD_ID}.json"):
-        shutil.copy2(out / name, target / name)
+        if not same:
+            shutil.copy2(out / name, target / name)
     (target / STAMP_NAME).write_text(
         json.dumps({
             "mod_id": MOD_ID,
@@ -134,8 +138,14 @@ def install(install: GameInstall, log=print, force: bool = False, allow_running:
         }, ensure_ascii=False, indent=1),
         encoding="utf-8",
     )
-    log(f"  MOD: {target} に置きました")
+    log(f"  MOD: {target} に{'置きました' if not same else '最新です（変更なし）'}")
     return target
+
+
+def _digest(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def remove(install: GameInstall, log=print) -> bool:

@@ -32,7 +32,7 @@ HELP = """操作:
 @dataclass
 class ServerConfig:
     host: str = "127.0.0.1"
-    port: int = 8765
+    port: int = 18765
     idle_timeout: float = 300.0      # これだけ無通信なら止める（既定 5 分）
     exit_on_done: bool = True        # 1 ラン終わったら受け口も閉じる
     stdin: bool = True
@@ -200,7 +200,7 @@ def _session(ap: Autopilot, conn: _Conn, cfg: ServerConfig, event, stop_event: t
         while b"\n" in buf:
             line, buf = buf.split(b"\n", 1)
             if not line.strip():
-                continue
+                continue      # 空行（別のアプリのポート確認など）は黙って無視する
             try:
                 msg = P.decode(line)
             except P.ProtocolError as e:

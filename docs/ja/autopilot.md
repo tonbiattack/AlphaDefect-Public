@@ -8,7 +8,7 @@
 
 # ゲーム側 MOD を入れて、推論サーバを立てる
 ./play.sh mod install
-./play.sh autopilot --character DEFECT          # 127.0.0.1:8765 で待つ
+./play.sh autopilot --character DEFECT          # 127.0.0.1:18765 で待つ
 ```
 
 ---
@@ -17,7 +17,7 @@
 
 ```text
 Windows                                    WSL2 (Ubuntu)
-┌──────────────────────────┐   TCP 127.0.0.1:8765   ┌──────────────────────────────┐
+┌──────────────────────────┐   TCP 127.0.0.1:18765   ┌──────────────────────────────┐
 │ Slay the Spire 2         │  1 行 1 JSON           │ local/bridge                 │
 │  └ MOD (game-mod/)       │ ─────────────────────► │  protocol  メッセージ定義     │
 │     Harmony で NRun を    │   hello / probe /      │  autopilot 状態機械・ログ     │
@@ -55,7 +55,7 @@ Windows                                    WSL2 (Ubuntu)
 
 ```text
 [autopilot] キャラ DEFECT / ゲーム v0.111.1 / 形式 19 / ログ ~/.local/share/sls2/logs/autopilot-….jsonl
-[autopilot] 127.0.0.1:8765 でゲーム側の接続を待っています（終了は Ctrl-C / quit）
+[autopilot] 127.0.0.1:18765 でゲーム側の接続を待っています（終了は Ctrl-C / quit）
 操作:
   pause      一時停止（MOD は次の行動を待つ）
   resume     再開
@@ -173,9 +173,18 @@ TCP 上を 1 行 1 つの JSON が流れます。定義は `local/bridge/protoco
 |---|---|
 | MOD がゲームの MOD 機構でビルドできる（ゲーム v0.111.1 のアセンブリ参照） | 成功（`game-mod/AlphaDefectAutopilot`、12.8 KB の DLL） |
 | `mods/AlphaDefectAutopilot/` への配置 | 成功（`./play.sh mod install`） |
-| ゲーム内での読み込み・接続・`probe` の送信 | **未確認**。作業中にゲーム（SlayTheSpire2.exe）が起動中だったため、こちらから再起動していません。次回起動時に `%APPDATA%\Godot\app_userdata\Slay the Spire 2\logs\godot.log` に `[AlphaDefect] connected` が出るかで判定できます |
+| ゲーム内での読み込み | 確認済み。ゲームログに `Loading assembly DLL …AlphaDefectAutopilot.dll`、`[AlphaDefect] mod initializer called`、`--- RUNNING MODDED! --- Loaded 1 mods` |
+| 接続とハンドシェイク | 確認済み。`[AlphaDefect] connected to 127.0.0.1:18765`、`[AlphaDefect] welcome: run=… obs_format=19`、こちら側のログに `hello … mod=AlphaDefectAutopilot` |
+| `probe`（公開状態の送信） | 確認済み。プレイヤーが Ironclad のランを開始したあと、0.5 秒おきに 17 件の probe が届いた（`act 0 / floor 0 / hp 80/80 / gold 99 / deck 10 / combat false`） |
 | ブリッジの通し試験（ゲーム不要） | 実フレーム 935 手で A10 を完走（Defect、13.2 秒、勝利） |
 | 一時停止・再開・即時停止・速度・重複防止・例外時停止 | ユニットテスト（98 件）で確認 |
 
 **実機での自動プレイ（1 戦闘でも AI が打つ）は未達です。** 観測フレームの生成と行動の実行が
-入ってからになります。
+入ってからになります。状態の送信は「読めている」ことの確認で、AI の判断はまだゲームに届いて
+いません（`probe` に対して推論側は行動を返さない）。
+
+### ポートについて
+
+既定は `127.0.0.1:18765`（`ALPHADEFECT_AUTOPILOT_PORT` で変更）。最初は 8765 にしていたが、
+このマシンでは別の常駐アプリ（instant-mic）が 0.0.0.0:8765 を使っていて、127.0.0.1 宛の
+接続がそちらに取られる可能性があったため変えた。

@@ -9,7 +9,7 @@ AlphaDefect inference server in WSL. It is the Windows half of the watch-the-AI-
 - loads through the game's own mod system: `[ModInitializer]` in `MegaCrit.Sts2.Core.Modding`,
   no external loader, no Steam Workshop;
 - Harmony-patches `NRun._Process` so it reads the live run state on the game's main thread;
-- connects to `127.0.0.1:8765` (override with `ALPHADEFECT_AUTOPILOT_HOST` / `_PORT`) and sends
+- connects to `127.0.0.1:18765` (override with `ALPHADEFECT_AUTOPILOT_HOST` / `_PORT`) and sends
   `hello` and, twice a second, a `probe`: act, floor, ascension, in-combat, character, HP, gold,
   deck size — all of it public information, nothing from the draw pile or the RNG;
 - obeys `control` messages: `paused`, `running`, `stopped`; logs everything to the game log.
@@ -59,7 +59,7 @@ if it is listed as disabled. `--nomods` on the game's command line skips mods en
 - the server side prints `connected`, `hello`, `probe` and `control` events and writes the same
   to `~/.local/share/sls2/logs/autopilot-*.jsonl`;
 - if nothing arrives, check that WSL's `127.0.0.1` is reachable from Windows
-  (`curl http://127.0.0.1:8765` is not enough — it is a raw TCP socket; check the server is
+  (`curl http://127.0.0.1:18765` is not enough — it is a raw TCP socket; check the server is
   listening and WSL's localhost forwarding is on).
 
 ## Protocol
