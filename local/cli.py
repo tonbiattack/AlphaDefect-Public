@@ -82,6 +82,30 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--top", type=int, default=5, help="候補スコアを上位何件出すか")
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("autopilot", help="ゲーム側 MOD とつないで AI に 1 ラン打たせる（観戦用）")
+    p.add_argument("--character", help="DEFECT / REGENT / SILENT / FOOL / IRONCLAD / NECROBINDER")
+    p.add_argument("--host", default="127.0.0.1")
+    p.add_argument("--port", type=int, default=18765)
+    p.add_argument("--speed", type=float, default=1.0, help="速度倍率（MOD に渡す待ち時間が 1/N になる）")
+    p.add_argument("--hold-ms", type=int, default=0, help="1 手あたりの待ち時間の基準（ミリ秒、既定 0）")
+    p.add_argument("--top", type=int, default=5, help="候補スコアを何件 MOD に渡すか")
+    p.add_argument("--merge", action="store_true", help="同じカードをまとめた貪欲")
+    p.add_argument("--device", default="cpu")
+    p.add_argument("--max-states", type=int, default=None, help="この数の状態で自動停止（検証用）")
+    p.add_argument("--idle-timeout", type=float, default=300.0, help="無通信で止めるまでの秒数")
+    p.add_argument("--exit-on-done", action="store_true", default=True, help="1 ラン終わったら受け口を閉じる")
+    p.add_argument("--keep-listening", dest="exit_on_done", action="store_false", help="1 ランの後も次の接続を待つ")
+    p.add_argument("--no-stdin", dest="stdin", action="store_false", help="標準入力からの操作を受け付けない")
+    p.add_argument("--log", help="JSONL のログの出力先（既定 ~/.local/share/sls2/logs/autopilot-<日時>.jsonl）")
+    p.add_argument("--simulate", action="store_true", help="ゲームを使わず、無頭エンジンの実フレームで通し試験する")
+    p.add_argument("--seed", default="ABC123", help="--simulate のシード")
+    p.add_argument("--asc", type=int, default=10, help="--simulate のアセンション")
+    p.add_argument("--stop-after", type=int, default=0, help="--simulate でこの歩数で打ち切る（0 は最後まで）")
+
+    p = sub.add_parser("mod", help="ゲーム側 MOD（観戦用）の導入・撤去・状態")
+    p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
+    p.add_argument("--force", action="store_true", help="キャッシュがあってもビルドし直す")
+
     p = sub.add_parser("versions", help="対応バージョンとキャラの一覧")
 
     a = ap.parse_args(argv)
@@ -119,6 +143,8 @@ def _dispatch(a) -> int:
         "selfcheck": cmd_selfcheck,
         "play": cmd_play,
         "api": cmd_api,
+        "autopilot": cmd_autopilot,
+        "mod": cmd_mod,
         "versions": cmd_versions,
     }[a.command](a)
 
@@ -335,6 +361,109 @@ def cmd_api(a) -> int:
         print(f"\nシード {seed} / {character} / A{a.asc}：{obs.floor} 層（{obs.decision}）")
     finally:
         agent.close()
+    return 0
+
+
+# ---------------------------------------------------------------- autopilot
+
+
+def cmd_autopilot(a) -> int:
+    """ゲーム側 MOD とつないで AI に打たせる（--simulate ならゲーム不要で通し試験）。"""
+    import time as _time
+
+    from .bridge import Autopilot, SessionLog
+    from .bridge.agent import ModelDecider
+    from .setup import require_ready
+
+    st = require_ready()
+    assert st.install is not None and st.line is not None
+    line = st.line
+    character = (a.character or _default_character(line)).upper()
+    require_character(line, character, allow_untested=True)
+    decider = ModelDecider.load(character, device=a.device, install=st.install, top=a.top, merge=a.merge)
+    stamp = _time.strftime("%Y%m%d-%H%M%S")
+    log_path = Path(a.log) if a.log else paths.home() / "logs" / f"autopilot-{stamp}_{character}.jsonl"
+    log = SessionLog(log_path)
+    run_id = f"{stamp}-{character}"
+    ap = Autopilot(
+        decider,
+        character=character,
+        run_id=run_id,
+        log=log,
+        hold_ms=a.hold_ms,
+        max_states=a.max_states,
+        merge=a.merge,
+        obs_format=decider.obs_format,
+    )
+    print(f"[autopilot] キャラ {character} / ゲーム {st.install.version} / 形式 {decider.obs_format} / ログ {log_path}", flush=True)
+    try:
+        if a.simulate:
+            return _run_simulation(ap, line, a, log_path)
+        from .bridge.server import ServerConfig, serve
+
+        cfg = ServerConfig(host=a.host, port=a.port, idle_timeout=a.idle_timeout,
+                           exit_on_done=a.exit_on_done, stdin=a.stdin)
+        return serve(ap, cfg)
+    finally:
+        log.close()
+
+
+def _run_simulation(ap, line, a, log_path: Path) -> int:
+    """無頭エンジンの実フレームで、ブリッジ越しに 1 局打つ（ゲーム不要の通し試験）。"""
+    from .bridge.sim import SimConfig, run
+
+    cfg = SimConfig(character=ap.character, seed=a.seed, ascension=a.asc, stop_after=a.stop_after)
+    print(f"[autopilot] ゲームを使わずに通し試験します（seed {cfg.seed} / A{cfg.ascension}）", flush=True)
+    ap.start()
+    try:
+        result = run(ap, line, cfg, log=lambda s: print(s, flush=True))
+    except Exception as e:                          # noqa: BLE001 - 失敗はそのまま報告する
+        print(f"[autopilot] 通し試験が失敗しました: {e}", file=sys.stderr)
+        ap.stop("simulation-error")
+        print("[autopilot] " + json.dumps(ap.summary(), ensure_ascii=False), flush=True)
+        return 1
+    print()
+    print(f"=== 通し試験の結果（{result['seconds']:.1f} 秒 / 行動 {result['actions']} 回）===")
+    print(f"シード {result['seed']} / {result['character']} / A{result['ascension']}: "
+          + ("勝利（全 3 幕クリア）" if result["win"] else f"第 {result['act_no']} 幕 {result['floor']} 層で終了")
+          + ("" if result["done"] else "（打ち切り）"))
+    print("ログ: " + str(log_path))
+    return 0
+
+
+# ---------------------------------------------------------------- mod
+
+
+def cmd_mod(a) -> int:
+    from . import mod as M
+    from .steam import find_install
+
+    install = find_install()
+    if a.action == "status":
+        st = M.status(install)
+        print(f"ゲーム: {install.path}（{install.version}）")
+        print(f"MOD: {'導入済み' if st.installed else '未導入'} {st.path}")
+        if st.installed:
+            print(f"  ビルド時の版: {st.built_for or '?'}" + ("（今のゲームと違います。入れ直してください）" if st.stale else ""))
+        print()
+        print(M.gameplay_note())
+        return 0
+    if a.action == "remove":
+        removed = M.remove(install)
+        if not removed:
+            print("MOD は入っていません。")
+        return 0
+    if M.game_running():
+        st = M.status(install)
+        if st.installed:
+            print("ゲームが動いています。MOD を入れ替えるにはゲームを終了してください。", file=sys.stderr)
+            return 1
+        print("ゲームが動いています（いまは未導入なので、置くだけにします。次の起動から効きます）", file=sys.stderr)
+    M.install(install, force=a.force, allow_running=True)
+    print()
+    print(M.ensure_enabled_hint(install))
+    print()
+    print(M.gameplay_note())
     return 0
 
 

@@ -27,6 +27,7 @@ In 866 runs of the released game, played through a mod on a public livestream (t
 | `game-v0.111.0/` | the system for game **v0.111.0** (the Defect, the Regent, the Silent), including the rollout search on sts2-sim (called PIMC in the code) ([README](game-v0.111.0/README.md)) |
 | `rust-engine/` | our Rust reimplementation of the combat rules, used briefly and then withdrawn (paper, Section 4) |
 | `weights/` | model card, manifests and checksums; the network files are release assets ([README](weights/README.md)) |
+| `game-mod/` | the game-side bridge mod for watching the network play in the real game (loads through the game's own mod system, streams the public run state; observation/action layer still to come) ([README](game-mod/README.md)) |
 | `local/` | the local runner: `python -m local` detects the Steam install and the game version, fetches and verifies the weights, prepares the game files, builds and selfchecks the engine, plays one run (greedy or with search) and gives the shared inference API ([Japanese guide](docs/ja/local-run.md)) |
 | `seeds/` | the test seed lists of the paper's tables |
 | `results/` | per-seed results behind Tables 3–7, Sections 3.2 and 3.5 and Appendices B (the distilled students against their starting checkpoints) and E (the Silent's network on v0.113.1), with scripts that recount them |
@@ -47,6 +48,8 @@ The commands below are the paper's evaluation path. If you only want to watch on
 ```
 
 [`docs/ja/local-run.md`](docs/ja/local-run.md) is the step-by-step guide (Japanese), including the supported game versions, the characters each one can run, the inference API for downstream tools and the troubleshooting table. Windows users can call `setup.cmd` / `play.cmd` instead.
+
+The game-side bridge (watching in the real game window) is described in [`docs/ja/autopilot.md`](docs/ja/autopilot.md) (Japanese) and [`game-mod/README.md`](game-mod/README.md): `./play.sh mod install`, then `./play.sh autopilot --character DEFECT`. `./play.sh autopilot --simulate --character DEFECT --seed ABC123` runs the same protocol against real headless frames without the game (a complete Ascension-10 run in about 13 s).
 
 ```bash
 # 1. game files (example for a Steam install seen from WSL; adjust the paths)

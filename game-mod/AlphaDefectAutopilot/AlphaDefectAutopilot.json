@@ -1,0 +1,12 @@
+{
+  "id": "AlphaDefectAutopilot",
+  "name": "AlphaDefect Autopilot Bridge",
+  "author": "AlphaDefect",
+  "description": "Connects the running game to the AlphaDefect inference server in WSL and, once the observation/action layer is complete, lets the network play the run. This version streams the public run state (probe) and accepts control commands (pause/resume/stop/speed).",
+  "version": "0.1.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [],
+  "affects_gameplay": true,
+  "min_game_version": "0.111.0"
+}

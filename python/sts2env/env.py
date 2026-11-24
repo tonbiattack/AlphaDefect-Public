@@ -102,6 +102,15 @@ class Sts2Env:
                          "seed": seed, "labels": self.labels, "snapshots": snapshots, **extra})
         return parse(self._proc.recv())
 
+    def request(self, req: dict) -> bytes:
+        """生の要求を送り、生の応答（観測フレームのバイト列）を返す。
+
+        ブリッジ（ゲーム側 MOD とつなぐ local/bridge）とその通し試験は、解析前の生の
+        フレームをそのまま相手に渡す必要があるので、この入口を使う。
+        """
+        self._proc.send(req)
+        return self._proc.recv()
+
     def reset_combat(self, spec: dict) -> Obs:
         self._proc.send({"op": "reset", "mode": "combat", "spec": spec, "labels": self.labels})
         return parse(self._proc.recv())
