@@ -65,6 +65,16 @@ internal static class CombatDriver
         var pcs = me.PlayerCombatState;
         long now = Environment.TickCount64;
 
+        // 死んだ／終わった: それ以上フレームを送らない（送り続けるとゲーム側の表示と噛み合わない）
+        if (run.IsGameOver || me.Creature.IsDead)
+        {
+            _awaiting = false;
+            _decision = null;
+            if (_wasInCombat || run.IsGameOver) ReportRunEnd(run, me);
+            _wasInCombat = false;
+            return;
+        }
+
         // 戦闘が終わったら数える（AI が打った戦闘の勝利を数える。ヘッダ 12 用）
         if (pcs == null)
         {
@@ -105,7 +115,7 @@ internal static class CombatDriver
         {
             var d = BuildDecision(me, pcs);
             if (d.Choices.Count == 0) return;
-            var session = new RunSession { Steps = ++_steps };
+            var session = new RunSession { Steps = _steps };
             var frame = Observation.Build(session, d, labels: true).Serialize();
             string digest = Convert.ToHexString(SHA256.HashData(frame)).Substring(0, 16);
             if (digest == _lastDigest) _sameFrame++; else { _sameFrame = 0; _lastDigest = digest; }
@@ -115,7 +125,8 @@ internal static class CombatDriver
                 Bridge.Stop("no-progress");
                 return;
             }
-            Bridge.SendState(frame, _seq++, $"\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"turn\":{pcs.TurnNumber}");
+            string character = me.Character?.Id?.Entry ?? "";
+            Bridge.SendState(frame, _seq++, $"\"character\":\"{character}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"turn\":{pcs.TurnNumber}");
             _decision = d;
             _awaiting = true;
             _deadline = now + ActionTimeoutMs;
@@ -140,6 +151,7 @@ internal static class CombatDriver
         }
         var choice = d.Choices[idx];
         LastNote = choice.Label;
+        _steps++;                    // 意思決定の数（ヘッダ 13）。局面が同じ間は増やさない（重複検出のため）
         try
         {
             var task = choice.Run();

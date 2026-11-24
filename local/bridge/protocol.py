@@ -4,7 +4,7 @@
 127.0.0.1 に張る。MOD は「いまの公開状態」を送り、こちらが「どの候補を選ぶか」を返す。
 
   MOD → 推論:  hello / probe / state / done / log / bye
-  推論 → MOD:  welcome / action / control / error
+  推論 → MOD:  welcome / start / action / control / error
 
 決まりごと:
 
@@ -37,6 +37,7 @@ C_DONE = "done"          # 1 ラン終了（勝敗つき）
 C_PROBE = "probe"        # MOD が読める公開状態の要約（観測フレームを送る前段）
 C_LOG = "log"
 C_BYE = "bye"
+S_START = "start"         # ゲーム側で 1 局を始める（観戦の起動を簡単にする）
 S_WELCOME = "welcome"
 S_ACTION = "action"
 S_CONTROL = "control"
@@ -150,6 +151,17 @@ def action(seq: int, index: int, label: str = "", prob: float = 0.0, candidates:
     if candidates:
         msg["candidates"] = candidates
     return msg
+
+
+def start(character: str, ascension: int = 0, seed: str = "ALPHADEFECT", encounter: str = "regular") -> dict:
+    """ゲーム側に 1 局を始めさせる。encounter は weak / regular / elite / boss か ENCOUNTER.XXX。"""
+    return {
+        "t": S_START,
+        "character": character.upper(),
+        "ascension": int(ascension),
+        "seed": seed,
+        "encounter": encounter,
+    }
 
 
 def control(state_name: str, reason: str = "") -> dict:
