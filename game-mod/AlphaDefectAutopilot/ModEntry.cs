@@ -32,6 +32,8 @@ public static class ModEntry
             Sts2Headless.Vocab.Load(vocab);
             MegaCrit.Sts2.Core.Logging.Log.Info($"[AlphaDefect] vocab loaded ({Sts2Headless.Vocab.Count} keys) from {vocab}");
             Bridge.Start();                 // パッチが失敗しても通信と記録は生きるように先に立てる
+            OutOfCombat.Install();
+            LiveCardSelect.Install();
             var harmony = new Harmony("alphadefect.autopilot");
             int patched = 0;
             foreach (var type in typeof(ModEntry).Assembly.GetTypes())

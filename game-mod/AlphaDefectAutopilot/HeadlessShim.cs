@@ -26,10 +26,10 @@ public sealed class RunSession
     /// <summary>この層で動かした意思決定の数（ヘッダ 13）。</summary>
     public int Steps { get; set; }
 
-    /// <summary>選牌の待ちは無い（いまは戦闘の出牌だけを扱う）。</summary>
-    public PendingCardChoice? Selecting => null;
+    /// <summary>いま選牌待ちがあればそれ（エンコーダが選牌プロンプトを書くのに使う）。</summary>
+    public PendingCardChoice? Selecting => LiveSelector.Instance?.Pending;
 
-    public IReadOnlyList<int> SelectedIndices => Array.Empty<int>();
+    public IReadOnlyList<int> SelectedIndices => LiveSelector.Selected;
 
     /// <summary>休息所の回復量（イベントのフレームだけが使う。いまは 0 を返す）。</summary>
     internal static (int actual, int nominal, int extra) RestHealInfo(Player p) => (0, 0, 0);
@@ -41,23 +41,11 @@ public static class UiFlows
     public static int CombatsWon { get; set; }
 }
 
-/// <summary>選牌の用途（エンコーダの選牌プロンプトだけが参照する）。</summary>
-public sealed record SelectInfo(string? PromptTable, string? PromptKey, string Method, EnchantmentModel? Enchantment, AbstractModel? Source = null);
-
-/// <summary>選牌の待ち（いまは作らないが、エンコーダのコンパイルに要る）。</summary>
-public sealed class PendingCardChoice(IReadOnlyList<CardModel> options, int min, int max, bool cancelable, SelectInfo? info = null)
+/// <summary>実機で動いている選牌器（AgentCardSelector）。RunSession.Selecting がこれを見る。</summary>
+internal static class LiveSelector
 {
-    public SelectInfo? Info { get; } = info;
-    public IReadOnlyList<CardModel> Options { get; } = options;
-    public int Min { get; } = min;
-    public int Max { get; } = max;
-    public bool Cancelable { get; } = cancelable;
-}
-
-/// <summary>エンコーダが参照する選牌器の状態（いまは常に無し）。</summary>
-public static class AgentCardSelector
-{
-    public static PotionModel? UsingPotion => null;
+    public static AgentCardSelector? Instance;
+    public static IReadOnlyList<int> Selected = Array.Empty<int>();
 }
 
 /// <summary>無頭ホストの偽画面（実機では本物の画面があるので、状態は持たない）。</summary>
