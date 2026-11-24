@@ -14,7 +14,7 @@ FAKE_EXTRACT = '''
 import sys
 from pathlib import Path
 pck, out = Path(sys.argv[1]), Path(sys.argv[2])
-for rel in ("localization/eng/cards.json", "localization/zhs/cards.json", "localization/completion.json"):
+for rel in ("localization/eng/cards.json", "localization/zhs/cards.json", "localization/jpn/cards.json", "localization/completion.json"):
     p = out / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("{}", encoding="utf-8")

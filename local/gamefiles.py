@@ -25,7 +25,8 @@ from .errors import LocalError
 from .steam import GameInstall
 
 # ローカライズとして取り出すもの（README と同じ）
-LOC_PREFIXES = ("localization/eng/", "localization/zhs/", "localization/completion.json")
+# リプレイ観戦は日本語名を使うので jpn も取る（無ければ eng にフォールバックする）
+LOC_PREFIXES = ("localization/eng/", "localization/zhs/", "localization/jpn/", "localization/completion.json")
 STAMP_NAME = ".local-stamp.json"
 
 
@@ -66,9 +67,11 @@ def is_prepared(install: GameInstall) -> bool:
         return False
     if not (target / "sts2.dll").is_file():
         return False
-    eng = target / "res" / "localization" / "eng"
-    if not eng.is_dir() or not any(eng.iterdir()):
-        return False
+    # 取り出しているのは LOC_PREFIXES の言語。どれか欠けたら用意し直す（日本語名を使うので jpn も要る）
+    for lang in ("eng", "jpn"):
+        d = target / "res" / "localization" / lang
+        if not d.is_dir() or not any(d.iterdir()):
+            return False
     try:
         return json.loads(stamp_path.read_text(encoding="utf-8")) == stamp_for(install)
     except (OSError, ValueError):
@@ -117,7 +120,7 @@ def _extract_localization(tree_root: Path, pck: Path, out_dir: Path, log) -> int
     script = tree_root / "tools" / "extract_pck.py"
     if not script.is_file():
         raise LocalError(f"ローカライズ抽出スクリプトがありません: {script}")
-    if (out_dir / "localization" / "eng").is_dir():
+    if all((out_dir / "localization" / lang).is_dir() for lang in ("eng", "jpn")):
         # スタンプだけ書き直す（版が同じで中身が揃っている）
         return _count_files(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

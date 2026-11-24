@@ -28,8 +28,8 @@ KEEP = 300      # 播放器里保留最新的多少局
 PULL_N = 2 * KEEP   # 每台、每个回放目录只拉最新的这么多局（pull_recent）
 
 
-def load_loc(lang: str) -> dict[str, dict]:
-    d = LOC / lang
+def load_loc(lang: str, root: Path | None = None) -> dict[str, dict]:
+    d = (root or LOC) / lang
     return {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in d.glob("*.json")} if d.exists() else {}
 
 
@@ -40,16 +40,27 @@ def clean(text: str | None) -> str:
     return re.sub(r"\[/?[a-zA-Z_]+[^\]]*\]", "", text).strip()
 
 
-def names(vocab: list[str]) -> list[list]:
+def names(vocab: list[str], langs: tuple[str, ...] = ("zhs", "eng"), loc_root: Path | None = None,
+          catalog_path: Path | None = None) -> list[list]:
     """词表编号 → [名字, 描述, 标签, 数值]。找不到中文的用英文，再找不到用键本身。
     标签：卡牌为“类型|稀有度”（Attack、Skill、Power、Curse、Status…），能力为 Buff / Debuff；数值为卡牌的基础数值（描述里的占位）；
     之后是键名和卡牌的基础费用（X 费为 −1）。"""
-    zh, en = load_loc("zhs"), load_loc("eng")
-    cat_doc = json.loads((REPO / "engine/catalog/v0.111.0/catalog.json").read_text(encoding="utf-8"))
-    ents = {e["key"]: e for e in cat_doc["entities"]}
+    # 言語は優先順（既定は従来どおり中国語 → 英語）。ローカル実行系は日本語 → 英語を渡す。
+    import sys as _sys
 
-    def get(table: str, key: str) -> str | None:
-        return zh.get(table, {}).get(key) or en.get(table, {}).get(key)
+    tables = [(lang, load_loc(lang, loc_root)) for lang in langs]
+    cat_doc = json.loads((catalog_path or (REPO / "engine/catalog/v0.111.0/catalog.json")).read_text(encoding="utf-8"))
+    ents = {e["key"]: e for e in cat_doc["entities"]}
+    mon_tables = [loc.get("monsters", {}) for _, loc in tables]
+    if not _sys.stdout.isatty():
+        pass
+
+    def get(table: str, key: str, monster: bool = False) -> str | None:
+        for _, loc in tables:
+            v = loc.get(table, {}).get(key)
+            if v:
+                return v
+        return None
 
     out = []
     for k in vocab:
@@ -80,7 +91,7 @@ def names(vocab: list[str]) -> list[list]:
         elif k.startswith("MOVE:"):
             mon, mv = k[5:].split(".", 1)
             mon = re.sub(r"_(FRONT|BACK|MIDDLE|LEFT|RIGHT)$", "", mon)
-            moves = zh.get("monsters", {})
+            moves = mon_tables[0]
             base = re.sub(r"_?\d+$", "", mv.removesuffix("_MOVE").replace("_MOVE_", "_"))
             name = get("monsters", f"{mon}.moves.{mv.removesuffix('_MOVE')}.title") or get("monsters", f"{mon}.moves.{base}.title")
             if not name:   # 状态机里的招式编号和本地化的键对不上时（SWING_1 对 BIG_SWING），取名字包含它的那一招
@@ -175,12 +186,17 @@ def write_if_changed(p: Path, text: str) -> None:
         tmp.replace(p)
 
 
-def build(src: Path, out: Path, home: str, keep: int = KEEP) -> None:
-    """生成播放器：最新的 keep 局（按时间），其余的数据文件删掉；home 为页面上“返回看板”的链接。"""
+def build(src: Path, out: Path, home: str, keep: int = KEEP, *, langs: tuple[str, ...] = ("zhs", "eng"),
+          loc_root: Path | None = None, catalog_path: Path | None = None, vocab_path: Path | None = None,
+          assets_python: Path | None = None, pck: Path | None = None, player_html: Path | None = None,
+          want_assets: bool = True) -> int:
+    """生成播放器：最新的 keep 局（按时间），其余的数据文件删掉；home 为页面上“返回看板”的链接。
+
+    ローカル実行系からは、言語・ローカライズの場所・カタログ・語彙・美術をすべて引数で渡す。"""
     out.mkdir(parents=True, exist_ok=True)
     (out / "data").mkdir(exist_ok=True)
-    vocab = (REPO / "engine/catalog/vocab.txt").read_text(encoding="utf-8").split("\n")
-    nm = names(vocab)
+    vocab = (vocab_path or (REPO / "engine/catalog/vocab.txt")).read_text(encoding="utf-8").split("\n")
+    nm = names(vocab, langs=langs, loc_root=loc_root, catalog_path=catalog_path)
     enc = {k.split(".", 1)[1]: nm[i][0] for i, k in enumerate(vocab) if k.startswith("ENCOUNTER.")}
     write_if_changed(out / "names.js", "window.NAMES=" + json.dumps(nm, ensure_ascii=False, separators=(",", ":")) + ";\nwindow.ENC="
                      + json.dumps(enc, ensure_ascii=False) + ";\n")
@@ -204,12 +220,16 @@ def build(src: Path, out: Path, home: str, keep: int = KEEP) -> None:
         if f.stem not in ids:
             f.unlink()
     write_if_changed(out / "replays.js", "window.REPLAYS=" + json.dumps(manifest, ensure_ascii=False) + ";\nwindow.HOME_URL=" + json.dumps(home) + ";\n")
-    page = (REPO / "tools/replay_player.html").read_text(encoding="utf-8")
+    page = (player_html or (REPO / "tools/replay_player.html")).read_text(encoding="utf-8")
     write_if_changed(out / "index.html", page)
-    # 游戏美术（本机资源包里取，已有的跳过；需要虚拟环境里的 Pillow）
-    r = subprocess.run([str(REPO / ".venv/bin/python"), str(REPO / "tools/replay_assets.py"), str(out)], capture_output=True, text=True)
-    print(r.stdout.strip() or r.stderr.strip()[-300:])
+    if want_assets:
+        # 游戏美术（本机资源包里取，已有的跳过；需要虚拟环境里的 Pillow）
+        cmd = [str(assets_python or (REPO / ".venv/bin/python")), str(REPO / "tools/replay_assets.py"), str(out)]
+        env = dict(os.environ, **({"STS2_PCK": str(pck)} if pck is not None else {}))
+        r = subprocess.run(cmd, capture_output=True, text=True, env=env, check=False)
+        print(r.stdout.strip() or r.stderr.strip()[-300:])
     print(f"回放 {len(manifest)} 局，输出到 {out}")
+    return len(manifest)
 
 
 if __name__ == "__main__":
@@ -217,11 +237,20 @@ if __name__ == "__main__":
     ap.add_argument("--no-pull", action="store_true")
     ap.add_argument("--src", default=str(LOCAL))
     ap.add_argument("--out", help="只生成到这个目录（默认生成 Windows 侧的 回放/ 和看板公开副本的 replay/ 两份）")
+    ap.add_argument("--langs", default="zhs,eng", help="名字的语言优先顺（逗号分隔，如 jpn,eng）")
+    ap.add_argument("--loc-root", help="localization 目录（默认 ~/.local/share/sls2/game/v0.111.0/res/localization）")
+    ap.add_argument("--catalog", help="catalog.json のパス")
+    ap.add_argument("--vocab", help="vocab.txt のパス")
+    ap.add_argument("--assets-python", help="美術を作る Python（Pillow 入り）")
+    ap.add_argument("--pck", help="ゲームの SlayTheSpire2.pck")
     a = ap.parse_args()
+    kw = dict(langs=tuple(x for x in a.langs.split(",") if x), loc_root=Path(a.loc_root) if a.loc_root else None,
+              catalog_path=Path(a.catalog) if a.catalog else None, vocab_path=Path(a.vocab) if a.vocab else None,
+              assets_python=Path(a.assets_python) if a.assets_python else None, pck=Path(a.pck) if a.pck else None)
     if not a.no_pull:
         pull()
     if a.out:
-        build(Path(a.src), Path(a.out), "../训练看板.html")
+        build(Path(a.src), Path(a.out), "../训练看板.html", **kw)
     else:
-        build(Path(a.src), OUT, "../训练看板.html")
-        build(Path(a.src), PUBLIC, "../")     # 香港服务器上看板在站点根（/），只认 / 不认 /index.html
+        build(Path(a.src), OUT, "../训练看板.html", **kw)
+        build(Path(a.src), PUBLIC, "../", **kw)     # 香港服务器上看板在站点根（/），只认 / 不认 /index.html

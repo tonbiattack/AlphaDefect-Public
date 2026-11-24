@@ -8,6 +8,7 @@ Godot 的纹理（.ctex，非显存压缩）里直接嵌着一张 WebP 或 PNG�
 from __future__ import annotations
 
 import io
+import os
 import re
 import struct
 import sys
@@ -15,7 +16,7 @@ from pathlib import Path
 
 from PIL import Image
 
-PCK = Path("/mnt/c/Program Files (x86)/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.pck")
+PCK = Path(os.environ.get("STS2_PCK") or "/mnt/c/Program Files (x86)/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.pck")
 
 
 class Pck:
