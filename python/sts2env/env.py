@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import selectors
+import shutil
 import struct
 import subprocess
 from pathlib import Path
@@ -13,7 +14,18 @@ from .protocol import Obs, parse
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_DLL = REPO / "engine" / "Sts2Headless" / "bin" / "Release" / "net9.0" / "Sts2Headless.dll"
-DOTNET = Path.home() / ".dotnet" / "dotnet"
+
+
+def _find_dotnet() -> Path:
+    """dotnet の場所: STS2_DOTNET（明示）→ ~/.dotnet（ローカル実行系が入れる所）→ PATH → システムの既定。"""
+    for c in (os.environ.get("STS2_DOTNET"), Path.home() / ".dotnet" / "dotnet", shutil.which("dotnet"),
+              "/usr/share/dotnet/dotnet", "/usr/lib/dotnet/dotnet"):
+        if c and Path(c).is_file():
+            return Path(c)
+    return Path.home() / ".dotnet" / "dotnet"
+
+
+DOTNET = _find_dotnet()
 # Rust 引擎（rust-engine/，`sts2-serve frames` 与 C# 的 serve 同协议）；租用机上放 musl 静态版，用 STS2_RUST_BIN 指定
 RUST_BIN = Path(os.environ.get("STS2_RUST_BIN", REPO / "rust-engine" / "target" / "release" / "sts2-serve"))
 ENGINES = ("csharp", "rust")
@@ -84,9 +96,10 @@ class Sts2Env:
         self._proc = _Process(dll, log, self.engine)
         self.labels = labels
 
-    def reset_run(self, character: str, ascension: int, seed: str, snapshots: bool = False) -> Obs:
+    def reset_run(self, character: str, ascension: int, seed: str, snapshots: bool = False, **extra) -> Obs:
+        # extra: そのまま reset 要求に並べる（obs_format、loop_cut、stall_turns など。Server.cs 冒頭の一覧）
         self._proc.send({"op": "reset", "mode": "run", "character": character, "ascension": ascension,
-                         "seed": seed, "labels": self.labels, "snapshots": snapshots})
+                         "seed": seed, "labels": self.labels, "snapshots": snapshots, **extra})
         return parse(self._proc.recv())
 
     def reset_combat(self, spec: dict) -> Obs:

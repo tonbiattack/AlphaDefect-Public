@@ -35,6 +35,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | 23 | [Game update v0.113.0](23_game_update_v0.113.0.md) (branch `game-v0.113.0`) | what changed in the game, the eight engine fixes, aliases, formats 24–25 for the Fool, the content-prior alignment fix, the Fool line |
 | 25 | [The livestream setup of 2026-11-17](25_live_fool_search_and_engine.md) (branch `game-v0.113.0`) | the Fool at v24,181, tree search in boss and elite fights and its measurements, the live adapter, the v0.113.1 engine with state cloning and speed patches |
 | 26 | [The Ironclad and the Necrobinder](26_ironclad_and_necrobinder.md) (branch `game-v0.113.0`) | the two v0.113.1 lines behind `weights-v6`, observation format 28 (and 29), recycling, how to run the networks, the checks of the code |
+| — | [Running a network locally (Japanese)](ja/local-run.md) | setup on Windows 11 / WSL2, one Ascension-10 run on the CPU, supported game versions, the shared inference API |
 | — | [Glossary](glossary.md) | English ↔ Chinese terms used in code and records |
 | — | [Notes](notes/) | two earlier English write-ups on out-of-combat training |
 
