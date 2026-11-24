@@ -153,7 +153,7 @@ def action(seq: int, index: int, label: str = "", prob: float = 0.0, candidates:
     return msg
 
 
-def start(character: str, ascension: int = 0, seed: str = "ALPHADEFECT", encounter: str = "regular") -> dict:
+def start(character: str, ascension: int = 0, seed: str = "ALPHADEFECT", encounter: str = "") -> dict:
     """ゲーム側に 1 局を始めさせる。encounter は weak / regular / elite / boss か ENCOUNTER.XXX。"""
     return {
         "t": S_START,

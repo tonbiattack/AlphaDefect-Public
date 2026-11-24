@@ -37,6 +37,7 @@ internal static class CombatDriver
     static string _lastDigest = "";
     static int _sameFrame;
     static bool _wasInCombat;
+    static string _lastWaitingRoom = "";
     static int _steps;
 
     public static string LastNote { get; private set; } = "";
@@ -158,7 +159,16 @@ internal static class CombatDriver
             if (d == null || d.Choices.Count == 0)
             {
                 _decision = null;
-                if (d == null) _nextAt = now + 500;        // 未対応の画面: 少し待ってから再確認
+                if (d == null)
+                {
+                    _nextAt = now + 1000;                  // 未対応の画面: 少し待ってから再確認
+                    string room = run.CurrentRoom?.GetType().Name ?? "null";
+                    if (room != _lastWaitingRoom)
+                    {
+                        _lastWaitingRoom = room;
+                        Bridge.LogLine("waiting for the player here: " + room);
+                    }
+                }
                 return;
             }
             var session = new RunSession { Steps = _steps };

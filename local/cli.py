@@ -107,6 +107,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
     p.add_argument("--force", action="store_true", help="キャッシュがあってもビルドし直す")
 
+    p = sub.add_parser("replay", help="1 局打って、ブラウザのリプレイで AI の判断を観戦する")
+    p.add_argument("--character", help="DEFECT / REGENT / SILENT（この版で重みがあるキャラ）")
+    p.add_argument("--seed", default="REPLAY1", help="シード（既定 REPLAY1）")
+    p.add_argument("--asc", type=int, default=10, help="アセンション（既定 10）")
+    p.add_argument("--from", dest="from_", help="既存のリプレイ（.jsonl.gz か、replays/ を含むディレクトリ）")
+    p.add_argument("--out", help="再生ページの出力先（既定 ~/.local/share/sls2/runs/<日時>_viewer）")
+    p.add_argument("--langs", default="jpn,eng", help="名前の言語の優先順（既定 jpn,eng）")
+    p.add_argument("--no-open", action="store_true", help="ブラウザで開かない（生成だけ）")
+    p.add_argument("--no-assets", action="store_true", help="ゲーム美術の抽出をしない（軽い）")
+    p.add_argument("--device", default="cpu")
+
     p = sub.add_parser("versions", help="対応バージョンとキャラの一覧")
 
     a = ap.parse_args(argv)
@@ -145,6 +156,7 @@ def _dispatch(a) -> int:
         "play": cmd_play,
         "api": cmd_api,
         "autopilot": cmd_autopilot,
+        "replay": cmd_replay,
         "mod": cmd_mod,
         "versions": cmd_versions,
     }[a.command](a)
@@ -439,6 +451,46 @@ def _run_simulation(ap, line, a, log_path: Path) -> int:
           + ("勝利（全 3 幕クリア）" if result["win"] else f"第 {result['act_no']} 幕 {result['floor']} 層で終了")
           + ("" if result["done"] else "（打ち切り）"))
     print("ログ: " + str(log_path))
+    return 0
+
+
+# ---------------------------------------------------------------- replay
+
+
+def cmd_replay(a) -> int:
+    from . import replay as R
+    from .setup import inspect, require_ready
+
+    langs = tuple(x for x in (a.langs or "jpn,eng").split(",") if x)
+    if a.from_:
+        st = inspect()
+        if st.install is None or st.line is None:
+            print("\n".join(st.problems) or "ゲームが見つかりません", file=sys.stderr)
+            return 2
+        records = R.collect(Path(a.from_))
+        if not records:
+            print(f"リプレイが見つかりません: {a.from_}", file=sys.stderr)
+            return 1
+    else:
+        st = require_ready()
+        assert st.install is not None and st.line is not None
+        character = (a.character or _default_character(st.line)).upper()
+        require_character(st.line, character, allow_untested=True)
+        if not R._load_viewer():
+            return 1
+        rec = R.record(st.line, st.install, character, a.seed, a.asc, device=a.device)
+        if not rec.ok:
+            print("リプレイが残りませんでした（ability_test の出力を確認してください）", file=sys.stderr)
+            return 1
+        records = rec.replays
+    out = Path(a.out) if a.out else R.default_out(
+        (a.character or "run").upper() if not a.from_ else "from", a.seed or "records")
+    print(f"記録: {len(records)} 局")
+    R.summarize(records)
+    html = R.build(records, st.install, st.line, out, langs=langs, assets=not a.no_assets)
+    print(f"再生ページ: {html}")
+    if not a.no_open:
+        R.open_in_browser(html)
     return 0
 
 
