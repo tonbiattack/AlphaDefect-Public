@@ -187,9 +187,9 @@ def _session(ap: Autopilot, conn: _Conn, cfg: ServerConfig, event, stop_event: t
             chunk = conn.sock.recv(65536)
         except TimeoutError:
             if cfg.idle_timeout and time.time() - last_rx > cfg.idle_timeout:
-                ap.log("idle-timeout", {"seconds": round(time.time() - last_rx)})
-                ap.stop("idle-timeout")
-                break
+                # 止めない。ゲームがメニューに居る間は何も来ないのが普通。
+                ap.log("idle", {"seconds": round(time.time() - last_rx)})
+                last_rx = time.time()
             continue
         except OSError:
             break

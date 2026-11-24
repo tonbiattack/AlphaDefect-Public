@@ -4,31 +4,38 @@ A Slay the Spire 2 mod (game **v0.111.x** line, .NET 9) that connects the runnin
 AlphaDefect inference server in WSL. It is the Windows half of the watch-the-AI-play feature
 (issue #5); the WSL half is `local/bridge/`.
 
-## What this version does
+## What this version does (0.2.0)
 
 - loads through the game's own mod system: `[ModInitializer]` in `MegaCrit.Sts2.Core.Modding`,
   no external loader, no Steam Workshop;
 - Harmony-patches `NRun._Process` so it reads the live run state on the game's main thread;
 - connects to `127.0.0.1:18765` (override with `ALPHADEFECT_AUTOPILOT_HOST` / `_PORT`) and sends
-  `hello` and, twice a second, a `probe`: act, floor, ascension, in-combat, character, HP, gold,
-  deck size — all of it public information, nothing from the draw pile or the RNG;
+  `hello`, a `probe` twice a second (act, floor, ascension, in-combat, character, HP, gold, deck
+  size) and, in combat on the player's turn, a **real observation frame**;
+- builds that frame with the headless engine's own encoder (`Engine/Obs/**`, `Observation.cs`,
+  `Engine/Compat/**`, `Decision.cs`, `Vocab.cs`) compiled into this assembly, with
+  `HeadlessShim.cs` supplying the few `RunSession`/`UiFlows` members it reads. The vocabulary the
+  encoder needs is shipped next to the DLL as `vocab.txt`;
+- builds the same combat candidates the headless engine builds (hand × target, potions, end turn)
+  and, when the server answers with an index, executes it (`CardModel.TryManualPlay`,
+  `PotionModel.EnqueueManualUse`, `EndPlayerTurnAction`);
 - obeys `control` messages: `paused`, `running`, `stopped`; logs everything to the game log.
 
 ## What it does not do yet
 
-- **observation frames**: the mod does not yet build the engine's observation frame (the encoder
-  in `engine/Sts2Headless/Engine/Obs/`). `local/bridge` decides on frames, so until this is added
-  the server receives `probe` and never sends an `action`.
-- **action execution**: no decision is executed in the game yet.
-- **overlay**: no on-screen text of the chosen action or its candidates.
+- **out-of-combat decisions**: rewards, map, shop, events and card selection are not driven; the
+  game waits for the player there (the mod only reports state);
+- **overlay**: no on-screen text of the chosen action or its candidates;
+- the in-game execution path has not been observed in a real fight yet (the session that built it
+  ended with the game at the main menu).
 
-The next step is to compile the encoder into this assembly. It needs a small shim, not a rewrite:
-the encoder reads the run through `RunSession.State`, `RunSession.Steps`, `RunSession.IsVictory`,
-`RunSession.RestHealInfo` and `UiFlows.CombatsWon`, so a bridge-local static class with those
-members can stand in for the headless session. `engine/Directory.Build.targets` already treats the
-`Obs/**` and `Compat/**` sources as shareable with a bridge mod for exactly this reason. After that,
-the remaining piece is mapping a chosen candidate index back to the game call that performs it,
-one decision type at a time (combat first, then rewards, map, shop, events).
+## Observation format and character
+
+The encoder emits the character's default format (Defect 19, Regent 20, Silent 23 on v0.111.x). The
+server sends its checkpoint's format in `welcome`; the mod applies it with
+`Observation.FormatOverride`, and the server refuses a frame whose format does not match its
+weights, so the network is never fed another character's numbers. On the v0.111.x line only Defect,
+Regent and Silent have weights; Ironclad/Fool/Necrobinder belong to v0.113.x.
 
 ## Build and install
 

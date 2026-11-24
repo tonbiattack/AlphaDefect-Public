@@ -17,7 +17,7 @@ namespace AlphaDefectAutopilot;
 internal static class Bridge
 {
     const int ProtocolVersion = 1;
-    const string ClientKind = "probe";     // 観測フレームではなく状態の要約を送る段階
+    const string ClientKind = "autopilot";   // 観測フレームを送り、行動を受け取る段階
 
     static readonly string Host = Environment.GetEnvironmentVariable("ALPHADEFECT_AUTOPILOT_HOST") ?? "127.0.0.1";
     static readonly int Port = ParsePort(Environment.GetEnvironmentVariable("ALPHADEFECT_AUTOPILOT_PORT"));
@@ -25,6 +25,10 @@ internal static class Bridge
 
     static volatile bool _stopped;
     static volatile bool _paused;
+    static volatile int _pendingAction = -1;
+    static int _obsFormat;
+    static bool _formatApplied;
+    public static bool RunReported;
     static NetworkStream? _stream;
     static long _lastProbeTicks;
     static bool _started;
@@ -38,13 +42,66 @@ internal static class Bridge
     }
 
     /// <summary>ゲームのメインスレッドから呼ばれる（NRun._Process の後処理）。</summary>
+    public static bool Stopped => _stopped;
+    public static bool Paused => _paused;
+
+    /// <summary>ゲームのメインスレッドから毎フレーム。状態を読める局面なら戦闘ドライバに渡す。</summary>
     public static void Tick()
     {
-        if (_stopped || _paused || _stream == null) return;
+        if (_stopped) return;
         long now = Environment.TickCount64;
-        if (now - Interlocked.Read(ref _lastProbeTicks) < 500) return;
-        Interlocked.Exchange(ref _lastProbeTicks, now);
-        Outbox.Enqueue("{\"t\":\"probe\",\"data\":" + Probe.Snapshot() + "}");
+        if (now - Interlocked.Read(ref _lastProbeTicks) >= 500)
+        {
+            Interlocked.Exchange(ref _lastProbeTicks, now);
+            Outbox.Enqueue("{\"t\":\"probe\",\"data\":" + Probe.Snapshot() + "}");
+        }
+        if (_stream == null || _paused) return;
+        ApplyFormat();
+        try
+        {
+            CombatDriver.Tick();
+        }
+        catch (Exception e)
+        {
+            LogLine("driver tick failed: " + e.GetType().Name + ": " + e.Message);
+        }
+    }
+
+    /// <summary>推論サーバから受け取った行動の添字。-1 は無し（取り出すと消費される）。</summary>
+    public static int TakeAction()
+    {
+        int v = Interlocked.Exchange(ref _pendingAction, -1);
+        return v;
+    }
+
+    /// <summary>観測フレームを送る（base64）。</summary>
+    public static void SendState(byte[] frame, int seq, string metaJson)
+    {
+        if (_stream == null || _stopped) return;
+        string b64 = Convert.ToBase64String(frame);
+        Outbox.Enqueue("{\"t\":\"state\",\"seq\":" + seq + ",\"frame\":\"" + b64 + "\",\"meta\":{" + metaJson + "}}");
+    }
+
+    public static void SendDone(bool win, int floor, int act)
+    {
+        if (_stream == null) return;
+        RunReported = true;
+        Outbox.Enqueue("{\"t\":\"done\",\"win\":" + (win ? "true" : "false") + ",\"floor\":" + floor + ",\"act\":" + act + "}");
+    }
+
+    static void ApplyFormat()
+    {
+        if (_formatApplied || _obsFormat <= 0) return;
+        _formatApplied = true;
+        try
+        {
+            Sts2Headless.Observation.FormatOverride = _obsFormat;
+            LogLine("observation format set to " + _obsFormat);
+        }
+        catch (Exception e)
+        {
+            LogLine("format override failed: " + e.GetType().Name);
+        }
     }
 
     public static void Stop(string reason)
@@ -66,6 +123,7 @@ internal static class Bridge
                 client.Connect(Host, Port);
                 var stream = client.GetStream();
                 _stream = stream;
+                _paused = false;                  // 新しいセッションは動いている状態から
                 SendRaw(stream, Hello());
                 LogLine($"connected to {Host}:{Port}");
                 var reader = new Thread(() => ReadLoop(stream)) { IsBackground = true, Name = "AlphaDefectBridgeReader" };
@@ -127,19 +185,33 @@ internal static class Bridge
             {
                 case "welcome":
                     LogLine($"welcome: run={Field(line, "run")} obs_format={Field(line, "obs_format")}");
+                    if (int.TryParse(Field(line, "obs_format"), out int fmt)) _obsFormat = fmt;
                     break;
                 case "control":
                     string state = Field(line, "state");
                     _paused = state == "paused";
-                    if (state == "stopped") Stop("control:" + Field(line, "reason"));
-                    else LogLine($"control: {state}");
+                    if (state == "stopped")
+                    {
+                        // サーバ側の都合（待ち時間切れ・操作者の停止）で切れただけかもしれない。
+                        // ゲームは止めず、行動を止めて再接続を待つ。
+                        _paused = true;
+                        LogLine("session stopped by server: " + Field(line, "reason"));
+                    }
+                    else
+                    {
+                        _paused = state == "paused";
+                        LogLine($"control: {state}");
+                    }
                     break;
                 case "error":
                     LogLine("server error: " + Field(line, "msg"));
                     break;
                 case "action":
-                    // この段階では観測フレームを送っていないので、行動は来ない
-                    LogLine("action ignored (probe mode): index=" + Field(line, "index"));
+                    if (int.TryParse(Field(line, "index"), out int idx))
+                    {
+                        Interlocked.Exchange(ref _pendingAction, idx);
+                        LogLine($"action: index={idx} p={Field(line, "prob")} {Field(line, "label")}");
+                    }
                     break;
             }
         }
@@ -217,7 +289,7 @@ internal static class Bridge
 
     static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
-    static void LogLine(string message)
+    internal static void LogLine(string message)
     {
         try
         {
