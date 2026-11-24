@@ -39,6 +39,7 @@ internal static class OutOfCombat
     /// <summary>いま判断すべき戦闘外の決定。無ければ null。</summary>
     public static Decision? Build(RunState run, Player me)
     {
+        if (LiveCardReward.Active && LiveCardReward.Build() is { } cardReward) return cardReward;
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
         if (RewardsFlow.Pending is { } pr) return RewardsDecision(me, pr);
         if (run.CurrentRoom is EventRoom && EventDecision(run, me) is { } ev) return ev;

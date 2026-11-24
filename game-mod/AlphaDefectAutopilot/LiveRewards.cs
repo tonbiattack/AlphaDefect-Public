@@ -58,7 +58,7 @@ internal static class LiveRewards
         }
         // 「進む」は、取り残しが無いときだけ候補にする。まだ取れる報酬があるうちは
         // 画面のボタンが無効なことがあり、押しても閉じない（同じ手の繰り返しになる）。
-        bool nothingLeft = set.Rewards.All(r => r.SuccessfullySelected || r is CardReward);
+        bool nothingLeft = set.Rewards.All(r => r.SuccessfullySelected);
         if (nothingLeft) d.Add(ActionKind.Leave, "离开", Leave);
         return d;
     }

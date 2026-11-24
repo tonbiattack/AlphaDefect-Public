@@ -31,6 +31,7 @@ public static class ModEntry
             string vocab = Path.Combine(modDir, "vocab.txt");
             Sts2Headless.Vocab.Load(vocab);
             MegaCrit.Sts2.Core.Logging.Log.Info($"[AlphaDefect] vocab loaded ({Sts2Headless.Vocab.Count} keys) from {vocab}");
+            Bridge.Start();                 // パッチが失敗しても通信と記録は生きるように先に立てる
             var harmony = new Harmony("alphadefect.autopilot");
             harmony.PatchAll(typeof(ModEntry).Assembly);
             MegaCrit.Sts2.Core.Logging.Log.Info("[AlphaDefect] harmony patches applied");
@@ -61,8 +62,6 @@ public static class ModEntry
             {
                 MegaCrit.Sts2.Core.Logging.Log.Warn("[AlphaDefect] scene tree hook failed: " + e.GetType().Name);
             }
-            OutOfCombat.Install();
-            Bridge.Start();
         }
         catch (Exception e)
         {
