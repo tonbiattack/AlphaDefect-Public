@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Slay the Spire 2 の MOD（ゲーム側）。ビルドはインストール済みのゲームのアセンブリを参照する。
+    ゲームの版に合わせて切り替える:
+
+      dotnet build -c Release -p:Sts2GameDir="$HOME/.local/share/sls2/game/v0.111.1"
+
+    できた AlphaDefectAutopilot.dll と AlphaDefectAutopilot.json を
+    <ゲーム>/mods/AlphaDefectAutopilot/ に置くと、ゲームが起動時に読み込む
+    （読み込みの仕組みは MegaCrit.Sts2.Core.Modding.ModManager）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>AlphaDefectAutopilot</AssemblyName>
+    <RootNamespace>AlphaDefectAutopilot</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- ゲームのアセンブリの場所（local setup が用意するキャッシュ） -->
+    <Sts2GameDir Condition="'$(Sts2GameDir)' == ''">$(HOME)/.local/share/sls2/game/v0.111.1</Sts2GameDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 実行時はゲームが読み込み済みのものを共有する（コピーしない） -->
+    <Reference Include="sts2">
+      <HintPath>$(Sts2GameDir)/sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GodotSharp">
+      <HintPath>$(Sts2GameDir)/GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Sts2GameDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="AlphaDefectAutopilot.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

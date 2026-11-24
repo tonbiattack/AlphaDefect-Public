@@ -142,8 +142,95 @@ def _load_net(ckpt: Path, torch):
     return net, blob
 
 
+class Policy:
+    """チェックポイントと推論だけを持つ部分（エンジンは持たない）。
+
+    LocalAgent（ヘッドレスを自分で回す）も、ゲーム側 MOD とつなぐブリッジも、
+    推論はここを共有する。観測フレームは python/sts2env/protocol.py の Obs。
+    """
+
+    def __init__(
+        self,
+        character: str,
+        ckpt: Path | str | None = None,
+        device: str = "cpu",
+        install=None,
+        tree: Path | None = None,
+        log=print,
+    ):
+        self.character = character.upper()
+        self.device = device
+        self._log = log
+        install = install or find_install()
+        self.install = install
+        self.line = line_for(install.version) if tree is None else None
+        root = Path(tree) if tree is not None else self.line.root
+        self.version = install.version
+
+        asset = W.ASSETS.get(self.character)
+        if asset is None:
+            raise LocalError(f"未知のキャラ: {character}（{', '.join(W.ASSETS)}）")
+        self.asset = asset
+        self.ckpt = Path(ckpt) if ckpt else W.weight_path(asset)
+        if not self.ckpt.is_file():
+            raise SetupRequired(f"重みがありません: {self.ckpt}\n  `python -m local setup` を実行してください。")
+
+        self.sts2env, self.sts2rl = _load_tree(root)
+        import torch
+
+        self.torch = torch
+        torch.set_num_threads(max(1, min(4, torch.get_num_threads())))
+        self.net, self.blob = _load_net(self.ckpt, torch)
+        self.net = self.net.to(device)
+        self.vocab = _load_vocab(root)
+
+    # -- 推論 ----------------------------------------------------------
+
+    def score(self, obs) -> tuple[Any, Any, float]:
+        """観測 1 つ分の (確率, ロジット, 価値)。ネットワークは 1 回だけ通す。"""
+        from sts2rl.features import Ragged, collate_ragged
+
+        # 整局モードの一局は、戦闘中もずっと MODE_RUN のヘッドで打つ（evaluator.play と同じ）。
+        mode = self.sts2rl.actor.MODE_RUN
+        rg = Ragged.from_obs([obs], [mode])
+        with self.torch.no_grad():
+            logits, value = self.net(collate_ragged(rg).to(self.device))
+        logits = logits[0].float().cpu().numpy()
+        probs = self.torch.softmax(self.torch.tensor(logits), -1).numpy()
+        return probs, logits, float(value[0].float().cpu())
+
+    def actions(self, obs) -> list[Action]:
+        """観測 1 つ分の合法手（確率・ロジットつき）。"""
+        probs, logits, _ = self.score(obs)
+        out = []
+        for i in range(obs.num_actions):
+            label = obs.labels[i] if i < len(obs.labels) else ""
+            if not label:
+                label = self.sts2rl.actor.cand_name(obs, i, self.vocab)
+            kind = self.sts2env.ActionKind(int(obs.cand_ints[i][0])).name.lower()
+            try:
+                key = self.sts2rl.actor.choice_key(obs, i, self.vocab)
+            except Exception:                      # noqa: BLE001 - 語彙に無い対象でもラベルだけで動く
+                key = label
+            out.append(Action(i, label, kind, str(key), float(probs[i]), float(logits[i])))
+        return out
+
+    def recommend(self, obs, merge: bool = False) -> Action:
+        """推奨手（確率最大。merge なら同じカードをまとめた貪欲）。"""
+        actions = [a for a in self.actions(obs) if a.logit > float("-inf")]
+        if not actions:
+            raise LocalError("合法手がありません（観測が壊れている可能性があります）")
+        if merge:
+            # 同じカードをまとめた貪欲（sts2rl.greedy.merged_argmax）。返すのはその添字の候補。
+            idx = self.sts2rl.greedy.merged_argmax(obs, self.score(obs)[0])
+            keep = [a for a in actions if a.index == idx]
+            if keep:
+                return keep[0]
+        return max(actions, key=lambda a: (a.prob, -a.index))
+
+
 class LocalAgent:
-    """1 つのゲーム版・1 キャラの推論をまとめたもの。"""
+    """1 つのゲーム版・1 キャラの推論をまとめたもの（ヘッドレスの 1 局を自分で回す）。"""
 
     def __init__(
         self,
@@ -156,54 +243,39 @@ class LocalAgent:
         install=None,
         log=print,
     ):
-        self.character = character.upper()
+        install = install or find_install()
+        self.policy = Policy(character, ckpt=ckpt, device=device, install=install, log=log)
+        self.character = self.policy.character
         self.device = device
         self.merge = merge
-        self._log = log
-        install = install or find_install()
-        self.line = line_for(install.version)
+        self.line = self.policy.line
         self.version = install.version
+        self.asset = self.policy.asset
         self.game_dir = game_dir or paths.game_dir(install.version)
-
-        asset = W.ASSETS.get(self.character)
-        if asset is None:
-            raise LocalError(f"未知のキャラ: {character}（{', '.join(W.ASSETS)}）")
-        self.ckpt = Path(ckpt) if ckpt else W.weight_path(asset)
-        if not self.ckpt.is_file():
-            raise SetupRequired(f"重みがありません: {self.ckpt}\n  `python -m local setup` を実行してください。")
-
-        self.sts2env, self.sts2rl = _load_tree(self.line.root)
-        import torch
-
-        self.torch = torch
-        torch.set_num_threads(max(1, min(4, torch.get_num_threads())))
-        self.net, self.blob = _load_net(self.ckpt, torch)
-        self.net = self.net.to(device)
-        self.asset = asset
+        self.sts2env = self.policy.sts2env
+        self.sts2rl = self.policy.sts2rl
+        self.torch = self.policy.torch
+        self.vocab = self.policy.vocab
         self._obs = None
-        self._logits = None
-        self._value = None
+        self._scores_cache = None
 
         dll = self.line.root / "engine" / "Sts2Headless" / "bin" / "Release" / "net9.0" / "Sts2Headless.dll"
         if not dll.is_file():
             raise SetupRequired(f"エンジンが未ビルドです: {dll}\n  `python -m local setup` を実行してください。")
         self._dll = dll
         self.env = self.sts2env.Sts2Env(dll=dll, labels=labels)
-        self.vocab = self.env.vocab()
 
     # ------------------------------------------------------------ 局面
 
     def reset(self, seed: str, ascension: int = 10) -> Observation:
         """新しい 1 局を始める（seed はゲーム内のシード文字列）。"""
-        extra = self._req_extra()
-        o = self.env.reset_run(self.character, ascension, seed, **extra)
+        o = self.env.reset_run(self.character, ascension, seed, **self._req_extra())
         self._set_obs(o)
         return self.observation()
 
     def _req_extra(self) -> dict:
-        cfg = default_format(self.line, self.character)
         extra = {}
-        if self.asset.obs_format != cfg:
+        if self.asset.obs_format != default_format(self.line, self.character):
             extra["obs_format"] = self.asset.obs_format
         return extra
 
@@ -236,21 +308,8 @@ class LocalAgent:
         )
 
     def legal_actions(self) -> list[Action]:
-        """今の決定点で選べる手（候補）全部。ラベルはゲーム自身が付ける日本語/英語名。"""
-        o = self._require_obs()
-        probs, logits = self._scores()
-        out = []
-        for i in range(o.num_actions):
-            label = o.labels[i] if i < len(o.labels) else ""
-            if not label:
-                label = self.sts2rl.actor.cand_name(o, i, self.vocab)
-            kind = self.sts2env.ActionKind(int(o.cand_ints[i][0])).name.lower()
-            try:
-                key = self.sts2rl.actor.choice_key(o, i, self.vocab)
-            except (AttributeError, IndexError, KeyError, TypeError, ValueError):
-                key = label
-            out.append(Action(i, label, kind, str(key), float(probs[i]), float(logits[i])))
-        return out
+        """今の決定点で選べる手（候補）全部。"""
+        return self.policy.actions(self._require_obs())
 
     def candidate_scores(self) -> list[Action]:
         """候補ごとのスコア（方策の確率とロジット）。合法手と同じ並び。"""
@@ -258,50 +317,21 @@ class LocalAgent:
 
     def recommend(self) -> Action:
         """推奨手（確率最大）。"""
-        actions = [a for a in self.legal_actions() if a.logit > float("-inf")]
-        if not actions:
-            raise LocalError("合法手がありません（観測が壊れている可能性があります）")
-        if self.merge:
-            o = self._require_obs()
-            probs = self._scores()[0]
-            idx = self.sts2rl.greedy.merged_argmax(o, probs)
-            return next(a for a in actions if a.index == idx)
-        return max(actions, key=lambda a: (a.prob, -a.index))
+        return self.policy.recommend(self._require_obs(), merge=self.merge)
 
     def value(self) -> float:
         """価値頭の評価（この局面から先の見込み。探索や比較の道具に使う）。"""
-        self._scores()
-        return float(self._value)
+        return self.policy.score(self._require_obs())[2]
 
     # ------------------------------------------------------------ 内部
 
     def _set_obs(self, o) -> None:
         self._obs = o
-        self._logits = None
-        self._value = None
 
     def _require_obs(self):
         if self._obs is None:
             raise LocalError("reset() を先に呼んでください")
         return self._obs
-
-    def _scores(self):
-        if self._logits is not None:
-            return self._probs, self._logits
-        o = self._require_obs()
-        from sts2rl.features import Ragged, collate_ragged
-
-        # 整局モードの一局は、戦闘中もずっと MODE_RUN のヘッドで打つ（evaluator.play と同じ）。
-        # MODE_COMBAT は「戦闘だけを連続で練習する」ときのモードで、値の意味が違う。
-        mode = self.sts2rl.actor.MODE_RUN
-        rg = Ragged.from_obs([o], [mode])
-        with self.torch.no_grad():
-            logits, value = self.net(collate_ragged(rg).to(self.device))
-        self._logits = logits[0].float().cpu().numpy()
-        self._value = float(value[0].float().cpu())
-        p = self.torch.softmax(logits[0].float(), -1).cpu().numpy()
-        self._probs = p
-        return p, self._logits
 
     # ------------------------------------------------------------ 便利
 
@@ -343,6 +373,15 @@ class LocalAgent:
     def __exit__(self, *exc):
         self.close()
         return False
+
+
+def _load_vocab(tree: Path) -> list[str]:
+    """語彙ファイル（1 行 1 キー、行番号が ID）を読む。ラベルの綴りに使うだけ。"""
+    path = tree / "engine" / "catalog" / "vocab.txt"
+    try:
+        return path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
 
 
 def loads_install(path: str | Path):
