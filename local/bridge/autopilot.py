@@ -135,7 +135,7 @@ class Autopilot:
             raise AutopilotError(f"速度は 0.1〜20 の範囲で指定してください: {speed}")
         self.speed = float(speed)
         self.log("speed", {"speed": self.speed, "hold_ms": self.hold_ms()})
-        return []
+        return [P.speed(self.speed)]
 
     def stop(self, reason: str = "operator") -> list[dict]:
         if self.state == "stopped":
@@ -163,7 +163,7 @@ class Autopilot:
         if self.state in ("idle", "stopped"):
             self.state = "running"
         self.log("start", {"character": self.character, "run": self.run_id})
-        out = [P.welcome(self.run_id, P.PROTOCOL_VERSION, self.character, self.speed, self.obs_format)]
+        out = [P.welcome(self.run_id, P.PROTOCOL_VERSION, self.character, self.speed, self.obs_format), P.speed(self.speed)]
         if self.autostart:
             out.append(self._start_message(self.autostart))
         return out

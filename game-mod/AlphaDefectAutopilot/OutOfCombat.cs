@@ -28,6 +28,7 @@ internal static class OutOfCombat
     static bool _chestOpened;
     static bool _relicDecided;
     static bool _shopLeft;
+    static int _restWaits;
     static object? _lastRoom;
 
     public static void Install()
@@ -51,9 +52,14 @@ internal static class OutOfCombat
             _chestOpened = false;
             _relicDecided = false;
         }
+        if (LiveBundle.Active && LiveBundle.Build() is { } bundles) return bundles;
         if (LiveCardReward.Active && LiveCardReward.Build() is { } cardReward) return cardReward;
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
         if (RewardsFlow.Pending is { } pr) return RewardsDecision(me, pr);
+        if (!LiveBundle.Active && !LiveCardReward.Active && !LiveRewards.Active)
+        {
+            // どの画面も出ていない: 古い捕捉は捨てる
+        }
         if (run.CurrentRoom is EventRoom)
         {
             if (EventDecision(run, me) is { } ev) return ev;
@@ -129,9 +135,43 @@ internal static class OutOfCombat
             int k = i;
             d.Add(ActionKind.RestOption, opts[i].OptionId, () => sync.ChooseLocalOption(k), a: opts[i]);
         }
-        if (d.Choices.Count == 0) return null;
+        if (d.Choices.Count == 0)
+        {
+            // まだ選択肢が用意されていない（部屋の画面が開く前）: 少し待つ。
+            // 待っても出ないなら「何もせず出る」でランを止めない。
+            if (_restWaits++ < 20) return null;
+            d.Add(ActionKind.Leave, "离开", () => PressRoomProceed("NRestSiteRoom"));
+            Bridge.LogLine("rest site has no options; leaving");
+            return d;
+        }
         AddPotionActions(me, d);
         return d;
+    }
+
+    /// <summary>部屋の「進む」ボタンを押す（部屋を出る）。</summary>
+    static void PressRoomProceed(string roomTypeName)
+    {
+        try
+        {
+            var scene = MegaCrit.Sts2.Core.Nodes.NGame.Instance?.RootSceneContainer?.CurrentScene;
+            if (scene == null) return;
+            foreach (var node in scene.FindChildren("*", "", true, false))
+            {
+                if (node.GetType().Name != roomTypeName) continue;
+                if (node is not MegaCrit.Sts2.Core.Nodes.Rooms.IRoomWithProceedButton holder) continue;
+                var button = holder.ProceedButton;
+                if (button == null || !Godot.GodotObject.IsInstanceValid(button)) continue;
+                button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
+                Bridge.LogLine($"pressed proceed in {roomTypeName}");
+                _restWaits = 0;
+                return;
+            }
+            Bridge.LogLine($"proceed button not found in {roomTypeName}");
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine($"proceed in {roomTypeName} failed: {e.GetType().Name}");
+        }
     }
 
     /// <summary>宝箱: 開けて、遺物が 1 件なら取り、複数なら選ぶ。</summary>
