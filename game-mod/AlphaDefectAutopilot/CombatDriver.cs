@@ -64,6 +64,9 @@ internal static class CombatDriver
         var me = run.Players[0];
         var pcs = me.PlayerCombatState;
         long now = Environment.TickCount64;
+        // 戦闘中かどうかは CombatManager で決める。報酬画面の間も PlayerCombatState は
+        // 残っていることがあるので、それで判断すると戦闘外の判断に降りられない。
+        bool inCombat = SafeInCombat();
 
         // 死んだ／終わった: それ以上フレームを送らない（送り続けるとゲーム側の表示と噛み合わない）
         if (run.IsGameOver || me.Creature.IsDead)
@@ -76,7 +79,7 @@ internal static class CombatDriver
         }
 
         // 戦闘が終わったら数える（AI が打った戦闘の勝利を数える。ヘッダ 12 用）
-        if (pcs == null)
+        if (!inCombat)
         {
             if (_wasInCombat && !me.Creature.IsDead) UiFlows.CombatsWon++;
             _wasInCombat = false;
@@ -87,7 +90,7 @@ internal static class CombatDriver
         }
         _wasInCombat = true;
 
-        if (pcs.Phase != PlayerTurnPhase.Play)
+        if (pcs == null || pcs.Phase != PlayerTurnPhase.Play)
         {
             _awaiting = false;                  // 敵のターン中は何もしない
             return;
@@ -170,6 +173,12 @@ internal static class CombatDriver
             Bridge.LogLine("out-of-combat build failed: " + e.GetType().Name + ": " + e.Message);
             _nextAt = now + 1000;
         }
+    }
+
+    static bool SafeInCombat()
+    {
+        try { return MegaCrit.Sts2.Core.Combat.CombatManager.Instance.IsInProgress; }
+        catch { return false; }
     }
 
     static void Execute(int idx)
