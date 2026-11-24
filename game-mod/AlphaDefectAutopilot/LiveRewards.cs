@@ -56,8 +56,10 @@ internal static class LiveRewards
             var reward = r;
             d.Add(ActionKind.TakeReward, "领 " + Label(reward), () => Take(reward), a: reward);
         }
-        // 「進む」（まだ取れる報酬があっても画面のボタンは押せる。取らない場合はこれ）
-        d.Add(ActionKind.Leave, "离开", Leave);
+        // 「進む」は、取り残しが無いときだけ候補にする。まだ取れる報酬があるうちは
+        // 画面のボタンが無効なことがあり、押しても閉じない（同じ手の繰り返しになる）。
+        bool nothingLeft = set.Rewards.All(r => r.SuccessfullySelected || r is CardReward);
+        if (nothingLeft) d.Add(ActionKind.Leave, "离开", Leave);
         return d;
     }
 
@@ -85,6 +87,7 @@ internal static class LiveRewards
             if (button == null) { Bridge.LogLine("proceed button not found"); return; }
             button.EmitSignal(NClickableControl.SignalName.Released, button);
             Bridge.LogLine("pressed proceed");
+            Forget();                     // 閉じた前提で手放す（多重押しを避ける）
         }
         catch (Exception e)
         {

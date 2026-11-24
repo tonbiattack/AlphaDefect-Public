@@ -41,7 +41,10 @@ internal static class OutOfCombat
     {
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
         if (RewardsFlow.Pending is { } pr) return RewardsDecision(me, pr);
-        if (run.CurrentRoom is MapRoom || run.CurrentRoom is null) return MapDecision(run, me);
+        if (run.CurrentRoom is EventRoom && EventDecision(run, me) is { } ev) return ev;
+        // 戦闘が終わって報酬も閉じたあとは、部屋のオブジェクトがまだ CombatRoom のことがある。
+        // エンジンと同じく、他にすることが無ければ地図の選択に落とす。
+        if (run.CurrentRoom is MapRoom or CombatRoom || run.CurrentRoom is null) return MapDecision(run, me);
         return null;
     }
 
@@ -64,6 +67,32 @@ internal static class OutOfCombat
         if (!me.HasOpenPotionSlots && pr.Set.Rewards.Any(r => r is PotionReward && !r.SuccessfullySelected))
             AddPotionDiscards(me, d);
     }
+
+    /// <summary>イベントの選択（エンジンの EventDecision と同じ。Neow もここで進む）。</summary>
+    static Decision? EventDecision(RunState run, Player me)
+    {
+        var ev = RunManager.Instance.EventSynchronizer.GetLocalEvent();
+        if (ev == null || ev.IsFinished) return null;
+        var d = new Decision(DecisionKind.Event) { Context = ev.Id.Entry };
+        var opts = ev.CurrentOptions;
+        for (int i = 0; i < opts.Count; i++)
+        {
+            var opt = opts[i];
+            if (opt.IsLocked || ExcludedEventOptions.Contains(opt.TextKey)) continue;
+            int k = i;
+            // NEventRoom.OptionButtonClicked: 「進む」系は Chosen を直接、それ以外は同期器経由
+            if (opt.IsProceed)
+                d.Add(ActionKind.EventOption, opt.TextKey, () => opt.Chosen(), a: opt);
+            else
+                d.Add(ActionKind.EventOption, opt.TextKey, () => RunManager.Instance.EventSynchronizer.ChooseLocalOption(k), a: opt);
+        }
+        if (d.Choices.Count == 0) return null;
+        AddPotionActions(me, d);
+        return d;
+    }
+
+    /// <summary>選ばない選択肢（エンジンと同じ。TRIAL の DOUBLE_DOWN は放棄確認だけなので出さない）。</summary>
+    static readonly HashSet<string> ExcludedEventOptions = new() { "TRIAL.pages.REJECT.options.DOUBLE_DOWN" };
 
     static Decision MapDecision(RunState run, Player me)
     {

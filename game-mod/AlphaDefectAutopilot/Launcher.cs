@@ -70,7 +70,9 @@ internal static class Launcher
             string characterId = parts.ElementAtOrDefault(0) is { Length: > 0 } c ? c : "DEFECT";
             int ascension = int.TryParse(parts.ElementAtOrDefault(1), out int a) ? a : 0;
             string seed = parts.ElementAtOrDefault(2) is { Length: > 0 } s ? s : "ALPHADEFECT";
-            string encounter = parts.ElementAtOrDefault(3) is { Length: > 0 } e ? e : "regular";
+            // 遭遇を指定したときだけ戦闘へ直行する（観戦の最短経路）。指定が無ければ
+            // ゲーム本来の流れ（Neow → マップ → 選んだノード）で始める。
+            string encounter = parts.ElementAtOrDefault(3) is { Length: > 0 } e ? e : "";
 
             var character = ModelDb.AllCharacters.FirstOrDefault(m => m.Id.Entry == characterId)
                             ?? throw new InvalidOperationException($"unknown character {characterId}");
@@ -84,6 +86,11 @@ internal static class Launcher
 
             var state = RunManager.Instance.DebugOnlyGetState();
             if (state == null) throw new InvalidOperationException("run did not start");
+            if (encounter.Length == 0)
+            {
+                Bridge.LogLine("started normally (Neow -> map)");
+                return;
+            }
             var enc = PickEncounter(state, seed, encounter);
             Bridge.LogLine($"entering combat: {enc.Id.Entry} ({enc.RoomType})");
             await RunManager.Instance.EnterRoomDebug(enc.RoomType, model: enc.ToMutable(), showTransition: false);
