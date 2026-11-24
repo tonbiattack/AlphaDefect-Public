@@ -56,9 +56,9 @@ internal static class Bridge
             Outbox.Enqueue("{\"t\":\"probe\",\"data\":" + Probe.Snapshot() + "}");
         }
         if (_stream == null || _paused) return;
-        ApplyFormat();
         try
         {
+            ApplyFormat();
             Launcher.Tick();
             CombatDriver.Tick();
         }

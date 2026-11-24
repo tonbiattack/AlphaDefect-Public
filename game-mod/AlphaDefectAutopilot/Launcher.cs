@@ -31,9 +31,30 @@ internal static class Launcher
 
     public static bool Busy => _busy;
 
+    /// <summary>
+    /// 開始してよい状態か。ゲームの起動処理（メインメニューの組み立て）が終わる前に
+    /// ランを作ると、起動処理の続きが破棄済みのノードに触れて致命エラーになる。
+    /// メインメニューが出ていて、まだランが無いときだけ開始する。
+    /// </summary>
+    static bool ReadyForStart()
+    {
+        try
+        {
+            if (RunManager.Instance.IsInProgress) return false;
+            var scene = NGame.Instance?.RootSceneContainer?.CurrentScene;
+            return scene is MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>メインスレッドから呼ぶ。開始要求があれば開始して true。</summary>
     public static bool Tick()
     {
+        if (_request.Length == 0 || _busy) return false;
+        if (!ReadyForStart()) return false;
         string spec = Interlocked.Exchange(ref _request, "");
         if (spec.Length == 0 || _busy) return false;
         _busy = true;
@@ -57,6 +78,7 @@ internal static class Launcher
             var acts = ActModel.GetRandomList(actRng, UnlockState.all, isMultiplayer: false).ToList();
 
             Bridge.LogLine($"starting run {characterId} A{ascension} seed={seed} encounter={encounter}");
+            OutOfCombat.ResetForNewRun();
             await NGame.Instance!.StartNewSingleplayerRun(character, shouldSave: false, acts,
                 Array.Empty<ModifierModel>(), seed, GameMode.Standard, ascension);
 

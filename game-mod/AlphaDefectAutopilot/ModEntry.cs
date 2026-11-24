@@ -40,7 +40,15 @@ public static class ModEntry
             {
                 if (Godot.Engine.GetMainLoop() is Godot.SceneTree tree)
                 {
-                    tree.ProcessFrame += () => Bridge.Tick();
+                    tree.ProcessFrame += () =>
+                    {
+                        try { Bridge.Tick(); }
+                        catch (Exception e)
+                        {
+                            // Godot の信号の中で例外を外へ出すとゲームが致命エラーになる。ここで必ず止める。
+                            MegaCrit.Sts2.Core.Logging.Log.Error("[AlphaDefect] tick: " + e.GetType().Name + ": " + e.Message);
+                        }
+                    };
                     TreeHooked = true;
                     MegaCrit.Sts2.Core.Logging.Log.Info("[AlphaDefect] scene tree hook installed");
                 }
@@ -53,6 +61,7 @@ public static class ModEntry
             {
                 MegaCrit.Sts2.Core.Logging.Log.Warn("[AlphaDefect] scene tree hook failed: " + e.GetType().Name);
             }
+            OutOfCombat.Install();
             Bridge.Start();
         }
         catch (Exception e)
