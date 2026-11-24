@@ -2,6 +2,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Map;
+using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Rewards;
@@ -29,6 +30,7 @@ internal static class OutOfCombat
     static bool _relicDecided;
     static bool _shopLeft;
     static int _restWaits;
+    static bool _roomLeft;
     static object? _lastRoom;
 
     public static void Install()
@@ -49,9 +51,13 @@ internal static class OutOfCombat
         {
             _lastRoom = run.CurrentRoom;
             _shopLeft = false;
+            _roomLeft = false;
             _chestOpened = false;
             _relicDecided = false;
         }
+        // 部屋の「進む」を押したあとは、その部屋では地図の判断に切り替える
+        // （ボタンは地図画面を開くだけで、部屋のオブジェクトはすぐには変わらない）
+        if (_roomLeft) return MapDecision(run, me);
         if (LiveBundle.Active && LiveBundle.Build() is { } bundles) return bundles;
         if (LiveCardReward.Active && LiveCardReward.Build() is { } cardReward) return cardReward;
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
@@ -164,6 +170,7 @@ internal static class OutOfCombat
                 button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
                 Bridge.LogLine($"pressed proceed in {roomTypeName}");
                 _restWaits = 0;
+                _roomLeft = true;
                 return;
             }
             Bridge.LogLine($"proceed button not found in {roomTypeName}");
@@ -257,13 +264,60 @@ internal static class OutOfCombat
         }
     }
 
-    /// <summary>店: いまは「出る」だけ（買い物は次の作業）。</summary>
+    /// <summary>店: 買える商品を候補にし、「出る」も出す（エンジンの ShopDecision と同じ並び）。</summary>
     static Decision? ShopDecision(RunState run, Player me)
     {
+        if (run.CurrentRoom is not MerchantRoom room) return null;
+        var inv = room.GetLocalInventory();
         var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
+        foreach (var entry in inv.AllEntries)
+        {
+            if (!entry.IsStocked) continue;
+            if (!entry.EnoughGold) { d.Locked.Add((EntryObject(entry), entry.Cost)); continue; }
+            if (entry is MerchantPotionEntry && !me.HasOpenPotionSlots) continue;
+            if (entry is MerchantCardRemovalEntry { Used: true }) continue;
+            var e = entry;
+            d.Add(ActionKind.Buy, $"买 {EntryLabel(entry)} ({entry.Cost})", () => Buy(e, inv), a: EntryObject(entry), f0: entry.Cost);
+        }
         d.Add(ActionKind.Leave, "离开", () => LeaveShop());
+        AddPotionActions(me, d);
         return d;
     }
+
+    static void Buy(MerchantEntry entry, MerchantInventory inv)
+    {
+        _ = BuyAsync(entry, inv);
+    }
+
+    static async Task BuyAsync(MerchantEntry entry, MerchantInventory inv)
+    {
+        try
+        {
+            bool ok = await entry.OnTryPurchaseWrapper(inv);
+            Bridge.LogLine($"buy {EntryLabel(entry)}: {(ok ? "ok" : "failed")}");
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("buy failed: " + e.GetType().Name + ": " + e.Message);
+        }
+    }
+
+    static object EntryObject(MerchantEntry e) => e switch
+    {
+        MerchantCardEntry c => c.CreationResult.Card,
+        MerchantRelicEntry { Model: { } r } => r,
+        MerchantPotionEntry { Model: { } p } => p,
+        _ => e,
+    };
+
+    static string EntryLabel(MerchantEntry e) => e switch
+    {
+        MerchantCardEntry c => c.CreationResult.Card.Id.Entry,
+        MerchantRelicEntry r => r.Model?.Id.Entry ?? "遗物",
+        MerchantPotionEntry p => p.Model?.Id.Entry ?? "药水",
+        MerchantCardRemovalEntry => "删牌",
+        _ => e.GetType().Name,
+    };
 
     static void LeaveShop()
     {
@@ -282,6 +336,7 @@ internal static class OutOfCombat
                     if (button == null || !Godot.GodotObject.IsInstanceValid(button)) continue;
                     button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
                     Bridge.LogLine("left the shop");
+                    _roomLeft = true;
                     return;
                 }
             }

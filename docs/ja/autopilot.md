@@ -126,6 +126,23 @@ TCP 上を 1 行 1 つの JSON が流れます。定義は `local/bridge/protoco
 - 推論・入力の例外は握りつぶさず、`error` を返して `stopped` にする。
 - すべての出来事を JSONL（`~/.local/share/sls2/logs/autopilot-*.jsonl`）と標準出力の両方に残す。
 
+## 4.5 観戦の操作（HTTP）
+
+端末が無い環境（バックグラウンド起動）でも操作できるよう、既定で
+`http://127.0.0.1:18766/status` と `POST /control` を開きます（`--control-port 0` で無効）。
+
+```bash
+curl -s http://127.0.0.1:18766/status
+curl -s -X POST -d '{"command":"pause"}'   http://127.0.0.1:18766/control
+curl -s -X POST -d '{"command":"resume"}'  http://127.0.0.1:18766/control
+curl -s -X POST -d '{"command":"speed 3"}' http://127.0.0.1:18766/control
+curl -s -X POST -d '{"command":"stop"}'    http://127.0.0.1:18766/control
+```
+
+実機での確認（2026-11-25 02:00 台）: pause で行動数が 51 で止まり、resume で 73 → 98 と再開、
+`speed 3` で Godot の TimeScale が 3 になり、stop で MOD が
+`session stopped by server: operator` を出して停止しました。
+
 ## 5. 実装状況と残り
 
 | 部分 | 状態 |
@@ -138,7 +155,7 @@ TCP 上を 1 行 1 つの JSON が流れます。定義は `local/bridge/protoco
 | MOD での観測フレーム生成（戦闘の出牌局面） | **実装済み**（無頭エンジンのエンコーダをそのまま同梱。実機の戦闘では未確認） |
 | 選ばれた行動のゲーム内実行（戦闘の出牌・薬水・ターン終了） | **実装済み**（実機の戦闘では未確認） |
 | 戦闘の外の意思決定（報酬・経路・イベント・休息・宝箱・カードパック・選牌） | **実装済み**（実機で動作を確認） |
-| ショップ | 出るだけ（買い物は未実装） |
+| ショップ | **実装済み**（買える商品を候補にして購入、出るも選択） |
 | 画面への表示（選択した行動・上位候補・確率） | **実装済み**（実機の画面で確認） |
 | 速度制御（ゲーム側） | **実装済み**（Godot の TimeScale。`speed N`） |
 

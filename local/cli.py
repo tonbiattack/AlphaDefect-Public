@@ -92,7 +92,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--merge", action="store_true", help="同じカードをまとめた貪欲")
     p.add_argument("--device", default="cpu")
     p.add_argument("--max-states", type=int, default=None, help="この数の状態で自動停止（検証用）")
-    p.add_argument("--idle-timeout", type=float, default=300.0, help="無通信で止めるまでの秒数")
+    p.add_argument("--idle-timeout", type=float, default=0.0, help="無通信で止めるまでの秒数（0 で無効）")
+    p.add_argument("--control-port", type=int, default=18766, help="操作口（HTTP）。0 で無効")
     p.add_argument("--exit-on-done", action="store_true", default=True, help="1 ラン終わったら受け口を閉じる")
     p.add_argument("--keep-listening", dest="exit_on_done", action="store_false", help="1 ランの後も次の接続を待つ")
     p.add_argument("--no-stdin", dest="stdin", action="store_false", help="標準入力からの操作を受け付けない")
@@ -421,8 +422,8 @@ def cmd_autopilot(a) -> int:
             return _run_simulation(ap, line, a, log_path)
         from .bridge.server import ServerConfig, serve
 
-        cfg = ServerConfig(host=a.host, port=a.port, idle_timeout=a.idle_timeout,
-                           exit_on_done=a.exit_on_done, stdin=a.stdin)
+        cfg = ServerConfig(host=a.host, port=a.port, control_port=a.control_port,
+                           idle_timeout=a.idle_timeout, exit_on_done=a.exit_on_done, stdin=a.stdin)
         return serve(ap, cfg)
     finally:
         log.close()
