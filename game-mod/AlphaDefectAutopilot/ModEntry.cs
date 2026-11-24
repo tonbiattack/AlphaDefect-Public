@@ -33,8 +33,21 @@ public static class ModEntry
             MegaCrit.Sts2.Core.Logging.Log.Info($"[AlphaDefect] vocab loaded ({Sts2Headless.Vocab.Count} keys) from {vocab}");
             Bridge.Start();                 // パッチが失敗しても通信と記録は生きるように先に立てる
             var harmony = new Harmony("alphadefect.autopilot");
-            harmony.PatchAll(typeof(ModEntry).Assembly);
-            MegaCrit.Sts2.Core.Logging.Log.Info("[AlphaDefect] harmony patches applied");
+            int patched = 0;
+            foreach (var type in typeof(ModEntry).Assembly.GetTypes())
+            {
+                if (type.GetCustomAttributes(typeof(HarmonyPatch), true).Length == 0) continue;
+                try
+                {
+                    harmony.CreateClassProcessor(type).Patch();   // 型ごとに当てる（1 つ失敗しても他は生きる）
+                    patched++;
+                }
+                catch (Exception e)
+                {
+                    MegaCrit.Sts2.Core.Logging.Log.Error($"[AlphaDefect] patch failed for {type.Name}: {e.GetType().Name}: {e.Message}");
+                }
+            }
+            MegaCrit.Sts2.Core.Logging.Log.Info($"[AlphaDefect] harmony patches applied ({patched} types)");
             // 実行中の画面に関係なく毎フレーム呼ばれる入口。メニューでも走るので、
             // サーバからの「ランを始める」指示をゲームの起動直後でも受けられる。
             try
