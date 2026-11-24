@@ -38,6 +38,7 @@ internal static class CombatDriver
     static int _sameFrame;
     static bool _wasInCombat;
     static string _lastWaitingRoom = "";
+    static long _lastDiag;
     static int _steps;
 
     public static string LastNote { get; private set; } = "";
@@ -94,6 +95,11 @@ internal static class CombatDriver
         if (pcs == null || pcs.Phase != PlayerTurnPhase.Play)
         {
             _awaiting = false;                  // 敵のターン中は何もしない
+            if (now - _lastDiag > 2000)
+            {
+                _lastDiag = now;
+                Bridge.LogLine($"in a fight but not in the play phase: phase={pcs?.Phase} inCombat={inCombat} room={run.CurrentRoom?.GetType().Name}");
+            }
             return;
         }
         if (!_awaiting && now < _nextAt) return;
@@ -166,7 +172,7 @@ internal static class CombatDriver
                     if (room != _lastWaitingRoom)
                     {
                         _lastWaitingRoom = room;
-                        Bridge.LogLine("waiting for the player here: " + room);
+                        Bridge.LogLine($"waiting for the player here: {room} rewards={LiveRewards.Active} cards={LiveCardReward.Active} inCombat={SafeInCombat()}");
                     }
                 }
                 return;
