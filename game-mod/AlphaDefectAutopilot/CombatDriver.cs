@@ -50,14 +50,16 @@ internal static class CombatDriver
         if (signature != _lastSignature) _signatureChangedAt = nowTick;
         // 同じ状態が 1.5 秒以上続いているときだけ「効いていない」と判断する
         // （部屋移動や演出の途中で誤判定しないため）。
-        bool settled = nowTick - _signatureChangedAt >= 1500;
+        // 同じ状態が 4 秒以上続き、かつ同じ手を 2 回続けて試したときだけ「効いていない」と判断する。
+        // 画面遷移や演出の途中で誤判定して実行を止めてしまうのを避ける（ゲームが忙しい間は判定しない）。
+        bool settled = nowTick - _signatureChangedAt >= 4000 && !AsyncGate.Busy;
         // 効かない行動の判定は「戦闘の出牌」と「選牌」だけに使う。
         // 部屋移動・報酬・退出は演出や画面遷移に時間がかかり、誤判定しやすい。
         bool filterable = d.Kind == DecisionKind.Combat || d.Kind == DecisionKind.CardSelect;
         if (filterable && settled && _lastExecutedLabel != null && _lastSignature == signature)
         {
-            if (_failedLabels.Add(_lastExecutedLabel))
-                Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect; excluding it");
+            if (_sameLabelTries >= 2 && _failedLabels.Add(_lastExecutedLabel))
+                Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect ({_sameLabelTries} tries); excluding it");
         }
         if (filterable && _failedLabels.Count > 0)
         {
@@ -103,6 +105,7 @@ internal static class CombatDriver
 
     static string _stateKey = "";
     static string _lastSignature = "";
+    static int _sameLabelTries;      // 同じ手を続けて試した回数（効かない判定の条件）
     static long _signatureChangedAt;
     static long _lastExecuteAt;
 
@@ -426,7 +429,8 @@ internal static class CombatDriver
         }
         var choice = d.Choices[idx];
         LastNote = choice.Label;
-        _lastExecutedLabel = choice.Label;
+        if (choice.Label == _lastExecutedLabel) _sameLabelTries++;
+        else { _lastExecutedLabel = choice.Label; _sameLabelTries = 1; }
         _lastExecuteAt = System.Environment.TickCount64;
         _steps++;                    // 意思決定の数（ヘッダ 13）。局面が同じ間は増やさない（重複検出のため）
         try
