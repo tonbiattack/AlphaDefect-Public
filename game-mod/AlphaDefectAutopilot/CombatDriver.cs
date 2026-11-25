@@ -45,7 +45,8 @@ internal static class CombatDriver
     {
         byte[] frame = Observation.Build(session, d, labels: true).Serialize();
         string digest = Digest(frame);
-        if (_lastExecutedLabel != null && digest == _lastFrameDigest)
+        string signature = StateSignature();
+        if (_lastExecutedLabel != null && _lastSignature == signature)
         {
             if (_failedLabels.Add(_lastExecutedLabel))
                 Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect; excluding it");
@@ -65,6 +66,8 @@ internal static class CombatDriver
             }
         }
         _lastFrameDigest = digest;
+        _lastSignature = signature;
+        _sentContext = ContextKey();
         Bridge.SendState(frame, _seq++, meta);
         return true;
     }
@@ -91,6 +94,47 @@ internal static class CombatDriver
     }
 
     static string _stateKey = "";
+    static string _lastSignature = "";
+
+    /// <summary>ゲームの状態そのものの指紋（フレームの Steps は毎回変わるので使わない）。</summary>
+    static string StateSignature()
+    {
+        try
+        {
+            var run = RunManager.Instance.DebugOnlyGetState();
+            if (run == null || run.Players.Count == 0) return "none";
+            var me = run.Players[0];
+            var pcs = me.PlayerCombatState;
+            string hand = string.Join(",", PileType.Hand.GetPile(me).Cards.Select(c => c.Id.Entry));
+            string enemies = "";
+            if (SafeInCombat())
+            {
+                enemies = string.Join(",", MegaCrit.Sts2.Core.Combat.CombatManager.Instance.DebugOnlyGetState()
+                    ?.Creatures.Where(c => !c.IsPlayer).Select(c => $"{c.Monster?.Id.Entry}:{c.CurrentHp}:{c.Block}") ?? Array.Empty<string>());
+            }
+            return $"{run.TotalFloor}|{run.CurrentActIndex}|{run.CurrentRoom?.GetType().Name}|{run.VisitedMapCoords.Count}"
+                   + $"|{pcs?.TurnNumber}|{pcs?.Energy}|{me.Creature.CurrentHp}|{me.Creature.Block}|{hand}|{enemies}";
+        }
+        catch (Exception e)
+        {
+            return "sig-error:" + e.GetType().Name;
+        }
+    }
+    static string _sentContext = "";
+
+    /// <summary>いまの局面（戦闘中か・部屋の種類）。判断を送ったときと違えば、その判断は捨てる。</summary>
+    static string ContextKey()
+    {
+        try
+        {
+            var run = RunManager.Instance.DebugOnlyGetState();
+            return (SafeInCombat() ? "combat" : "out") + "|" + (run?.CurrentRoom?.GetType().Name ?? "null");
+        }
+        catch
+        {
+            return "unknown";
+        }
+    }
 
     static string Digest(byte[] frame)
     {
@@ -131,6 +175,14 @@ internal static class CombatDriver
     {
         if (Bridge.Stopped) return;
         AutoStopPoints();
+        // 戦闘に入った／部屋が変わったのに前の判断を待っているなら、その判断は捨てる
+        if ((_awaiting || _decision != null) && _sentContext.Length > 0 && _sentContext != ContextKey())
+        {
+            Bridge.LogEvent($"[driver] situation changed ({_sentContext} -> {ContextKey()}); dropping the pending decision");
+            _awaiting = false;
+            _decision = null;
+            _sentContext = "";
+        }
         try
         {
             var st = RunManager.Instance.DebugOnlyGetState();
