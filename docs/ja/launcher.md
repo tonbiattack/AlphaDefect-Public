@@ -139,3 +139,22 @@ WSL2 Ubuntu、ゲーム v0.111.1。
 
 未検証: ショートカットを**実際にマウスでダブルクリック**する操作（同じ .lnk を ShellExecute で
 起動して確認）。Windows のスタートメニュー検索への反映には時間がかかることがあります。
+
+## GUI ランチャー（推奨）
+
+`launcher.cmd` をダブルクリックすると、**GUI のランチャー**が開きます（PowerShell + WinForms。追加インストール不要）。
+
+- **モード**: 通常プレイ / AI 観戦（独自 MOD）/ Mentor 観戦（spire-mentor）
+- **設定**: キャラ（auto / DEFECT / REGENT / SILENT / select）、アセンション 0〜10、シード（乱数可）、速度、間隔（0 / 500 / 1500 / 3000 ms）、ラン数
+- **ボタン**: 起動 / 停止 / 状態 / 一時停止・再開 / 1 手 / 手動（推奨のみ）
+- 下の欄に実行ログと状態が出ます
+
+デスクトップから使う場合は、`launcher.cmd` のショートカットを作るのが簡単です。
+
+```powershell
+$ws = New-Object -ComObject WScript.Shell
+$sc = $ws.CreateShortcut("$env:USERPROFILE\Desktop\AlphaDefect ランチャー.lnk")
+$sc.TargetPath = "\\wsl.localhost\Ubuntu\home\teni2\AlphaDefect-Public\launcher.cmd"
+$sc.WorkingDirectory = "\\wsl.localhost\Ubuntu\home\teni2\AlphaDefect-Public"
+$sc.Save()
+```
