@@ -44,6 +44,7 @@ internal static class MentorClient
     static bool _awaiting;
     static long _deadline;
     static int _replies;
+    static int _ignored;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -104,12 +105,15 @@ internal static class MentorClient
     public static void Tick()
     {
         if (!Enabled) return;
-        // 1) 届いた判断メッセージを処理（フレームを送る）
-        while (Inbox.TryDequeue(out string? line))
+        // 推論の返答待ちの間は、次のメッセージを処理しない（pending を上書きしない）
+        if (!_awaiting)
         {
-            if (line is not null) HandleMessage(line);
+            while (Inbox.TryDequeue(out string? line))
+            {
+                if (line is not null) HandleMessage(line);
+                if (_awaiting) break;      // 1 件処理したら返答待ちへ
+            }
         }
-        // 2) 推論の返答が来ていたら spire-mentor に返す
         if (_awaiting && _pendingDecision != null)
         {
             int idx = Bridge.TakeAction();
@@ -140,6 +144,14 @@ internal static class MentorClient
             int requestId = ReadInt(root, "request_id");
             int stateId = ReadInt(root, "state_id");
             _lastMessage = line;
+            // 返事が要らないメッセージ（エラー通知・完了通知など）には返さない。
+            // 返すと相手が「不正な返答」として再送し、ループになる。
+            if (kind is "error" or "pong" or "snapshot_saved" or "run_complete" or "game_over"
+                or "combat_ended" or "annotation" or "advice_request" or "human_action")
+            {
+                if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
+                return;
+            }
             if (kind == "run_config")
             {
                 // ランの開始もこちらで決める（Defect / A0 / 乱数 seed）
@@ -147,21 +159,26 @@ internal static class MentorClient
                 Bridge.LogEvent("[mentor] answered run_config with start_run (DEFECT, A0)");
                 return;
             }
-            if (kind != "combat_action")
-            {
-                // 最初の PoC は戦闘のみ。他は合法な既定（先頭を選ぶ）で返す。
-                _unmapped++;
-                if (_unmapped <= 5 || _unmapped % 50 == 0)
-                    Bridge.LogEvent($"[mentor] unmapped decision '{kind}' ({_unmapped}); replying with the first option");
-                SendReply(DefaultReply(kind, root, requestId));
-                return;
-            }
             var run = RunManager.Instance.DebugOnlyGetState();
             if (run == null || run.Players.Count == 0) return;
             var me = run.Players[0];
-            var pcs = me.PlayerCombatState;
-            if (pcs == null) return;
-            var d = CombatDriver.BuildCombatDecision(me, pcs);
+            Decision? d = kind switch
+            {
+                "combat_action" => me.PlayerCombatState == null ? null : CombatDriver.BuildCombatDecision(me, me.PlayerCombatState),
+                "card_reward" => LiveCardReward.Active ? LiveCardReward.Build() : null,
+                "rest_site" => BuildRestDecision(),
+                "event" => OutOfCombat.BuildEventDecisionForMentor(run, me),
+                "map_select" => BuildMapDecision(run),
+                _ => null,
+            };
+            if (d == null || d.Choices.Count == 0)
+            {
+                _unmapped++;
+                if (_unmapped <= 5 || _unmapped % 50 == 0)
+                    Bridge.LogEvent($"[mentor] '{kind}' has no model decision yet ({_unmapped}); replying with a legal default");
+                SendReply(DefaultReply(kind, root, requestId));
+                return;
+            }
             var frame = Observation.Build(new RunSession { Steps = _replies }, d, labels: true).Serialize();
             _pendingKind = kind;
             _pendingRequestId = requestId;
@@ -191,6 +208,119 @@ internal static class MentorClient
         };
         if (kind == "map_select") reply = "{\"index\":0}";
         return WithIds(reply, requestId, -1);
+    }
+
+    /// <summary>休息所の選択肢を読むだけ（押さない）。</summary>
+    static Decision? BuildRestDecision()
+    {
+        try
+        {
+            var sync = RunManager.Instance.RestSiteSynchronizer;
+            var opts = sync.GetLocalOptions();
+            var d = new Decision(DecisionKind.RestSite);
+            foreach (var opt in opts)
+            {
+                if (!opt.IsEnabled) continue;
+                d.Add(ActionKind.RestOption, opt.OptionId, () => { }, a: opt);
+            }
+            return d.Choices.Count == 0 ? null : d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>次のノードの候補を読むだけ（動かさない）。</summary>
+    static Decision? BuildMapDecision(RunState run)
+    {
+        try
+        {
+            var d = new Decision(DecisionKind.Map);
+            foreach (var p in RunSessionMap.Travelable(run).OrderBy(p => p.coord.col))
+                d.Add(ActionKind.MapMove, $"→ ({p.coord.col},{p.coord.row}) {p.PointType}", () => { }, a: p);
+            return d.Choices.Count == 0 ? null : d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>直前のメッセージから、id が一致する要素の並び位置を返す。</summary>
+    static int IndexOf(string? message, string arrayName, string idField, string id)
+    {
+        try
+        {
+            if (message == null) return 0;
+            using var doc = JsonDocument.Parse(message);
+            if (!doc.RootElement.TryGetProperty(arrayName, out var arr) || arr.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in arr.EnumerateArray())
+            {
+                if (el.TryGetProperty(idField, out var idEl) && idEl.ValueKind == JsonValueKind.String
+                    && string.Equals(idEl.GetString(), id, StringComparison.OrdinalIgnoreCase))
+                    return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>直前に受け取った map_select の nodes[] から、同じ座標の位置を返す。</summary>
+    static int MapNodeIndex(MegaCrit.Sts2.Core.Map.MapCoord coord)
+    {
+        try
+        {
+            if (_lastMessage == null) return 0;
+            using var doc = JsonDocument.Parse(_lastMessage);
+            if (!doc.RootElement.TryGetProperty("nodes", out var nodes) || nodes.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in nodes.EnumerateArray())
+            {
+                var c = el.TryGetProperty("coord", out var coordEl) ? coordEl : el;
+                int col = c.TryGetProperty("col", out var colEl) ? colEl.GetInt32() : -1;
+                int row = c.TryGetProperty("row", out var rowEl) ? rowEl.GetInt32() : -1;
+                if (col == coord.col && row == coord.row) return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>直前に受け取った card_reward の cards[] から、同じカードの位置を返す。</summary>
+    static int CardIndexInMessage(CardModel card)
+    {
+        try
+        {
+            if (_lastMessage == null) return 0;
+            using var doc = JsonDocument.Parse(_lastMessage);
+            if (!doc.RootElement.TryGetProperty("cards", out var cards) || cards.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in cards.EnumerateArray())
+            {
+                string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
+                    ? idEl.GetString() : null;
+                if (string.Equals(id, card.Id.Entry, StringComparison.OrdinalIgnoreCase)) return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     static int ReadInt(JsonElement root, string name)
@@ -224,6 +354,8 @@ internal static class MentorClient
         string reply = index >= 0 && index < d.Choices.Count
             ? Translate(d.Choices[index])
             : "{\"action\":\"end_turn\"}";
+        if (index >= 0 && index < d.Choices.Count && _replies < 60 && reply.Contains("end_turn"))
+            Bridge.LogEvent($"[mentor] unmapped choice kind={d.Choices[index].Kind} label='{d.Choices[index].Label}' for {_pendingKind}");
         SendReply(WithIds(reply, _pendingRequestId, _pendingStateId));
     }
 
@@ -262,6 +394,14 @@ internal static class MentorClient
                     ? $"{{\"action\":\"play\",\"card_index\":{handIndex},\"target_index\":{targetIndex}}}"
                     : $"{{\"action\":\"play\",\"card_index\":{handIndex}}}";
             }
+            if (choice.Kind == ActionKind.EventOption && choice.Label.Length > 0)
+                return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "text_key", choice.Label) + "}";
+            if (choice.Kind == ActionKind.RestOption && choice.A is MegaCrit.Sts2.Core.Entities.RestSite.RestSiteOption rest)
+                return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", rest.OptionId) + "}";
+            if (choice.Kind == ActionKind.MapMove && choice.A is MegaCrit.Sts2.Core.Map.MapPoint point)
+                return "{\"index\":" + MapNodeIndex(point.coord) + "}";
+            if (choice.Kind == ActionKind.PickCardReward && choice.A is CardModel rewardCard)
+                return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(rewardCard) + "}";
             if (choice.Kind == ActionKind.UsePotion && choice.A is PotionModel potion)
             {
                 var run = RunManager.Instance.DebugOnlyGetState();
@@ -294,7 +434,7 @@ internal static class MentorClient
     {
         var stream = _stream;
         if (stream == null) return;
-        if (_sent++ < 40) Bridge.LogEvent("[mentor] reply: " + json);
+        if (_sent++ < 60) Bridge.LogEvent($"[mentor] reply({_pendingKind}): " + json);
         try
         {
             lock (SendLock)
