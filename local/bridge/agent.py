@@ -103,18 +103,24 @@ class AutoDecider:
         self.merge = merge
         self._inner: ModelDecider | None = None
         self.character = "AUTO"
+        self.switches: list[str] = []      # 切り替えたキャラの履歴（ログ用）
 
     @property
     def obs_format(self):
         return None if self._inner is None else self._inner.obs_format
 
     def __call__(self, frame: P.Frame) -> Decision:
+        ch = str(frame.meta.get("character") or "").upper()
         if self._inner is None:
-            ch = str(frame.meta.get("character") or "").upper()
             if not ch:
                 raise LocalError("フレームにキャラが入っていません（MOD が古い可能性があります）")
             self._inner = ModelDecider.load(ch, device=self.device, install=self.install, top=self.top, merge=self.merge)
             self.character = ch
+        elif ch and ch != self.character:
+            # 連続ランでキャラが変わった: そのキャラのモデルへ切り替える（別キャラのモデルで打たない）。
+            self._inner = ModelDecider.load(ch, device=self.device, install=self.install, top=self.top, merge=self.merge)
+            self.character = ch
+            self.switches.append(ch)
         return self._inner(frame)
 
 
