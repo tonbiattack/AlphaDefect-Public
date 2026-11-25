@@ -112,6 +112,7 @@ internal static class MentorClient
     public static void Tick()
     {
         if (!Enabled) return;
+        PumpReady();
         // 推論の返答待ちの間は、次のメッセージを処理しない（pending を上書きしない）
         if (!_awaiting)
         {
@@ -134,9 +135,7 @@ internal static class MentorClient
                 }
                 else
                 {
-                    Reply(idx);
-                    _awaiting = false;
-                    _pendingDecision = null;
+                    HoldReply(idx);
                 }
                 return;
             }
@@ -149,6 +148,60 @@ internal static class MentorClient
                 _discardNext = true;
             }
         }
+    }
+
+    // 観戦用の保留（実時間の待機・一時停止・1手）
+    static string? _readyReply;
+    static long _readyAt;
+    static int _readyStateId = -1;
+    static string _readyLabel = "";
+    static bool _heldLogged;
+
+    /// <summary>推論結果をすぐ実行せず、HUD に出してから設定した実時間だけ待つ。</summary>
+    static void HoldReply(int index)
+    {
+        var d = _pendingDecision;
+        if (d == null) return;
+        string label = index >= 0 && index < d.Choices.Count ? d.Choices[index].Label : "（判断なし）";
+        string reply = index >= 0 && index < d.Choices.Count ? Translate(d.Choices[index]) : FallbackForKind(_pendingKind);
+        reply = WithIds(reply, _pendingRequestId, _pendingStateId);   // 保留中に送るので、ここで ID を付ける
+        int wait = Math.Max(0, PanelState.PacingMs);
+        _readyReply = reply;
+        _readyLabel = label;
+        _readyStateId = _pendingStateId;
+        _readyAt = System.Environment.TickCount64 + wait;
+        _heldLogged = false;
+        PanelState.SetPreview($"[{index}] {label}" + (wait > 0 ? $"（{wait} ms 待って実行）" : ""));
+        Bridge.LogEvent($"[mentor] chosen: {label} (wait {wait} ms, {_pendingKind})");
+        _awaiting = false;
+        _pendingDecision = null;
+    }
+
+    /// <summary>保留中の返答を、停止・1手・待機に従って送る。</summary>
+    static void PumpReady()
+    {
+        if (_readyReply == null) return;
+        if (PanelState.Paused)
+        {
+            if (!_heldLogged) { Bridge.LogEvent("[mentor] held the action (paused)"); _heldLogged = true; }
+            return;
+        }
+        bool step = PanelState.TakeStepOnce();
+        if (!step && System.Environment.TickCount64 < _readyAt) return;
+        if (_readyStateId >= 0 && _readyStateId != _pendingStateId)
+        {
+            Bridge.LogEvent($"[mentor] dropped a stale action (state {_readyStateId} -> {_pendingStateId}): {_readyLabel}");
+            _readyReply = null;
+            return;
+        }
+        SendReply(_readyReply);
+        if (step)
+        {
+            Bridge.LogEvent("[mentor] step: executed one action, pausing");
+            PanelState.SetPaused(true, "step");
+        }
+        _readyReply = null;
+        _heldLogged = false;
     }
 
     static void HandleMessage(string line)
@@ -551,8 +604,24 @@ internal static class MentorClient
         }
         if (string.Equals(want, "auto", StringComparison.OrdinalIgnoreCase))
         {
-            character = available.Count > 0 ? available[0] : "DEFECT";
-            Bridge.LogEvent($"[mentor] character=auto -> {character} (available: {string.Join(",", available)})");
+            // その版で動くキャラ（auto_order）の順に見て、ゲームが提示する最初のものを選ぶ。
+            // ゲームが提示してもこちらにモデルが無いキャラ（例: v0.111.1 の IRONCLAD）は選ばない。
+            string? picked = null;
+            foreach (var c in cfg.AutoOrder)
+            {
+                if (available.Count == 0 || available.Any(a => string.Equals(a, c, StringComparison.OrdinalIgnoreCase)))
+                {
+                    picked = c;
+                    break;
+                }
+            }
+            if (picked == null)
+            {
+                Bridge.LogEvent($"[mentor] cannot start: none of [{string.Join(",", cfg.AutoOrder)}] is offered by the game (available: {string.Join(",", available)})");
+                return;
+            }
+            character = picked.ToUpperInvariant();
+            Bridge.LogEvent($"[mentor] character=auto -> {character} (preferred: {string.Join(",", cfg.AutoOrder)}; available: {string.Join(",", available)})");
         }
         else
         {
@@ -579,6 +648,7 @@ internal static class MentorClient
         public string? Character { get; set; }
         public int Ascension { get; set; }
         public int? Seed { get; set; }
+        public List<string> AutoOrder { get; } = new();
     }
 
     /// <summary>mentor.json（キャラ・アセンション・シード）。無ければ既定。</summary>
@@ -596,6 +666,12 @@ internal static class MentorClient
                 cfg.Character = c.GetString();
             if (root.TryGetProperty("ascension", out var a) && a.ValueKind == JsonValueKind.Number)
                 cfg.Ascension = a.GetInt32();
+            if (root.TryGetProperty("auto_order", out var ao) && ao.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var entry in ao.EnumerateArray())
+                    if (entry.ValueKind == JsonValueKind.String && entry.GetString() is { } id)
+                        cfg.AutoOrder.Add(id.ToUpperInvariant());
+            }
             if (root.TryGetProperty("seed", out var sd))
             {
                 if (sd.ValueKind == JsonValueKind.Number && sd.TryGetInt32(out int n)) cfg.Seed = n;

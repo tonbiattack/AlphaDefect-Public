@@ -53,6 +53,20 @@ internal static class PanelState
     /// <summary>確認モード: 応答が来たら実行せず、ユーザーの許可を待つ。</summary>
     public static bool AwaitingApproval => Confirm && _pendingIndex >= 0 && !_approved && Mode == RunMode.Auto;
 
+    /// <summary>観戦用: これから実行する判断を先に出す（HUD 用）。</summary>
+    public static void SetPreview(string text)
+    {
+        _recommendation = text;
+    }
+
+    /// <summary>「1 手」の権利を 1 回だけ消費する（実行側から呼ぶ）。</summary>
+    public static bool TakeStepOnce()
+    {
+        if (!_stepOnce) return false;
+        _stepOnce = false;
+        return true;
+    }
+
     public static bool KeysEnabled { get; private set; } = true;
     static readonly Dictionary<string, string> Keys = new();
 

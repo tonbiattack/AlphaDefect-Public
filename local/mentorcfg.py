@@ -30,6 +30,7 @@ class MentorChoice:
     ascension: int
     seed: int | None      # None = 乱数
     note: str
+    auto_order: tuple[str, ...] = ()   # auto のときに試す順（その版で動くキャラ）
 
 
 def config_path(install) -> Path:
@@ -102,12 +103,14 @@ def resolve(version: str, character: str, ascension: int, seed: str | None,
     req = (character or "auto").strip()
     note = ""
 
+    auto_order: tuple[str, ...] = ()
     if req.lower() in (MODE_AUTO, MODE_SELECT):
         req = req.lower()
         if req == MODE_SELECT:
             note = "ゲーム内で選んで開始する（自動開始しない）"
         else:
-            note = "使えるキャラの先頭で開始する"
+            auto_order = tuple(c for c, st in available_characters(version) if st == "validated")
+            note = "使えるキャラの先頭（" + (", ".join(auto_order) or "なし") + "）で開始する"
     else:
         c = req.upper()
         if c not in versions.ALL_CHARACTERS:
@@ -145,7 +148,7 @@ def resolve(version: str, character: str, ascension: int, seed: str | None,
             ) from e
         if seed_int < 0:
             raise LocalError("seed は 0 以上の整数です。")
-    return MentorChoice(character=req, ascension=ascension, seed=seed_int, note=note)
+    return MentorChoice(character=req, ascension=ascension, seed=seed_int, note=note, auto_order=auto_order)
 
 
 def write(install, choice: MentorChoice) -> Path:
@@ -156,6 +159,7 @@ def write(install, choice: MentorChoice) -> Path:
         "ascension": choice.ascension,
         "seed": choice.seed,
         "note": choice.note,
+        "auto_order": list(choice.auto_order),
     }
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return path
