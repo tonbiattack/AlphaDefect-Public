@@ -111,12 +111,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--speed", type=float, default=1.0, help="AI モードの速度（Godot の TimeScale）")
     p.add_argument("--seed", default="", help="AI モードのシード（空ならランダム）")
     p.add_argument("--ascension", type=int, default=0, help="Mentor モードのアセンション 0〜10")
+    p.add_argument("--pacing", type=int, default=None,
+                   help="AI 観戦の行動間隔（ms、0=最速 / 500 / 1500 / 3000）")
     p.add_argument("--no-autostart", dest="autostart", action="store_false", help="ランを自動で始めない（自分で開始する）")
     p.add_argument("--no-wait", dest="wait", action="store_false", help="ゲームの終了を待たない（サーバは残す）")
     p.add_argument("--dry-run", action="store_true", help="起動内容を表示するだけ")
     p.add_argument("--status", action="store_true", help="いまの状態を表示する")
     p.add_argument("--stop", action="store_true", help="推論サーバを止める")
     p.add_argument("--pause", action="store_true")
+    p.add_argument("--step", action="store_true", help="1 手だけ実行する")
+    p.add_argument("--manual", action="store_true", help="手動（AI は推奨のみ表示）")
     p.add_argument("--resume", action="store_true")
     p.add_argument("--set-speed", type=float, default=None, help="動いている推論サーバの速度を変える")
     p.add_argument("--install-shortcuts", action="store_true", help="デスクトップとスタートメニューにショートカットを作る")
@@ -593,14 +597,27 @@ def cmd_launch(a) -> int:
         return 0
     if a.stop:
         return L.stop_server()
-    if a.pause or a.resume or a.set_speed is not None:
-        cmd = "pause" if a.pause else ("resume" if a.resume else f"speed {a.set_speed}")
+    if a.pause or a.resume or a.set_speed is not None or a.step or a.manual:
+        if a.pause:
+            cmd = "pause"
+        elif a.resume:
+            cmd = "resume"
+        elif a.step:
+            cmd = "step"
+        elif a.manual:
+            cmd = "manual"
+        else:
+            cmd = f"speed {a.set_speed}"
         got = L.control(cmd)
         print(json.dumps(got or {"error": "推論サーバが応答しません"}, ensure_ascii=False))
         return 0 if got else 1
     if a.mode == "mentor":
+        if a.pacing is not None:
+            L.control(f"pacing {a.pacing}")     # 起動前なら次の接続に引き継がれる
         return _start_mentor(character=a.character, ascension=a.ascension, seed=a.seed,
                              runs=1, launch=not a.dry_run)
+    if a.pacing is not None:
+        L.control(f"pacing {a.pacing}")
     return L.start(a.mode, character=a.character, speed=a.speed, seed=a.seed,
                    autostart=a.autostart, wait=a.wait, dry_run=a.dry_run)
 
