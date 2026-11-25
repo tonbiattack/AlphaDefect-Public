@@ -214,7 +214,7 @@ internal static class MentorClient
                 "map_select" => BuildMapDecision(run),
                 "shop" => OutOfCombat.BuildShopDecisionForMentor(run, me),
                 "card_select" => BuildCardSelectDecision(me, root),
-                "treasure" => OutOfCombat.BuildTreasureDecisionForMentor(run, me),
+                "treasure" => BuildTreasureDecisionFromRequest(root, run, me),
                 "card_bundle" => BuildCardBundleDecision(root),
                 "reward_screen" => LiveRewards.Active ? LiveRewards.Build(me) : null,
                 _ => null,
@@ -459,6 +459,40 @@ internal static class MentorClient
         }
     }
 
+    /// <summary>宝箱の候補を、相手の options[]（遺物 ID）から作る。開ける前は同期が空なので要求から作る。</summary>
+    static Decision? BuildTreasureDecisionFromRequest(JsonElement root, RunState run, Player me)
+    {
+        try
+        {
+            if (!root.TryGetProperty("options", out var opts) || opts.ValueKind != JsonValueKind.Array)
+                return null;
+            var d = new Decision(DecisionKind.Treasure);
+            int i = 0;
+            foreach (var el in opts.EnumerateArray())
+            {
+                string? action = el.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() : null;
+                if (!string.Equals(action, "collect", StringComparison.OrdinalIgnoreCase)) { i++; continue; }
+                string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String ? idEl.GetString() : null;
+                RelicModel? relic = null;
+                if (id != null)
+                {
+                    try { relic = ModelDb.GetById<RelicModel>(new ModelId("RELIC", id)); }
+                    catch { relic = null; }
+                }
+                string label = id != null ? "拿 " + id : "拿 " + (i + 1);
+                d.Add(ActionKind.PickRelic, label, () => { }, a: relic, key: id ?? "");
+                i++;
+            }
+            if (d.Choices.Count == 0) return null;
+            d.Add(ActionKind.SkipRelic, "跳过", () => { }, key: "SKIP");
+            return d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>カード報酬の候補を、相手の cards[] から作る（mentor モードではこちらの捕捉が無い）。</summary>
     static Decision? BuildCardRewardDecision(Player me, JsonElement root)
     {
@@ -647,8 +681,11 @@ internal static class MentorClient
                 return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", rest.OptionId) + "}";
             if (choice.Kind == ActionKind.MapMove && choice.A is MegaCrit.Sts2.Core.Map.MapPoint point)
                 return "{\"index\":" + MapNodeIndex(point.coord) + "}";
-            if (choice.Kind == ActionKind.PickRelic && choice.A is RelicModel relic)
-                return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", relic.Id.Entry) + "}";
+            if (choice.Kind == ActionKind.PickRelic)
+            {
+                string id = choice.A is RelicModel relic ? relic.Id.Entry : choice.Key;
+                return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", id) + "}";
+            }
             if (choice.Kind == ActionKind.SkipRelic)
                 return "{\"action\":\"skip\"}";
             if (choice.Kind == ActionKind.PickBundle)
