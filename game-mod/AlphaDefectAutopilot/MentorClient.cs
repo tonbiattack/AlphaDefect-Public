@@ -411,20 +411,35 @@ internal static class MentorClient
     /// <summary>報酬画面の「進む」の index。</summary>
     static int ProceedIndex() => IndexOfAction(_lastMessage, "proceed");
 
-    /// <summary>報酬画面で、うちの候補に対応する報酬の index（未対応なら 0）。</summary>
+    /// <summary>報酬画面で、うちの候補に対応する報酬の index。</summary>
     static int RewardOptionIndex(Choice choice)
     {
         try
         {
             if (_lastMessage == null) return 0;
+            // うちの「受け取る」候補のうち何番目か（0 始まり）を数え、相手の pick_reward の同じ順に当てる
+            int wanted = 0;
+            if (_pendingDecision != null)
+            {
+                foreach (var c in _pendingDecision.Choices)
+                {
+                    if (c.Kind != ActionKind.TakeReward) continue;
+                    if (ReferenceEquals(c, choice)) break;
+                    wanted++;
+                }
+            }
             using var doc = JsonDocument.Parse(_lastMessage);
             if (!doc.RootElement.TryGetProperty("options", out var opts) || opts.ValueKind != JsonValueKind.Array)
                 return 0;
-            int i = 0;
+            int i = 0, seen = 0;
             foreach (var el in opts.EnumerateArray())
             {
                 string? action = el.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() : null;
-                if (string.Equals(action, "pick_reward", StringComparison.OrdinalIgnoreCase)) return i;
+                if (string.Equals(action, "pick_reward", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (seen == wanted) return i;
+                    seen++;
+                }
                 i++;
             }
             return 0;

@@ -119,7 +119,6 @@ internal static class RewardScreenPatch
     [HarmonyPostfix]
     static void Postfix(RewardsSet set, bool isTerminal, NRewardsScreen __result)
     {
-        if (MentorClient.Enabled) return;      // mentor モードでは画面は相手に任せる
         try
         {
             LiveRewards.Capture(set, __result, isTerminal);
