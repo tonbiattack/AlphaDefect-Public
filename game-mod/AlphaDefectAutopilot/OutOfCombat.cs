@@ -70,6 +70,7 @@ internal static class OutOfCombat
             _firstFailedAt = 0;
             _sawRoomScreen = false;
             _screenClosedLogged = false;
+            _mapLogged = false;
             _restLogged = false;
             _shopLogged = false;
             Bridge.LogLine($"[room] now in {_currentRoomName}");
@@ -423,6 +424,7 @@ internal static class OutOfCombat
     static bool _shopOptionsLogged;
     static bool _entryLogged;
     static bool _sawRoomScreen;
+    static bool _mapLogged;
     static long _roomEnteredAt;
     static string _currentRoomName = "";
 
@@ -620,7 +622,15 @@ internal static class OutOfCombat
         {
             Context = $"第 {run.CurrentActIndex + 1} 幕 {(cur == null ? "起点" : $"({cur.coord.col},{cur.coord.row})")}",
         };
-        foreach (var p in RunSessionMap.Travelable(run).OrderBy(p => p.coord.col))
+        var travel = RunSessionMap.Travelable(run).OrderBy(p => p.coord.col).ToList();
+        if (!_mapLogged)
+        {
+            _mapLogged = true;
+            Bridge.LogLine($"[map] visited={run.VisitedMapCoords.Count} current={cur?.coord.col},{cur?.coord.row} "
+                           + $"act={run.CurrentActIndex} travelable={travel.Count}: "
+                           + string.Join(", ", travel.Select(p => $"({p.coord.col},{p.coord.row}){p.PointType}")));
+        }
+        foreach (var p in travel)
         {
             var dest = p;
             d.Add(ActionKind.MapMove, $"→ ({p.coord.col},{p.coord.row}) {p.PointType}", () =>
