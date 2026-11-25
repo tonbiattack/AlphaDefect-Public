@@ -177,6 +177,16 @@ internal static class MentorClient
         _readyAt = System.Environment.TickCount64 + wait;
         _heldLogged = false;
         PanelState.SetPreview($"[{index}] {label}" + (wait > 0 ? $"（{wait} ms 待って実行）" : ""));
+        try
+        {
+            if (index >= 0 && index < d.Choices.Count)
+                MentorHighlight.Show(d.Choices[index].A as MegaCrit.Sts2.Core.Models.CardModel,
+                                    d.Choices[index].B as MegaCrit.Sts2.Core.Entities.Creatures.Creature);
+        }
+        catch (Exception)
+        {
+            // 強調できなくても実行は続ける
+        }
         Bridge.LogEvent($"[mentor] chosen: {label} (wait {wait} ms, {_pendingKind})");
         _awaiting = false;
         _pendingDecision = null;
@@ -197,9 +207,11 @@ internal static class MentorClient
         {
             Bridge.LogEvent($"[mentor] dropped a stale action (state {_readyStateId} -> {_pendingStateId}): {_readyLabel}");
             _readyReply = null;
+            MentorHighlight.Clear();
             return;
         }
         SendReply(_readyReply);
+        MentorHighlight.Clear();
         if (step)
         {
             Bridge.LogEvent("[mentor] step: executed one action, pausing");
