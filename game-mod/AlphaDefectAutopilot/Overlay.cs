@@ -17,11 +17,13 @@ internal static class Overlay
     static Label? _status;
     static Label? _action;
     static Label? _candidates;
+    static Label? _history;
     static bool _failed;
     static int _attachTries;
 
     static volatile string _statusText = "";
     static volatile string _actionText = "";
+    static volatile string _historyText = "";
     static volatile string _candidatesText = "";
     static volatile bool _dirty;
 
@@ -43,6 +45,7 @@ internal static class Overlay
             _dirty = false;
             _status!.Text = _statusText;
             _action!.Text = _actionText;
+            if (_history != null) _history.Text = _historyText;
             _candidates!.Text = _candidatesText;
         }
         catch (Exception e)
@@ -70,10 +73,13 @@ internal static class Overlay
         };
         _status = MakeLabel(17, new Color(0.8f, 0.9f, 1f));
         _action = MakeLabel(21, new Color(1f, 0.92f, 0.5f));
+        // 履歴は _action の下に出す（SetHistory で更新）
         _candidates = MakeLabel(15, new Color(0.88f, 0.95f, 0.88f));
         box.AddChild(_status);
         box.AddChild(_action);
         box.AddChild(_candidates);
+        _history = MakeLabel(14, new Color(0.78f, 0.82f, 0.9f));
+        box.AddChild(_history);
         layer.AddChild(box);
         tree.Root.AddChild(layer);
         _dirty = true;
@@ -99,10 +105,18 @@ internal static class Overlay
         _dirty = true;
     }
 
+    /// <summary>直近の行動履歴（#52）。新しいものが上に来る。</summary>
+    public static void SetHistory(IReadOnlyList<string> lines)
+    {
+        _historyText = lines.Count == 0 ? "" : "履歴: " + string.Join(" / ", lines);
+        _dirty = true;
+    }
+
     public static void SetAction(int index, string label, double prob, string candidates)
     {
         _actionText = $"AI: [{index}] {label}  p={prob:0.000}";
         _candidatesText = candidates.Length == 0 ? "" : "候補: " + candidates;
+        if (_history != null) _history.Text = _historyText;
         _dirty = true;
     }
 

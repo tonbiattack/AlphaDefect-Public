@@ -432,6 +432,15 @@ internal static class CombatDriver
         if (choice.Label == _lastExecutedLabel) _sameLabelTries++;
         else { _lastExecutedLabel = choice.Label; _sameLabelTries = 1; }
         _lastExecuteAt = System.Environment.TickCount64;
+        try
+        {
+            int turn = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.PlayerCombatState?.TurnNumber ?? 0;
+            PanelState.RecordAction($"T{turn} {choice.Label}");
+        }
+        catch (Exception)
+        {
+            PanelState.RecordAction(choice.Label);
+        }
         _steps++;                    // 意思決定の数（ヘッダ 13）。局面が同じ間は増やさない（重複検出のため）
         try
         {
