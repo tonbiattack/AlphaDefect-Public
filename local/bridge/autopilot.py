@@ -98,6 +98,7 @@ class Autopilot:
         self.obs_format = obs_format
         self.autostart = autostart            # "DEFECT|0|SEED|regular" 形式（接続時に start を送る）
         self.panel: dict | None = None        # MOD から届くパネルの状態（表示の同期用）
+        self.run_config: dict | None = None    # Mentor の run_config で決めた開始設定
         # 接続し直したときに同じ操作を送り直すための控え（操作名 → メッセージ）
         self.pending_controls: dict[str, dict] = {}
 
@@ -259,6 +260,12 @@ class Autopilot:
             if self.state not in ("stopped", "error", "error-stopped"):
                 self.state = "paused" if state.get("paused") else "running"
             self.log("panel", state)
+            return []
+        if kind == P.C_RUNCONFIG:
+            cfg = {"character": msg.get("character"), "ascension": msg.get("ascension"),
+                   "seed": msg.get("seed")}
+            self.run_config = dict(cfg)
+            self.log("runconfig", cfg)
             return []
         if kind == P.C_LOG:
             self.log("mod-log", {"level": msg.get("level"), "msg": msg.get("msg")})

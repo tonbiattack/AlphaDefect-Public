@@ -246,9 +246,7 @@ internal static class MentorClient
             if (kind == "run_config")
             {
                 _reportedEnd = false;      // 次のラン
-                // ランの開始もこちらで決める（Defect / A0 / 乱数 seed）
-                SendReply(WithIds("{\"action\":\"start_run\",\"character\":\"DEFECT\",\"ascension\":0,\"seed\":null}", requestId, stateId));
-                Bridge.LogEvent("[mentor] answered run_config with start_run (DEFECT, A0)");
+                StartRun(root, requestId, stateId);
                 return;
             }
             var run = RunManager.Instance.DebugOnlyGetState();
@@ -521,6 +519,94 @@ internal static class MentorClient
         {
             return 0;
         }
+    }
+
+    /// <summary>run_config に答えてランを開始する（キャラ・アセンション・シードは mentor.json から）。</summary>
+    static void StartRun(JsonElement root, int requestId, int stateId)
+    {
+        var cfg = ReadChoiceConfig();
+        var available = new List<string>();
+        int maxAsc = 10;
+        try
+        {
+            if (root.TryGetProperty("characters", out var chars) && chars.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var c in chars.EnumerateArray())
+                {
+                    string? id = c.ValueKind == JsonValueKind.String ? c.GetString()
+                        : c.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String ? idEl.GetString() : null;
+                    if (!string.IsNullOrEmpty(id)) available.Add(id!);
+                }
+            }
+            if (root.TryGetProperty("max_ascension", out var ma) && ma.ValueKind == JsonValueKind.Number) maxAsc = ma.GetInt32();
+        }
+        catch { }
+
+        string want = (cfg.Character ?? "auto").Trim();
+        string character;
+        if (string.Equals(want, "select", StringComparison.OrdinalIgnoreCase))
+        {
+            Bridge.LogEvent("[mentor] character=select: not starting a run; pick the character in game and start it yourself");
+            return;
+        }
+        if (string.Equals(want, "auto", StringComparison.OrdinalIgnoreCase))
+        {
+            character = available.Count > 0 ? available[0] : "DEFECT";
+            Bridge.LogEvent($"[mentor] character=auto -> {character} (available: {string.Join(",", available)})");
+        }
+        else
+        {
+            character = want.ToUpperInvariant();
+            if (available.Count > 0 && !available.Any(a => string.Equals(a, character, StringComparison.OrdinalIgnoreCase)))
+            {
+                Bridge.LogEvent($"[mentor] cannot start: '{character}' is not offered by the game (available: {string.Join(",", available)})");
+                return;
+            }
+        }
+        int ascension = Math.Clamp(cfg.Ascension, 0, Math.Max(0, maxAsc));
+        if (cfg.Ascension > maxAsc)
+            Bridge.LogEvent($"[mentor] ascension {cfg.Ascension} is above the game maximum {maxAsc}; using {ascension}");
+        string seedText = cfg.Seed is int si ? si.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null";
+        string reply = "{\"action\":\"start_run\",\"character\":\"" + character + "\",\"ascension\":" + ascension
+                       + ",\"seed\":" + (cfg.Seed is int ? seedText : "null") + "}";
+        Bridge.LogEvent($"[mentor] answered run_config: {character} / A{ascension} / seed={(cfg.Seed is int ? seedText : "random")}");
+        Bridge.SendRunConfig(character, ascension, cfg.Seed);
+        SendReply(WithIds(reply, requestId, stateId));
+    }
+
+    sealed class ChoiceConfig
+    {
+        public string? Character { get; set; }
+        public int Ascension { get; set; }
+        public int? Seed { get; set; }
+    }
+
+    /// <summary>mentor.json（キャラ・アセンション・シード）。無ければ既定。</summary>
+    static ChoiceConfig ReadChoiceConfig()
+    {
+        var cfg = new ChoiceConfig { Character = "auto", Ascension = 0, Seed = null };
+        try
+        {
+            string modDir = Path.GetDirectoryName(typeof(MentorClient).Assembly.Location) ?? ".";
+            var path = Path.Combine(modDir, "mentor.json");
+            if (!File.Exists(path)) return cfg;
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            var root = doc.RootElement;
+            if (root.TryGetProperty("character", out var c) && c.ValueKind == JsonValueKind.String)
+                cfg.Character = c.GetString();
+            if (root.TryGetProperty("ascension", out var a) && a.ValueKind == JsonValueKind.Number)
+                cfg.Ascension = a.GetInt32();
+            if (root.TryGetProperty("seed", out var sd))
+            {
+                if (sd.ValueKind == JsonValueKind.Number && sd.TryGetInt32(out int n)) cfg.Seed = n;
+                else if (sd.ValueKind == JsonValueKind.String && int.TryParse(sd.GetString(), out int m)) cfg.Seed = m;
+            }
+        }
+        catch (Exception e)
+        {
+            Bridge.LogEvent("[mentor] mentor.json read failed: " + e.GetType().Name);
+        }
+        return cfg;
     }
 
     /// <summary>宝箱の候補を、相手の options[]（遺物 ID）から作る。開ける前は同期が空なので要求から作る。</summary>

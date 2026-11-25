@@ -127,7 +127,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--keep-listening", action="store_true", help="ゲームが終わっても待ち続ける")
     p.add_argument("--idle-timeout", type=float, default=30.0, help="接続が切れてから終了するまで（秒）")
     p.add_argument("--control-port", type=int, default=0, help="操作 HTTP のポート（既定 18766）")
-    p.add_argument("--character", default="auto", help="キャラ（auto / DEFECT / IRONCLAD / SILENT）")
+    p.add_argument("--character", default="auto",
+                   help="キャラ（auto / select / DEFECT / REGENT / SILENT など。versions.py が正）")
+    p.add_argument("--ascension", type=int, default=0, help="アセンション 0〜10")
+    p.add_argument("--seed", default=None, help="整数のシード（省略または random で乱数）")
+    p.add_argument("--allow-untested", action="store_true", help="未検証のキャラでも開始する")
+    p.add_argument("--status", action="store_true", help="いまの開始設定だけを表示する")
 
     p = sub.add_parser("measure", help="実ゲームで複数ランを回して勝敗・到達階を記録する")
     p.add_argument("--runs", type=int, default=1, help="回すラン数（seed は MEAS1.. または --seeds）")
@@ -608,15 +613,39 @@ def cmd_mentor(a) -> int:
     if install is None:
         print("ゲームが見つかりません（Steam のインストール先を確認してください）。")
         return 1
+    if a.status:
+        from . import mentorcfg as MC_STATUS
+
+        print(MC_STATUS.describe(install))
+        print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC_STATUS.available_characters(install.version)))
+        return 0
     spire = install.path / "mods" / "SpireMentor" / "SpireMentor.conf"
     if not spire.is_file():
         print("spire-mentor が入っていません（docs/ja/oss-operation-layer.md の手順で導入してください）。")
         return 1
-    M._set_spire_autostart(install, True, max(1, a.runs))
+    from . import mentorcfg as MC
+
+    try:
+        choice = MC.resolve(install.version, a.character, a.ascension, a.seed,
+                            allow_untested=a.allow_untested)
+    except (LocalError, UnsupportedVersion) as e:   # はっきり断る
+        print(f"開始できません: {e}", file=sys.stderr)
+        print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC.available_characters(install.version)))
+        return 2
+    MC.write(install, choice)
+    if choice.character == "select":
+        # ゲーム内で選んで開始するモード: こちらからは開始しない（spire-mentor の autopilot は
+        # メニューからの開始だけに対応するため、AI は接続だけして観戦しない）。
+        M._set_spire_autostart(install, False, max(1, a.runs))
+        print("開始しません（ゲーム内でキャラを選んで開始してください）。"
+              "このモードでは spire-mentor の autopilot は動きません。")
+    else:
+        M._set_spire_autostart(install, True, max(1, a.runs))
     flag = M._mentor_flag(install)
     flag.parent.mkdir(parents=True, exist_ok=True)
     flag.write_text("1", encoding="utf-8")
-    print(f"spire-mentor: {a.runs} ラン / mentor フラグ: {flag}")
+    print(f"spire-mentor: {a.runs} ラン / {install.version}")
+    print("開始設定: " + MC.describe(install))
     if a.no_launch:
         return 0
     argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", a.character,
