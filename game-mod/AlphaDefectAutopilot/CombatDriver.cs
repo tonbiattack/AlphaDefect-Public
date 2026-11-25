@@ -517,8 +517,33 @@ internal static class CombatDriver
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// ポーションを使うか。既定は無効。
+    /// POTION_OF_BINDING のような「使用後にカード選択が開く」ポーションで、選択を処理できず
+    /// 戦闘が止まる事例があったため（#22）。使う場合は MOD の隣に allow_potions.txt を置く。
+    /// </summary>
+    static bool PotionsAllowed()
+    {
+        if (_potionsAllowed.HasValue) return _potionsAllowed.Value;
+        bool allowed;
+        try
+        {
+            string modDir = Path.GetDirectoryName(typeof(CombatDriver).Assembly.Location) ?? ".";
+            allowed = File.Exists(Path.Combine(modDir, "allow_potions.txt"));
+        }
+        catch (Exception)
+        {
+            allowed = false;
+        }
+        _potionsAllowed = allowed;
+        if (!allowed) Bridge.LogLine("[driver] potions disabled (known block after use); create allow_potions.txt to enable");
+        return allowed;
+    }
+
+    static bool? _potionsAllowed;
+
     static IEnumerable<PotionModel> UsablePotions(Player me) =>
-        me.CanUseOrRemovePotions && !me.Creature.IsDead
+        PotionsAllowed() && me.CanUseOrRemovePotions && !me.Creature.IsDead
             ? me.Potions.Where(p => !p.IsQueued && p.PassesCustomUsabilityCheck &&
                                     (p.Usage == PotionUsage.AnyTime || p.Usage == PotionUsage.CombatOnly))
             : Enumerable.Empty<PotionModel>();
