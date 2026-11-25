@@ -622,6 +622,30 @@ internal static class OutOfCombat
     }
 
     /// <summary>店: 買える商品を候補にし、「出る」も出す（エンジンの ShopDecision と同じ並び）。</summary>
+    /// <summary>店の候補を読むだけ（Mentor 連携用。買わない・出ない）。</summary>
+    public static Decision? BuildShopDecisionForMentor(RunState run, Player me)
+    {
+        if (run.CurrentRoom is not MerchantRoom room) return null;
+        try
+        {
+            var inv = room.GetLocalInventory();
+            var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
+            foreach (var entry in inv.AllEntries)
+            {
+                if (!entry.IsStocked || !entry.EnoughGold) continue;
+                if (entry is MerchantPotionEntry && !me.HasOpenPotionSlots) continue;
+                if (entry is MerchantCardRemovalEntry { Used: true }) continue;
+                d.Add(ActionKind.Buy, $"买 {EntryLabel(entry)} ({entry.Cost})", () => { }, a: EntryObject(entry), f0: entry.Cost);
+            }
+            d.Add(ActionKind.Leave, "离开", () => { });
+            return d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     static Decision? ShopDecision(RunState run, Player me)
     {
         if (run.CurrentRoom is not MerchantRoom room) return null;
