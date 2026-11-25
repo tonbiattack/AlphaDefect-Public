@@ -162,7 +162,7 @@ mentor フラグと spire-mentor の autostart を設定して推論サーバを
 
 宝箱は、ゲームの遺物同期が空でも動くように、**要求の `options[]`（`collect` の遺物 ID）から候補を作る**
 方式に直した（遺物モデルは `ModelDb.GetById<RelicModel>` で引き当て、引けなければ ID だけで対応付ける）。
-実機では宝箱に到達する前にランが終わったため、**この修正はまだ実機で確認できていない**。
+実機で確認済み: `[SimTreasure] Agent chose relic PLANISPHERE` → `Clicking proceed`（モデルの選択が遺物として採用された）。
 報酬画面（`reward_screen`）は、こちらの捕捉を mentor モードでも有効に戻し（押すのは自前ドライバだけなので
 安全）、モデルの「受け取る」候補を相手の `pick_reward` の同じ順に当てるようにした（実測 5 件）。
 また `run_complete` は幕の区切りでも送られてくるため、終了記録は `game_over`（floor > 0）だけを採用するようにした。
