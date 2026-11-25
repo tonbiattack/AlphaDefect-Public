@@ -25,6 +25,6 @@ if [ "$#" -eq 0 ]; then
   exec "$PY" -m local play
 fi
 case "$1" in
-  play|api|status|selfcheck|versions|setup|autopilot|mod|replay|launch) exec "$PY" -m local "$@" ;;
+  play|api|status|selfcheck|versions|setup|autopilot|mod|replay|launch|mentor|measure) exec "$PY" -m local "$@" ;;
   *) exec "$PY" -m local play "$@" ;;
 esac
