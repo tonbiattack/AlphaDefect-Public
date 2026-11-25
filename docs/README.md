@@ -38,6 +38,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | — | [Windows one-click launcher (Japanese)](ja/launcher.md) | normal play vs AI watch mode from a double click, detection, safety, controls |
 | — | [Survey of OSS game-operation layers (Japanese)](ja/oss-operation-layer.md) | candidates, licences, PoC with spire-mentor, partial-reuse decision |
 | — | [Mentor mode settings: character, ascension, seed (Japanese)](ja/mentor.md) | `local mentor` options, how run_config is answered, what is verified |
+| — | [Evaluating deck strength with the model (Japanese)](ja/deck-eval.md) | feasibility study for #6: value head vs rollouts, what is unverified |
 | — | [Third-party code and data (Japanese)](ja/third-party.md) | what is used (spire-mentor, BaseLib), what is never committed (game assets), attribution rules |
 | — | [Measuring runs in the real game (Japanese)](ja/measure.md) | batch runs, recorded fields, caveats |
 | — | [In-game control panel (Japanese)](ja/panel.md) | speed, pause, single-step, manual mode, confirm mode, shortcuts |
