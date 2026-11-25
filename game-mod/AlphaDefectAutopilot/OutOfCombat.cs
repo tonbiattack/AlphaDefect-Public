@@ -295,6 +295,14 @@ internal static class OutOfCombat
         long now = System.Environment.TickCount64;
         if (_failedLeaves < LeaveGiveUpCount) return false;
         if (_firstFailedAt > 0 && now - _firstFailedAt < LeaveGiveUpMs) return false;
+        // 「進む」が無効のまま: 地図の移動を直接積んで部屋を抜ける（休息所の鍛冶後など）。
+        if (EscapeViaMap())
+        {
+            _failedLeaves = 0;
+            _roomLeft = true;
+            Bridge.LogLine("[room] left via a map move instead of the proceed button");
+            return false;
+        }
         if (!_leaveStuckLogged)
         {
             _leaveStuckLogged = true;
@@ -364,6 +372,27 @@ internal static class OutOfCombat
         catch (Exception e)
         {
             Bridge.LogLine("[treasure] chest press failed: " + e.GetType().Name + ": " + e.Message);
+            return false;
+        }
+    }
+
+    /// <summary>部屋から出る代わりに、次のノードへ直接移動する（出口ボタンが無効のとき）。</summary>
+    static bool EscapeViaMap()
+    {
+        try
+        {
+            var run = RunManager.Instance.DebugOnlyGetState();
+            if (run == null) return false;
+            var me = MegaCrit.Sts2.Core.Runs.RunManager.Instance.DebugOnlyGetState().Players[0];
+            var next = RunSessionMap.Travelable(run).OrderBy(p => p.coord.col).FirstOrDefault();
+            if (next == null) return false;
+            RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
+                new MegaCrit.Sts2.Core.GameActions.MoveToMapCoordAction(me, next.coord));
+            return true;
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[room] escape move failed: " + e.GetType().Name + ": " + e.Message);
             return false;
         }
     }
@@ -712,17 +741,31 @@ internal static class OutOfCombat
         // 同じ目的地へ連続で積まない（移動の演出中に何度も積むと二重操作になる）。
         long now = System.Environment.TickCount64;
         string key = $"{dest.coord.col},{dest.coord.row}";
-        if (key == _lastMoveDest && now - _lastMoveAt < 1500)
+        if (key == _lastMoveDest)
         {
+            // 同じ目的地への再試行は 3 秒以上あける。何度も駄目なら安全停止する
+            // （毎フレーム積むと二重操作になり、ログも埋まる）。
+            if (now - _lastMoveAt < 3000)
+            {
+                _moveSkips++;
+                if (_moveSkips == 4)
+                    Bridge.LogLine($"[map] move to {key} does not seem to take effect");
+                if (_moveSkips >= 8) PanelState.AutoStop("map move had no effect: " + key);
+                return;
+            }
             _moveSkips++;
-            if (_moveSkips == 6)
-                Bridge.LogLine($"[map] move to {key} does not seem to take effect; stopping to avoid a loop");
-            if (_moveSkips >= 6) PanelState.AutoStop("map move had no effect: " + key);
-            return;
+            if (_moveSkips >= 8)
+            {
+                PanelState.AutoStop("map move had no effect: " + key);
+                return;
+            }
+        }
+        else
+        {
+            _moveSkips = 0;
         }
         _lastMoveDest = key;
         _lastMoveAt = now;
-        _moveSkips = 0;
         // シングルプレイなので、ホストと同じ「移動」を直接積むのが最も確実
         // （投票は出所の判定で捨てられ、点のクリックは画面外のノードで無視されることがある）。
         try
