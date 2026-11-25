@@ -45,6 +45,7 @@ internal static class MentorClient
     static long _deadline;
     static int _replies;
     static int _ignored;
+    static bool _discardNext;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -119,17 +120,27 @@ internal static class MentorClient
             int idx = Bridge.TakeAction();
             if (idx >= 0)
             {
-                Reply(idx);
-                _awaiting = false;
-                _pendingDecision = null;
+                if (_discardNext)
+                {
+                    // 前の要求をタイムアウトで打ち切ったあとに届いた古い返答。使わない。
+                    _discardNext = false;
+                    Bridge.LogEvent("[mentor] discarded a late inference answer");
+                }
+                else
+                {
+                    Reply(idx);
+                    _awaiting = false;
+                    _pendingDecision = null;
+                }
                 return;
             }
             if (Environment.TickCount64 > _deadline)
             {
-                Bridge.LogEvent("[mentor] inference timeout; answering with a legal default");
+                Bridge.LogEvent("[mentor] inference timeout; answering with a legal default for " + _pendingKind);
                 Reply(-1);
                 _awaiting = false;
                 _pendingDecision = null;
+                _discardNext = true;
             }
         }
     }
@@ -149,6 +160,12 @@ internal static class MentorClient
             if (kind is "error" or "pong" or "snapshot_saved" or "run_complete" or "game_over"
                 or "combat_ended" or "annotation" or "advice_request" or "human_action")
             {
+                if (kind == "error" && _ignored < 20)
+                {
+                    string code = root.TryGetProperty("error", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() ?? "" : "";
+                    string detail = root.TryGetProperty("detail", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() ?? "" : "";
+                    Bridge.LogEvent($"[mentor] error from spire-mentor: {code} / {detail}");
+                }
                 if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
                 return;
             }
@@ -169,6 +186,8 @@ internal static class MentorClient
                 "rest_site" => BuildRestDecision(),
                 "event" => OutOfCombat.BuildEventDecisionForMentor(run, me),
                 "map_select" => BuildMapDecision(run),
+                "shop" => OutOfCombat.BuildShopDecisionForMentor(run, me),
+                "reward_screen" => LiveRewards.Active ? LiveRewards.Build(me) : null,
                 _ => null,
             };
             if (d == null || d.Choices.Count == 0)
@@ -186,7 +205,7 @@ internal static class MentorClient
             _pendingDecision = d;
             _pendingSeq = ++_replies;
             _awaiting = true;
-            _deadline = Environment.TickCount64 + 15000;
+            _deadline = Environment.TickCount64 + 60000;   // 初回ロード等を見込んで長めに待つ
             Bridge.SendState(frame, _pendingSeq,
                 $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},"
                 + $"\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"mentor\":true");
@@ -323,6 +342,94 @@ internal static class MentorClient
         }
     }
 
+    /// <summary>店の商品を、相手の options（item.id）に合わせて index にする。</summary>
+    static int ShopOptionIndex(Choice choice)
+    {
+        try
+        {
+            string? id = choice.A switch
+            {
+                CardModel c => c.Id.Entry,
+                RelicModel r => r.Id.Entry,
+                PotionModel p => p.Id.Entry,
+                _ => null,
+            };
+            string label = choice.Label;
+            if (_lastMessage == null) return 0;
+            using var doc = JsonDocument.Parse(_lastMessage);
+            if (!doc.RootElement.TryGetProperty("options", out var opts) || opts.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in opts.EnumerateArray())
+            {
+                string? itemId = el.TryGetProperty("item", out var item) && item.ValueKind == JsonValueKind.Object
+                    && item.TryGetProperty("id", out var itemIdEl) && itemIdEl.ValueKind == JsonValueKind.String
+                    ? itemIdEl.GetString() : null;
+                string? optId = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
+                    ? idEl.GetString() : null;
+                if (id != null && string.Equals(itemId, id, StringComparison.OrdinalIgnoreCase)) return i;
+                if (id == null && optId != null && label.Contains("删牌") && optId.Contains("remove")) return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>報酬画面の「進む」の index。</summary>
+    static int ProceedIndex() => IndexOfAction(_lastMessage, "proceed");
+
+    /// <summary>報酬画面で、うちの候補に対応する報酬の index（未対応なら 0）。</summary>
+    static int RewardOptionIndex(Choice choice)
+    {
+        try
+        {
+            if (_lastMessage == null) return 0;
+            using var doc = JsonDocument.Parse(_lastMessage);
+            if (!doc.RootElement.TryGetProperty("options", out var opts) || opts.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in opts.EnumerateArray())
+            {
+                string? action = el.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() : null;
+                if (string.Equals(action, "pick_reward", StringComparison.OrdinalIgnoreCase)) return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    static int IndexOfAction(string? message, string action)
+    {
+        try
+        {
+            if (message == null) return 0;
+            using var doc = JsonDocument.Parse(message);
+            if (!doc.RootElement.TryGetProperty("options", out var opts) || opts.ValueKind != JsonValueKind.Array)
+                return 0;
+            int i = 0;
+            foreach (var el in opts.EnumerateArray())
+            {
+                string? a = el.TryGetProperty("action", out var actionEl) && actionEl.ValueKind == JsonValueKind.String
+                    ? actionEl.GetString() : null;
+                if (string.Equals(a, action, StringComparison.OrdinalIgnoreCase)) return i;
+                i++;
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
     static int ReadInt(JsonElement root, string name)
     {
         if (!root.TryGetProperty(name, out var v)) return -1;
@@ -353,11 +460,20 @@ internal static class MentorClient
         if (d == null) return;
         string reply = index >= 0 && index < d.Choices.Count
             ? Translate(d.Choices[index])
-            : "{\"action\":\"end_turn\"}";
+            : FallbackForKind(_pendingKind);
         if (index >= 0 && index < d.Choices.Count && _replies < 60 && reply.Contains("end_turn"))
             Bridge.LogEvent($"[mentor] unmapped choice kind={d.Choices[index].Kind} label='{d.Choices[index].Label}' for {_pendingKind}");
         SendReply(WithIds(reply, _pendingRequestId, _pendingStateId));
     }
+
+    /// <summary>判断できないときの、種類に合った安全な返答。</summary>
+    static string FallbackForKind(string kind) => kind switch
+    {
+        "card_reward" => "{\"action\":\"skip\"}",
+        "map_select" => "{\"index\":0}",
+        "combat_action" => "{\"action\":\"end_turn\"}",
+        _ => "{\"action\":\"choose\",\"index\":0}",
+    };
 
     /// <summary>うちの候補を spire-mentor の行動へ翻訳する。</summary>
     static string Translate(Choice choice)
@@ -400,6 +516,16 @@ internal static class MentorClient
                 return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", rest.OptionId) + "}";
             if (choice.Kind == ActionKind.MapMove && choice.A is MegaCrit.Sts2.Core.Map.MapPoint point)
                 return "{\"index\":" + MapNodeIndex(point.coord) + "}";
+            if (choice.Kind == ActionKind.Buy)
+                return "{\"action\":\"choose\",\"index\":" + ShopOptionIndex(choice) + "}";
+            if (choice.Kind == ActionKind.Leave && _pendingKind == "shop")
+                return "{\"action\":\"choose\",\"index\":0}";   // 店の 0 は leave_shop
+            if (choice.Kind == ActionKind.Leave && _pendingKind == "reward_screen")
+                return "{\"action\":\"choose\",\"index\":" + ProceedIndex() + "}";
+            if (choice.Kind == ActionKind.TakeReward)
+                return "{\"action\":\"choose\",\"index\":" + RewardOptionIndex(choice) + "}";
+            if (choice.Kind == ActionKind.CardRewardAlt)
+                return "{\"action\":\"skip\"}";      // カード報酬のスキップ等
             if (choice.Kind == ActionKind.PickCardReward && choice.A is CardModel rewardCard)
                 return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(rewardCard) + "}";
             if (choice.Kind == ActionKind.UsePotion && choice.A is PotionModel potion)
@@ -419,12 +545,13 @@ internal static class MentorClient
                 }
                 return "{\"action\":\"end_turn\"}";
             }
-            return "{\"action\":\"end_turn\"}";
+            // 未対応の種別は、その判断に合った安全な既定にする（戦闘以外に end_turn を返さない）
+            return FallbackForKind(_pendingKind);
         }
         catch (Exception e)
         {
             Bridge.LogEvent("[mentor] translate failed: " + e.GetType().Name);
-            return "{\"action\":\"end_turn\"}";
+            return FallbackForKind(_pendingKind);
         }
     }
 
