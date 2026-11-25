@@ -26,6 +26,7 @@ internal static class ControlPanel
 
     static readonly double[] SpeedPresets = { 0.25, 0.5, 1, 2, 5, 10 };
     static readonly int[] PacingPresets = { 0, 500, 1000, 2000, 5000 };
+    static readonly int[] EntryPresets = { 0, 1000, 1500, 2500, 4000 };
 
     static readonly List<(Button button, string label, Func<string> text)> Dynamic = new();
 
@@ -149,6 +150,17 @@ internal static class ControlPanel
         root.AddChild(pacing);
         ExtraRows.Add(pacing);
 
+        var entry = new HBoxContainer();
+        entry.AddChild(MakeLabel(13, new Color(0.75f, 0.8f, 0.9f), "入場待ち"));
+        foreach (var ms in EntryPresets)
+        {
+            int v = ms;
+            string text = ms == 0 ? "なし" : $"{ms / 1000.0:0.#}s";
+            entry.AddChild(MakeButton(text, () => PanelState.Apply("entry", v.ToString())));
+        }
+        root.AddChild(entry);
+        ExtraRows.Add(entry);
+
         layer.AddChild(panel);
         tree.Root.AddChild(layer);
         _layer = layer;
@@ -207,7 +219,8 @@ internal static class ControlPanel
         string confirm = PanelState.Confirm ? " 確認ON" : "";
         string stops = PanelState.StopOnCombatEnd ? " 戦闘終了停止" : "";
         string pacing = PanelState.PacingMs > 0 ? $" 間隔{PanelState.PacingMs}ms" : "";
-        _head.Text = $"{mode} {state} {PanelState.Speed:0.##}x {conn}{confirm}{stops}{pacing}";
+        string entryWait = $" 入場{PanelState.EntryDelayMs}ms";
+        _head.Text = $"{mode} {state} {PanelState.Speed:0.##}x {conn}{confirm}{stops}{pacing}{entryWait}";
         if (_reco != null && GodotObject.IsInstanceValid(_reco))
             _reco.Text = "推奨: " + (PanelState.Status.Length > 0 ? PanelState.Status : "—");
         if (_pause != null && GodotObject.IsInstanceValid(_pause))

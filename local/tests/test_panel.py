@@ -56,6 +56,18 @@ class AutopilotPanelTest(unittest.TestCase):
         with self.assertRaises(AutopilotError):
             ap.set_mode("wat")
 
+    def test_entry_delay(self):
+        ap = make_ap()
+        self.assertEqual(ap.set_entry_delay(2000), [P.command("entry", 2000)])
+        self.assertEqual(ap.set_entry_delay(-1), [P.command("entry", 0)])
+        self.assertEqual(ap.set_entry_delay(99999), [P.command("entry", 8000)])
+
+    def test_entry_is_replayed_on_reconnect(self):
+        ap = make_ap()
+        ap.set_entry_delay(2500)
+        names = [m.get("name") for m in ap.start()]
+        self.assertIn("entry", names)
+
     def test_confirm_and_pacing_and_stop_points(self):
         ap = make_ap()
         self.assertEqual(ap.set_confirm(True), [P.command("confirm-on")])
@@ -99,12 +111,14 @@ class AutopilotPanelTest(unittest.TestCase):
 
     def test_status_text_shows_the_panel(self):
         ap = make_ap()
-        ap.handle({"t": "panel", "state": {"mode": "manual", "paused": True, "pacing_ms": 500, "confirm": True}})
+        ap.handle({"t": "panel", "state": {"mode": "manual", "paused": True, "pacing_ms": 500,
+                                           "entry_ms": 2000, "confirm": True}})
         text = _status_text(ap)
         self.assertIn("手動", text)
         self.assertIn("停止", text)
         self.assertIn("確認", text)
         self.assertIn("間隔500ms", text)
+        self.assertIn("入場待ち2000ms", text)
 
 
 class ControlsDispatchTest(unittest.TestCase):
@@ -116,11 +130,11 @@ class ControlsDispatchTest(unittest.TestCase):
 
     def test_step_manual_auto_confirm_pacing(self):
         for line in ("step", "manual", "auto", "confirm on", "confirm off", "pacing 750",
-                     "stopcombat on", "stopreward off"):
+                     "entry 2000", "stopcombat on", "stopreward off"):
             self.controls.apply(line)
         names = [m.get("name") for m in self.conn.sent]
         self.assertEqual(names, ["step", "manual", "auto", "confirm-on", "confirm-off", "pacing",
-                                 "stopcombat", "stopreward"])
+                                 "entry", "stopcombat", "stopreward"])
 
     def test_pause_and_resume_reach_the_mod(self):
         self.controls.apply("pause")
@@ -133,7 +147,7 @@ class ControlsDispatchTest(unittest.TestCase):
         self.assertEqual(self.conn.sent, [])
 
     def test_help_mentions_the_panel_commands(self):
-        for word in ("step", "manual", "confirm", "pacing"):
+        for word in ("step", "manual", "confirm", "pacing", "entry"):
             self.assertIn(word, HELP)
 
 

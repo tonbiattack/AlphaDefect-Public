@@ -174,6 +174,14 @@ class Autopilot:
         self.pending_controls["confirm"] = msg
         return [msg]
 
+    def set_entry_delay(self, ms: int) -> list[dict]:
+        """部屋に入ってから操作を始めるまでの待ち（実時間。TimeScale に依存しない）。"""
+        ms = max(0, min(int(ms), 8000))
+        self.log("entry_delay", {"ms": ms})
+        msg = P.command("entry", ms)
+        self.pending_controls["entry"] = msg
+        return [msg]
+
     def set_pacing(self, ms: int) -> list[dict]:
         """行動の間隔（ミリ秒）。速度（TimeScale）とは独立。"""
         ms = max(0, min(int(ms), 10000))

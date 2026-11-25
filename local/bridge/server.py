@@ -31,6 +31,7 @@ HELP = """操作:
   auto         AI 自動に戻す
   confirm on|off  各判断の前に止めて、候補を見せてから実行する
   pacing N     行動の間隔（ミリ秒）。速度とは独立
+  entry N      部屋に入ってから操作するまでの待ち（ミリ秒、既定 1500）
   stopcombat on|off  戦闘終了で自動停止
   stopreward on|off  カード報酬画面で自動停止
   status       いまの状態と手数の表示
@@ -116,6 +117,8 @@ class _Controls:
                 self._send(self.ap.set_confirm(on))
             elif cmd == "pacing":
                 self._send(self.ap.set_pacing(int(parts[1])))
+            elif cmd == "entry":
+                self._send(self.ap.set_entry_delay(int(parts[1])))
             elif cmd in ("stopcombat", "stopreward"):
                 on = len(parts) < 2 or parts[1].lower() not in ("off", "false", "0", "no")
                 self._send(self.ap.set_stop_points(
@@ -159,6 +162,8 @@ def _status_text(ap: Autopilot) -> str:
             panel += "・確認"
         if p.get("pacing_ms"):
             panel += f"・間隔{p['pacing_ms']}ms"
+        if p.get("entry_ms") is not None:
+            panel += f"・入場待ち{p['entry_ms']}ms"
     return (f"[autopilot] {ap.state} / キャラ {ap.character} / 速度 {ap.speed}倍{panel}"
             f" / 状態 {s.states} / 行動 {s.actions} / 重複 {s.duplicates} / {s.seconds:.0f} 秒{result}")
 

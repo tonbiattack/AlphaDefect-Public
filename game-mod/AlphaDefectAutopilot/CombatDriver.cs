@@ -70,6 +70,11 @@ internal static class CombatDriver
     {
         if (Bridge.Stopped) return;
         AutoStopPoints();
+        if (AsyncGate.Busy)
+        {
+            if (nowDiag(3000)) Bridge.LogLine($"[wait] game is busy with {AsyncGate.LastOp}; not deciding yet");
+            return;
+        }
         if (_awaiting && _awaitEpoch != PanelState.Epoch)
         {
             // 手動切り替え・1 手実行・再開で古い判断は無効。応答は捨てて次の状態から作り直す。
@@ -205,7 +210,7 @@ internal static class CombatDriver
                 _decision = null;
                 if (d == null)
                 {
-                    _nextAt = now + 1000;                  // 未対応の画面: 少し待ってから再確認
+                    _nextAt = now + 300;                   // 準備中・未対応: すぐ再確認（実時間の待ちは入場待ちで行う）
                     string room = run.CurrentRoom?.GetType().Name ?? "null";
                     if (room != _lastWaitingRoom)
                     {
@@ -229,6 +234,17 @@ internal static class CombatDriver
             _nextAt = now + 1000;
         }
     }
+
+    /// <summary>診断ログを間引く（同じメッセージを毎フレーム出さない）。</summary>
+    static bool nowDiag(int intervalMs)
+    {
+        long now = System.Environment.TickCount64;
+        if (now - _lastDiagAt < intervalMs) return false;
+        _lastDiagAt = now;
+        return true;
+    }
+
+    static long _lastDiagAt;
 
     static bool SafeInCombat()
     {

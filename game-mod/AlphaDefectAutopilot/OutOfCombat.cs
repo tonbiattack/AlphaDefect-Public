@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Entities.Merchant;
+using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Rewards;
@@ -30,6 +31,7 @@ internal static class OutOfCombat
     static bool _relicDecided;
     static bool _shopLeft;
     static int _restWaits;
+    const long RestReadyMs = 2500;      // 画面が出てから選択肢が揃うまでの猶予
     static bool _roomLeft;
     static bool _eventLeft;
     static object? _lastRoom;
@@ -48,18 +50,47 @@ internal static class OutOfCombat
     public static Decision? Build(RunState run, Player me)
     {
         // 部屋が変わったら「この部屋ではもう用は済んだ」系のフラグを戻す（エンジンと同じ）
+        long nowMs = System.Environment.TickCount64;
         if (!ReferenceEquals(run.CurrentRoom, _lastRoom))
         {
             _lastRoom = run.CurrentRoom;
+            _currentRoomName = run.CurrentRoom?.GetType().Name ?? "null";
+            _roomEnteredAt = nowMs;
+            _entryLogged = false;
             _shopLeft = false;
             _roomLeft = false;
             _eventLeft = false;
             _chestOpened = false;
             _relicDecided = false;
+            _restWaits = 0;
+            _restChosen = false;
+            _failedLeaves = 0;
+            _leaveStuckLogged = false;
+            _sawRoomScreen = false;
+            _screenClosedLogged = false;
+            _restLogged = false;
+            _shopLogged = false;
+            Bridge.LogLine($"[room] now in {_currentRoomName}");
         }
         // 部屋の「進む」を押したあとは、その部屋では地図の判断に切り替える
         // （ボタンは地図画面を開くだけで、部屋のオブジェクトはすぐには変わらない）
         if (_roomLeft) return MapDecision(run, me);
+        // 部屋の画面が閉じた（地図が開いた等）なら退出済み。部屋のモデルが残っていても
+        // その部屋の操作はしない（「進む」が押せないまま繰り返すのを防ぐ）。
+        if (_currentRoomName is not ("null" or "MapRoom"))
+        {
+            bool screen = FindRoomNode(_currentRoomName) != null;
+            if (screen) _sawRoomScreen = true;
+            else if (_sawRoomScreen && nowMs - _roomEnteredAt > 500)
+            {
+                if (!_screenClosedLogged)
+                {
+                    _screenClosedLogged = true;
+                    Bridge.LogLine($"[room] {_currentRoomName} screen closed; going back to the map");
+                }
+                return MapDecision(run, me);
+            }
+        }
         if (LiveBundle.Active && LiveBundle.Build() is { } bundles) return bundles;
         if (LiveCardReward.Active && LiveCardReward.Build() is { } cardReward) return cardReward;
         if (LiveRewards.Active && LiveRewards.Build(me) is { } rewards) return rewards;
@@ -158,45 +189,224 @@ internal static class OutOfCombat
             int k = i;
             d.Add(ActionKind.RestOption, opts[i].OptionId, () => sync.ChooseLocalOption(k), a: opts[i]);
         }
+        if (_restChosen)
+        {
+            // もう選んだ: 選牌（鍛冶）が終わったら退出するだけ。同じ選択を押し続けない。
+            if (LeaveIsStuck()) return null;
+            d.Add(ActionKind.Leave, "离开", () => LeaveRestSite());
+            return d;
+        }
         if (d.Choices.Count == 0)
         {
-            // まだ選択肢が用意されていない（部屋の画面が開く前）: 少し待つ。
-            // 待っても出ないなら「何もせず出る」でランを止めない。
-            if (_restWaits++ < 20) return null;
-            d.Add(ActionKind.Leave, "离开", () => PressRoomProceed("NRestSiteRoom"));
-            Bridge.LogLine("rest site has no options; leaving");
+            // 同期器に選択肢が無くても、画面にボタンが出ていることがある（休息所の 休憩/鍛冶）。
+            // 画面のボタンから候補を作り、押して選ぶ（プレイヤーのクリックと同じ）。
+            if (AddRestButtons(d)) return d;
+            // 画面が出ていないだけなのか、もう選び終えて退出待ちなのかを分ける。
+            long now = System.Environment.TickCount64;
+            long waited = now - _roomEnteredAt;
+            bool screen = FindRoomNode("NRestSiteRoom") != null;
+            if (!screen)
+            {
+                if (!_restLogged) { _restLogged = true; Bridge.LogLine("[rest] waiting for the room screen"); }
+                return null;                                  // 表示待ち: すぐ再確認する
+            }
+            if (WaitEntry(now)) return null;                   // 観戦用の入場待ち
+            if (waited < RestReadyMs)
+            {
+                if (!_restLogged)
+                {
+                    _restLogged = true;
+                    Bridge.LogLine($"[rest] screen is up, options are not ready yet (waited {waited}ms)");
+                }
+                return null;
+            }
+            // ここまで来たら「もう選び終えた」か「この部屋に選択肢が無い」。
+            // 押せる「進む」があるときだけ退出する（押せないなら待つ）。
+            if (LeaveIsStuck()) return null;
+            d.Add(ActionKind.Leave, "离开", () => LeaveRestSite());
+            Bridge.LogLine($"[rest] no options after {waited}ms; leaving with the proceed button");
             return d;
+        }
+        _restLogged = true;
+        if (!_restOptionsLogged)
+        {
+            _restOptionsLogged = true;
+            Bridge.LogLine($"[rest] options={d.Choices.Count}: " + string.Join(", ", d.Choices.Select(c => c.Label)));
         }
         AddPotionActions(me, d);
         return d;
     }
 
-    /// <summary>部屋の「進む」ボタンを押す（部屋を出る）。</summary>
-    static void PressRoomProceed(string roomTypeName)
+    /// <summary>いまの画面に、その型名の部屋ノードがあるか（＝画面が初期化されたか）。</summary>
+    static Godot.Node? FindRoomNode(string roomTypeName)
     {
         try
         {
             var scene = MegaCrit.Sts2.Core.Nodes.NGame.Instance?.RootSceneContainer?.CurrentScene;
-            if (scene == null) return;
+            if (scene == null) return null;
+            foreach (var node in scene.FindChildren("*", "", true, false))
+                if (node.GetType().Name == roomTypeName) return node;
+        }
+        catch
+        {
+            // 画面の読み取り失敗は「まだ無い」と同じ扱い
+        }
+        return null;
+    }
+
+    static int _failedLeaves;
+    static bool _leaveStuckLogged;
+    static bool _screenClosedLogged;
+
+    /// <summary>部屋を出る。押せなかったら数える（押せないまま何度も選ばないため）。</summary>
+    static void LeaveVia(string roomTypeName)
+    {
+        if (PressRoomProceed(roomTypeName))
+        {
+            _roomLeft = true;
+            _failedLeaves = 0;
+            return;
+        }
+        _failedLeaves++;
+        if (_failedLeaves == 3)
+            Bridge.LogLine($"[room] cannot leave {roomTypeName} (proceed is disabled); stopping instead of retrying");
+    }
+
+    /// <summary>退出できないまま繰り返していないか。3 回失敗したら安全停止する。</summary>
+    static bool LeaveIsStuck()
+    {
+        if (_failedLeaves < 3) return false;
+        if (!_leaveStuckLogged)
+        {
+            _leaveStuckLogged = true;
+            Bridge.LogLine($"[room] stuck in {_currentRoomName}: the proceed button stays disabled");
+        }
+        PanelState.AutoStop("stuck in " + _currentRoomName + ": the proceed button is disabled");
+        return true;
+    }
+
+    /// <summary>休息所の画面ボタン（休憩・鍛冶など）を候補にする。押せたら true。</summary>
+    static bool AddRestButtons(Decision d)
+    {
+        try
+        {
+            var node = FindRoomNode("NRestSiteRoom");
+            if (node == null) return false;
+            foreach (var child in node.FindChildren("*", "", true, false))
+            {
+                if (child.GetType().Name != "NRestSiteButton") continue;
+                if (child is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable) continue;
+                if (!clickable.IsEnabled) continue;
+                var option = child.GetType().GetProperty("Option")?.GetValue(child);
+                if (option is not RestSiteOption rest) continue;
+                string label = rest.OptionId;
+                d.Add(ActionKind.RestOption, label, () => PressRestButton(clickable, label), a: rest);
+            }
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[rest] reading the screen buttons failed: " + e.GetType().Name);
+        }
+        return d.Choices.Count > 0;
+    }
+
+    static void PressRestButton(Godot.Node button, string label)
+    {
+        if (button is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable)
+        {
+            Bridge.LogLine("[rest] button is not clickable: " + label);
+            return;
+        }
+        AsyncGate.RunSync("rest choose " + label, () => clickable.EmitSignal(
+            MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
+        _restChosen = true;
+        Bridge.LogLine("[rest] chose " + label);
+    }
+
+    /// <summary>宝箱の「開ける」ボタンを押す（UI 自身の流れを進める）。</summary>
+    static bool PressChestButton()
+    {
+        try
+        {
+            var node = FindRoomNode("NTreasureRoom");
+            if (node == null) return false;
+            foreach (var child in node.FindChildren("*", "", true, false))
+            {
+                if (child.GetType().Name != "NTreasureButton") continue;
+                if (child is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable) continue;
+                if (!clickable.IsEnabled) continue;
+                AsyncGate.RunSync("open chest button", () => clickable.EmitSignal(
+                    MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
+                Bridge.LogLine("[treasure] pressed the chest button");
+                return true;
+            }
+            return false;
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[treasure] chest press failed: " + e.GetType().Name + ": " + e.Message);
+            return false;
+        }
+    }
+
+    /// <summary>休息所を出る（押せたら出た扱いにする）。</summary>
+    static void LeaveRestSite() => LeaveVia("NRestSiteRoom");
+
+    /// <summary>部屋の「進む」ボタンを押す（部屋を出る）。押せたら true。</summary>
+    static bool PressRoomProceed(string roomTypeName)
+    {
+        try
+        {
+            var scene = MegaCrit.Sts2.Core.Nodes.NGame.Instance?.RootSceneContainer?.CurrentScene;
+            if (scene == null) return false;
             foreach (var node in scene.FindChildren("*", "", true, false))
             {
                 if (node.GetType().Name != roomTypeName) continue;
                 if (node is not MegaCrit.Sts2.Core.Nodes.Rooms.IRoomWithProceedButton holder) continue;
                 var button = holder.ProceedButton;
                 if (button == null || !Godot.GodotObject.IsInstanceValid(button)) continue;
-                button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
-                Bridge.LogLine($"pressed proceed in {roomTypeName}");
+                if (!button.IsEnabled)
+                {
+                    Bridge.LogLine($"proceed in {roomTypeName} is disabled; waiting");
+                    return false;
+                }
+                AsyncGate.RunSync("proceed " + roomTypeName, () =>
+                    button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button));
                 _restWaits = 0;
-                _roomLeft = true;
-                return;
+                return true;
             }
             Bridge.LogLine($"proceed button not found in {roomTypeName}");
+            return false;
         }
         catch (Exception e)
         {
-            Bridge.LogLine($"proceed in {roomTypeName} failed: {e.GetType().Name}");
+            Bridge.LogLine($"proceed in {roomTypeName} failed: {e.GetType().Name}: {e.Message}");
+            return false;
         }
     }
+
+    /// <summary>部屋に入ってから、操作できるようになるまで少し待つ（観戦しやすいように）。</summary>
+    static bool WaitEntry(long now)
+    {
+        long waited = now - _roomEnteredAt;
+        if (waited >= PanelState.EntryDelayMs) return false;
+        if (!_entryLogged)
+        {
+            _entryLogged = true;
+            Bridge.LogLine($"[room] entered {_currentRoomName}: waiting {PanelState.EntryDelayMs}ms before acting");
+        }
+        return true;
+    }
+
+    static bool _restLogged;
+    static bool _restChosen;
+    static bool _restOptionsLogged;
+    static bool _shopLogged;
+    static bool _shopOptionsLogged;
+    static bool _entryLogged;
+    static bool _sawRoomScreen;
+    static long _roomEnteredAt;
+    static string _currentRoomName = "";
 
     /// <summary>宝箱: 開けて、遺物が 1 件なら取り、複数なら選ぶ。</summary>
     static Decision? TreasureDecision(TreasureRoom room, Player me)
@@ -204,21 +414,32 @@ internal static class OutOfCombat
         if (!_chestOpened)
         {
             _chestOpened = true;
-            try
+            // 画面の宝箱ボタンを押す（UI 側が開封・演出・遺物選択を進める）。
+            // 押せないときだけモデル側で開ける。
+            if (!PressChestButton())
             {
-                _ = OpenChest(room);
-            }
-            catch (Exception e)
-            {
-                Bridge.LogLine("open chest failed: " + e.GetType().Name);
+                Bridge.LogLine("[treasure] chest button not found; opening from the model");
+                try
+                {
+                    AsyncGate.Run("open chest", async () =>
+                    {
+                        await room.DoNormalRewards();
+                        await room.DoExtraRewardsIfNeeded();
+                    });
+                }
+                catch (Exception e)
+                {
+                    Bridge.LogLine("open chest failed: " + e.GetType().Name);
+                }
             }
             return null;                       // 開けた次のフレームで判断
         }
         if (_relicDecided)
         {
-            // 遺物は決めたのに部屋が残っている: 部屋の「進む」で出る
+            // 遺物は決めたのに部屋が残っている: 部屋の「進む」で出る（押せなければ止める）
+            if (LeaveIsStuck()) return null;
             var leave = new Decision(DecisionKind.Treasure);
-            leave.Add(ActionKind.Leave, "离开", () => PressRoomProceed("NTreasureRoom"));
+            leave.Add(ActionKind.Leave, "离开", () => LeaveVia("NTreasureRoom"));
             return leave;
         }
         var sync = RunManager.Instance.TreasureRoomRelicSynchronizer;
@@ -285,6 +506,18 @@ internal static class OutOfCombat
     static Decision? ShopDecision(RunState run, Player me)
     {
         if (run.CurrentRoom is not MerchantRoom room) return null;
+        long now = System.Environment.TickCount64;
+        if (FindRoomNode("NMerchantRoom") == null)
+        {
+            if (!_shopLogged) { _shopLogged = true; Bridge.LogLine("[shop] waiting for the room screen"); }
+            return null;                                  // 表示待ち
+        }
+        if (WaitEntry(now)) return null;                   // 観戦用の入場待ち（既定 1.5 秒）
+        if (!_shopOptionsLogged)
+        {
+            _shopOptionsLogged = true;
+            Bridge.LogLine("[shop] gold=" + me.Gold);
+        }
         var inv = room.GetLocalInventory();
         var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
         foreach (var entry in inv.AllEntries)
@@ -303,20 +536,17 @@ internal static class OutOfCombat
 
     static void Buy(MerchantEntry entry, MerchantInventory inv)
     {
-        _ = BuyAsync(entry, inv);
-    }
-
-    static async Task BuyAsync(MerchantEntry entry, MerchantInventory inv)
-    {
-        try
+        string label = EntryLabel(entry);
+        int cost = entry.Cost;
+        int goldBefore = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.Gold ?? 0;
+        Bridge.LogLine($"[shop] buy {label} for {cost}g (gold {goldBefore})");
+        AsyncGate.Run("buy " + label, async () =>
         {
             bool ok = await entry.OnTryPurchaseWrapper(inv);
-            Bridge.LogLine($"buy {EntryLabel(entry)}: {(ok ? "ok" : "failed")}");
-        }
-        catch (Exception e)
-        {
-            Bridge.LogLine("buy failed: " + e.GetType().Name + ": " + e.Message);
-        }
+            int goldAfter = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.Gold ?? 0;
+            Bridge.LogLine($"[shop] buy {label}: {(ok ? "ok" : "failed")}, gold {goldBefore} -> {goldAfter}"
+                           + $", stocked={entry.IsStocked}");
+        });
     }
 
     static object EntryObject(MerchantEntry e) => e switch
@@ -338,7 +568,6 @@ internal static class OutOfCombat
 
     static void LeaveShop()
     {
-        _shopLeft = true;
         try
         {
             // 部屋のノードは「進むボタンを持つ部屋」として取れる（IRoomWithProceedButton）。
@@ -353,6 +582,7 @@ internal static class OutOfCombat
                     if (button == null || !Godot.GodotObject.IsInstanceValid(button)) continue;
                     button.EmitSignal(MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, button);
                     Bridge.LogLine("left the shop");
+                    _shopLeft = true;
                     _roomLeft = true;
                     return;
                 }
