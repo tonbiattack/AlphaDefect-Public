@@ -159,3 +159,9 @@ curl -s -X POST -H 'Content-Type: application/json' \
 - `mentor.json` は `mods/AlphaDefectAutopilot/` に置かれます（MOD を入れ直しても残ります）。
 - 設定を消すと MOD の既定（auto / A0 / 乱数）に戻ります。
 - 未検証の項目（v0.113.1 の各キャラ、A0 以外の実機）は、確認できるまで「未検証」と扱います。
+
+## 複数枚のカード選択（イベント等）
+
+イベントの「融合」のように**複数枚えらぶ**選択では、モデルは 1 枚しか返せないため、
+`min_select` 枚を**先頭から**選びます（ルール。ログに `card_select needs N cards: choosing the first K by rule`）。
+これが無いと `card_select reply rejected` を繰り返して進行不能になります。

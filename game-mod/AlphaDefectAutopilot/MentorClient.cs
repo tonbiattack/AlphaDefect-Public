@@ -54,6 +54,7 @@ internal static class MentorClient
     static bool _reportedEnd;
     static int _cardRewardSkips;
     static int _crystalReplies;
+    static int _multiSelectReplies;
     static int _crystalStateId = -1;
     static int _crystalSameState;
     static int _crystalCells = 1;
@@ -274,6 +275,28 @@ internal static class MentorClient
                 }
                 if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
                 return;
+            }
+            if (kind == "card_select")
+            {
+                // 複数枚えらぶ選択（イベントの融合など）は、モデルが 1 枚しか返せないため
+                // ルールで先頭から min_select 枚を選ぶ（止まらないことを優先。ログに残す）。
+                int minSel = ReadInt(root, "min_select");
+                int cardCount = 0;
+                try
+                {
+                    if (root.TryGetProperty("cards", out var cardsEl) && cardsEl.ValueKind == JsonValueKind.Array)
+                        cardCount = cardsEl.GetArrayLength();
+                }
+                catch { }
+                if (minSel > 1 && cardCount > 0)
+                {
+                    int k = Math.Min(minSel, cardCount);
+                    var indices = string.Join(",", Enumerable.Range(0, k));
+                    if (_multiSelectReplies++ < 5)
+                        Bridge.LogEvent($"[mentor] card_select needs {minSel} cards: choosing the first {k} by rule");
+                    SendReply(WithIds("{\"action\":\"choose\",\"indices\":[" + indices + "]}", requestId, stateId));
+                    return;
+                }
             }
             if (kind == "crystal_sphere")
             {
