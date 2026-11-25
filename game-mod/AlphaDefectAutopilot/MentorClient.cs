@@ -48,6 +48,7 @@ internal static class MentorClient
     static bool _discardNext;
     static bool _reportedEnd;
     static int _cardRewardSkips;
+    static int _crystalReplies;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -192,6 +193,32 @@ internal static class MentorClient
                     Bridge.LogEvent($"[mentor] error from spire-mentor: {code} / {detail}");
                 }
                 if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
+                return;
+            }
+            if (kind == "crystal_sphere")
+            {
+                // ミニゲーム（水晶球）。index だけを返す形式で、進める（proceed）か先頭の未公開セル。
+                // これはモデルではなくルール（ログに残す）。
+                int index = 0;
+                try
+                {
+                    if (root.TryGetProperty("options", out var opts) && opts.ValueKind == JsonValueKind.Array)
+                    {
+                        int last = -1, firstCell = -1;
+                        foreach (var el in opts.EnumerateArray())
+                        {
+                            int i = el.TryGetProperty("index", out var iEl) && iEl.ValueKind == JsonValueKind.Number ? iEl.GetInt32() : -1;
+                            string action = el.TryGetProperty("action", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() ?? "" : "";
+                            if (action == "proceed") { last = i; continue; }
+                            if (firstCell < 0) firstCell = i;
+                        }
+                        index = last >= 0 ? last : Math.Max(0, firstCell);
+                    }
+                }
+                catch { }
+                if (_crystalReplies++ < 3)
+                    Bridge.LogEvent($"[mentor] crystal_sphere: rule-based answer (index {index}); the minigame is not modelled");
+                SendReply(WithIds("{\"index\":" + index + "}", requestId, stateId));
                 return;
             }
             if (kind == "run_config")
