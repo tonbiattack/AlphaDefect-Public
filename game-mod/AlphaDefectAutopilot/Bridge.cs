@@ -72,6 +72,11 @@ internal static class Bridge
             ApplyFormat();
             Overlay.Tick();
             Launcher.Tick();
+            if (MentorClient.Enabled)
+            {
+                MentorClient.Tick();
+                return;
+            }
             if (PanelState.CanAct || PanelState.AwaitingApproval) CombatDriver.Tick();
         }
         catch (Exception e)
