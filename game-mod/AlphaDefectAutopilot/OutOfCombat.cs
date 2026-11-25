@@ -73,7 +73,7 @@ internal static class OutOfCombat
             _mapLogged = false;
             _restLogged = false;
             _shopLogged = false;
-            Bridge.LogLine($"[room] now in {_currentRoomName}");
+            Bridge.LogEvent($"[room] now in {_currentRoomName}");
         }
         // 部屋の「進む」を押したあとは、その部屋では地図の判断に切り替える
         // （ボタンは地図画面を開くだけで、部屋のオブジェクトはすぐには変わらない）
@@ -89,7 +89,7 @@ internal static class OutOfCombat
                 if (!_screenClosedLogged)
                 {
                     _screenClosedLogged = true;
-                    Bridge.LogLine($"[room] {_currentRoomName} screen closed; going back to the map");
+                    Bridge.LogEvent($"[room] {_currentRoomName} screen closed; going back to the map");
                 }
                 return MapDecision(run, me);
             }
@@ -210,7 +210,7 @@ internal static class OutOfCombat
             bool screen = FindRoomNode("NRestSiteRoom") != null;
             if (!screen)
             {
-                if (!_restLogged) { _restLogged = true; Bridge.LogLine("[rest] waiting for the room screen"); }
+                if (!_restLogged) { _restLogged = true; Bridge.LogEvent("[rest] waiting for the room screen"); }
                 return null;                                  // 表示待ち: すぐ再確認する
             }
             if (WaitEntry(now)) return null;                   // 観戦用の入場待ち
@@ -219,7 +219,7 @@ internal static class OutOfCombat
                 if (!_restLogged)
                 {
                     _restLogged = true;
-                    Bridge.LogLine($"[rest] screen is up, options are not ready yet (waited {waited}ms)");
+                    Bridge.LogEvent($"[rest] screen is up, options are not ready yet (waited {waited}ms)");
                 }
                 return null;
             }
@@ -227,14 +227,14 @@ internal static class OutOfCombat
             // 押せる「進む」があるときだけ退出する（押せないなら待つ）。
             if (LeaveIsStuck()) return null;
             d.Add(ActionKind.Leave, "离开", () => LeaveRestSite());
-            Bridge.LogLine($"[rest] no options after {waited}ms; leaving with the proceed button");
+            Bridge.LogEvent($"[rest] no options after {waited}ms; leaving with the proceed button");
             return d;
         }
         _restLogged = true;
         if (!_restOptionsLogged)
         {
             _restOptionsLogged = true;
-            Bridge.LogLine($"[rest] options={d.Choices.Count}: " + string.Join(", ", d.Choices.Select(c => c.Label)));
+            Bridge.LogEvent($"[rest] options={d.Choices.Count}: " + string.Join(", ", d.Choices.Select(c => c.Label)));
         }
         AddPotionActions(me, d);
         return d;
@@ -272,7 +272,7 @@ internal static class OutOfCombat
         long now = System.Environment.TickCount64;
         if (now - _lastLeaveAttempt < LeaveRetryMs)
         {
-            Bridge.LogLine($"[room] leave attempt spacing ({now - _lastLeaveAttempt}ms); waiting");
+            Bridge.LogEvent($"[room] leave attempt spacing ({now - _lastLeaveAttempt}ms); waiting");
             return;                                  // 連打しない（演出待ちを潰さない）
         }
         _lastLeaveAttempt = now;
@@ -285,7 +285,7 @@ internal static class OutOfCombat
         }
         if (_failedLeaves == 0) _firstFailedAt = now;
         _failedLeaves++;
-        Bridge.LogLine($"[room] cannot leave {roomTypeName} yet (attempt {_failedLeaves}, "
+        Bridge.LogEvent($"[room] cannot leave {roomTypeName} yet (attempt {_failedLeaves}, "
                        + $"{now - _firstFailedAt}ms since the first attempt)");
     }
 
@@ -300,13 +300,13 @@ internal static class OutOfCombat
         {
             _failedLeaves = 0;
             _roomLeft = true;
-            Bridge.LogLine("[room] left via a map move instead of the proceed button");
+            Bridge.LogEvent("[room] left via a map move instead of the proceed button");
             return false;
         }
         if (!_leaveStuckLogged)
         {
             _leaveStuckLogged = true;
-            Bridge.LogLine($"[room] stuck in {_currentRoomName}: the proceed button stays disabled");
+            Bridge.LogEvent($"[room] stuck in {_currentRoomName}: the proceed button stays disabled");
         }
         PanelState.AutoStop("stuck in " + _currentRoomName + ": the proceed button is disabled");
         return true;
@@ -332,7 +332,7 @@ internal static class OutOfCombat
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[rest] reading the screen buttons failed: " + e.GetType().Name);
+            Bridge.LogEvent("[rest] reading the screen buttons failed: " + e.GetType().Name);
         }
         return d.Choices.Count > 0;
     }
@@ -341,13 +341,13 @@ internal static class OutOfCombat
     {
         if (button is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable)
         {
-            Bridge.LogLine("[rest] button is not clickable: " + label);
+            Bridge.LogEvent("[rest] button is not clickable: " + label);
             return;
         }
         AsyncGate.RunSync("rest choose " + label, () => clickable.EmitSignal(
             MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
         _restChosen = true;
-        Bridge.LogLine("[rest] chose " + label);
+        Bridge.LogEvent("[rest] chose " + label);
     }
 
     /// <summary>宝箱の「開ける」ボタンを押す（UI 自身の流れを進める）。</summary>
@@ -392,7 +392,7 @@ internal static class OutOfCombat
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[room] escape move failed: " + e.GetType().Name + ": " + e.Message);
+            Bridge.LogEvent("[room] escape move failed: " + e.GetType().Name + ": " + e.Message);
             return false;
         }
     }
@@ -441,7 +441,7 @@ internal static class OutOfCombat
         if (!_entryLogged)
         {
             _entryLogged = true;
-            Bridge.LogLine($"[room] entered {_currentRoomName}: waiting {PanelState.EntryDelayMs}ms before acting");
+            Bridge.LogEvent($"[room] entered {_currentRoomName}: waiting {PanelState.EntryDelayMs}ms before acting");
         }
         return true;
     }
@@ -464,16 +464,16 @@ internal static class OutOfCombat
             var screen = MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance;
             if (screen == null)
             {
-                Bridge.LogLine("[map] tree: NMapScreen.Instance is null");
+                Bridge.LogEvent("[map] tree: NMapScreen.Instance is null");
                 return;
             }
             var types = screen.FindChildren("*", "", true, false).Take(40)
                 .Select(n => n.GetType().Name).ToList();
-            Bridge.LogLine("[map] tree: " + string.Join(", ", types));
+            Bridge.LogEvent("[map] tree: " + string.Join(", ", types));
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[map] tree dump failed: " + e.GetType().Name);
+            Bridge.LogEvent("[map] tree dump failed: " + e.GetType().Name);
         }
     }
 
@@ -496,12 +496,12 @@ internal static class OutOfCombat
             var want = run.MapLocation;
             if (current.actIndex == want.actIndex && Nullable.Equals(current.coord, want.coord)) return;
             sync.OnLocationChanged(want);
-            Bridge.LogLine($"[map] accepting source synced to act {want.actIndex} coord "
+            Bridge.LogEvent($"[map] accepting source synced to act {want.actIndex} coord "
                            + (want.coord.HasValue ? $"({want.coord.Value.col},{want.coord.Value.row})" : "(null)"));
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[map] source sync failed: " + e.GetType().Name + ": " + e.Message);
+            Bridge.LogEvent("[map] source sync failed: " + e.GetType().Name + ": " + e.Message);
         }
     }
 
@@ -614,14 +614,14 @@ internal static class OutOfCombat
         long now = System.Environment.TickCount64;
         if (FindRoomNode("NMerchantRoom") == null)
         {
-            if (!_shopLogged) { _shopLogged = true; Bridge.LogLine("[shop] waiting for the room screen"); }
+            if (!_shopLogged) { _shopLogged = true; Bridge.LogEvent("[shop] waiting for the room screen"); }
             return null;                                  // 表示待ち
         }
         if (WaitEntry(now)) return null;                   // 観戦用の入場待ち（既定 1.5 秒）
         if (!_shopOptionsLogged)
         {
             _shopOptionsLogged = true;
-            Bridge.LogLine("[shop] gold=" + me.Gold);
+            Bridge.LogEvent("[shop] gold=" + me.Gold);
         }
         var inv = room.GetLocalInventory();
         var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
@@ -644,12 +644,12 @@ internal static class OutOfCombat
         string label = EntryLabel(entry);
         int cost = entry.Cost;
         int goldBefore = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.Gold ?? 0;
-        Bridge.LogLine($"[shop] buy {label} for {cost}g (gold {goldBefore})");
+        Bridge.LogEvent($"[shop] buy {label} for {cost}g (gold {goldBefore})");
         AsyncGate.Run("buy " + label, async () =>
         {
             bool ok = await entry.OnTryPurchaseWrapper(inv);
             int goldAfter = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.Gold ?? 0;
-            Bridge.LogLine($"[shop] buy {label}: {(ok ? "ok" : "failed")}, gold {goldBefore} -> {goldAfter}"
+            Bridge.LogEvent($"[shop] buy {label}: {(ok ? "ok" : "failed")}, gold {goldBefore} -> {goldAfter}"
                            + $", stocked={entry.IsStocked}");
         });
     }
@@ -712,7 +712,7 @@ internal static class OutOfCombat
             if (!_mapWaitLogged)
             {
                 _mapWaitLogged = true;
-                Bridge.LogLine("[map] waiting for the map screen");
+                Bridge.LogEvent("[map] waiting for the map screen");
             }
             return null;                        // 画面が開いてから動かす
         }
@@ -721,7 +721,7 @@ internal static class OutOfCombat
         if (!_mapLogged)
         {
             _mapLogged = true;
-            Bridge.LogLine($"[map] visited={string.Join(" ", run.VisitedMapCoords.Select(c => $"({c.col},{c.row})"))}"
+            Bridge.LogEvent($"[map] visited={string.Join(" ", run.VisitedMapCoords.Select(c => $"({c.col},{c.row})"))}"
                            + $" travelable={string.Join(" ", travel.Select(p => $"({p.coord.col},{p.coord.row}){p.PointType}"))}");
         }
         foreach (var p in travel)
@@ -765,12 +765,12 @@ internal static class OutOfCombat
             {
                 RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
                     new MegaCrit.Sts2.Core.GameActions.MoveToMapCoordAction(me, dest.coord));
-                Bridge.LogLine($"[map] move → ({dest.coord.col},{dest.coord.row}) {dest.PointType}");
+                Bridge.LogEvent($"[map] move → ({dest.coord.col},{dest.coord.row}) {dest.PointType}");
                 return;
             }
             catch (Exception e)
             {
-                Bridge.LogLine("[map] move enqueue failed: " + e.GetType().Name + ": " + e.Message);
+                Bridge.LogEvent("[map] move enqueue failed: " + e.GetType().Name + ": " + e.Message);
             }
         }
 
@@ -784,13 +784,13 @@ internal static class OutOfCombat
                 await RunManager.Instance.EnterMapCoord(coord);
                 _ = RunManager.Instance.FadeIn();
             });
-            Bridge.LogLine($"[map] enter → ({dest.coord.col},{dest.coord.row}) {dest.PointType}"
+            Bridge.LogEvent($"[map] enter → ({dest.coord.col},{dest.coord.row}) {dest.PointType}"
                            + $" (attempt {_moveAttempts})");
             return;
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[map] enter failed: " + e.GetType().Name + ": " + e.Message);
+            Bridge.LogEvent("[map] enter failed: " + e.GetType().Name + ": " + e.Message);
         }
         PanelState.AutoStop("map move failed: " + key);
     }
@@ -815,7 +815,7 @@ internal static class OutOfCombat
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[map] point click failed: " + e.GetType().Name + ": " + e.Message);
+            Bridge.LogEvent("[map] point click failed: " + e.GetType().Name + ": " + e.Message);
         }
         return false;
     }

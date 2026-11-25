@@ -358,6 +358,21 @@ internal static class Bridge
 
     static string Escape(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
+    /// <summary>大事な出来事はゲームのログとサーバの両方に送る（計測の停止理由に使う）。</summary>
+    internal static void LogEvent(string message)
+    {
+        LogLine(message);
+        try
+        {
+            var escaped = message.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            Outbox.Enqueue("{\"t\":\"log\",\"level\":\"info\",\"msg\":\"" + escaped + "\"}");
+        }
+        catch
+        {
+            // 送れなくても止めない
+        }
+    }
+
     internal static void LogLine(string message)
     {
         try

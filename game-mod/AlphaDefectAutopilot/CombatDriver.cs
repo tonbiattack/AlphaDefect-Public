@@ -47,16 +47,20 @@ internal static class CombatDriver
         string digest = Digest(frame);
         if (_lastExecutedLabel != null && digest == _lastFrameDigest)
         {
-            int removed = d.Choices.RemoveAll(c => c.Label == _lastExecutedLabel);
+            if (_failedLabels.Add(_lastExecutedLabel))
+                Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect; excluding it");
+        }
+        if (_failedLabels.Count > 0)
+        {
+            int removed = d.Choices.RemoveAll(c => _failedLabels.Contains(c.Label));
             if (removed > 0)
             {
-                Bridge.LogLine($"[driver] {_lastExecutedLabel} had no effect; trying another candidate");
                 frame = Observation.Build(session, d, labels: true).Serialize();
                 digest = Digest(frame);
             }
             if (d.Choices.Count == 0)
             {
-                PanelState.AutoStop("no candidate changes the state");
+                PanelState.AutoStop("no candidate changes the state (all had no effect)");
                 return false;
             }
         }
@@ -64,6 +68,29 @@ internal static class CombatDriver
         Bridge.SendState(frame, _seq++, meta);
         return true;
     }
+
+    static readonly HashSet<string> _failedLabels = new();
+
+    /// <summary>局面が変わったら「効かなかった候補」の記憶を捨てる。</summary>
+    static void NoteStateKey(RunState run, Player me)
+    {
+        int hp = me.Creature.CurrentHp;
+        int turn = 0;
+        try
+        {
+            if (MegaCrit.Sts2.Core.Combat.CombatManager.Instance.IsInProgress)
+                turn = me.PlayerCombatState?.TurnNumber ?? 0;
+        }
+        catch { }
+        string key = $"{run.TotalFloor}|{run.CurrentActIndex}|{turn}|{hp}|{run.CurrentRoom?.GetType().Name}";
+        if (key != _stateKey)
+        {
+            _stateKey = key;
+            if (_failedLabels.Count > 0) _failedLabels.Clear();
+        }
+    }
+
+    static string _stateKey = "";
 
     static string Digest(byte[] frame)
     {
@@ -104,6 +131,13 @@ internal static class CombatDriver
     {
         if (Bridge.Stopped) return;
         AutoStopPoints();
+        try
+        {
+            var st = RunManager.Instance.DebugOnlyGetState();
+            var p0 = st?.Players != null && st.Players.Count > 0 ? st.Players[0] : null;
+            if (st != null && p0 != null) NoteStateKey(st, p0);
+        }
+        catch { }
         if (AsyncGate.Busy)
         {
             if (nowDiag(3000)) Bridge.LogLine($"[wait] game is busy with {AsyncGate.LastOp}; not deciding yet");
