@@ -49,6 +49,8 @@ The commands below are the paper's evaluation path. If you only want to watch on
 
 [`docs/ja/local-run.md`](docs/ja/local-run.md) is the step-by-step guide (Japanese), including the supported game versions, the characters each one can run, the inference API for downstream tools and the troubleshooting table. Windows users can call `setup.cmd` / `play.cmd` instead.
 
+Runs can be measured in the real game: `./play.sh measure --runs 10` records win/loss, floor, time and stop reason per run ([Japanese guide](docs/ja/measure.md)).
+
 While watching, an in-game panel controls speed, pause, single-step, manual play and confirm-before-act ([Japanese guide](docs/ja/panel.md)).
 
 On Windows, `launch.cmd` (or the desktop shortcuts made by `./play.sh launch --install-shortcuts`) starts either a normal game without mods or the AI watch mode with one click ([Japanese guide](docs/ja/launcher.md)).
