@@ -521,13 +521,28 @@ internal static class MentorClient
                 string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
                     ? idEl.GetString() : null;
                 if (id == null) continue;
-                var card = FindOwnedCard(me, id);
+                var card = ResolveCard(me, id);
                 if (card == null) continue;
                 var c = card;
                 d.Add(ActionKind.PickCardReward, "选 " + c.Id.Entry, () => { }, a: c);
             }
             d.Add(ActionKind.CardRewardAlt, "跳过", () => { }, key: "SKIP");
             return d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>カード ID から CardModel を引く。持っていないカード（報酬・変化）はテンプレートから取る。</summary>
+    static CardModel? ResolveCard(Player me, string id)
+    {
+        var owned = FindOwnedCard(me, id);
+        if (owned != null) return owned;
+        try
+        {
+            return ModelDb.GetById<CardModel>(new ModelId("CARD", id));
         }
         catch
         {
