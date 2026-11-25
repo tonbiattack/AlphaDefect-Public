@@ -67,11 +67,11 @@ CLI / ランチャー
 
 | 設定 | 結果 |
 |---|---|
-| `--character DEFECT --ascension 0 --seed 12345` | `answered run_config: DEFECT / A0 / seed=12345`、戦闘・報酬・選牌まで進行（敗北 floor 17） |
-| `--character REGENT --ascension 0 --seed 999` | `answered run_config: REGENT / A0 / seed=999`、戦闘開始を確認 |
-| `--character SILENT --ascension 5 --seed 4242` | `answered run_config: SILENT / A5 / seed=4242`、戦闘開始を確認 |
+| `--character DEFECT --seed 12345` | `answered run_config: DEFECT / A0 / seed=12345`、戦闘・報酬・選牌まで進行（敗北 floor 17） |
+| `--character REGENT --seed 999` | REGENT で開始し、**戦闘 45 回・報酬画面 5 回・カード報酬 4 回**まで動作 |
+| `--character SILENT --seed 4242` | SILENT で開始し、**戦闘 45 回・報酬画面 2 回・カード報酬 1 回・選牌 8 回**まで動作 |
 | `--character auto` | ゲームが提示した先頭（IRONCLAD）で開始 |
-| `--character select` | 開始しない（ゲーム内で選ぶ）。spire-mentor の autopilot はメニュー開始のみ対応のため、このモードでは観戦しない |
+| `--character select` | 開始しないことを実機で確認（`in_run: false`、`runconfig` なし、ログに `character=select: not starting a run`）。spire-mentor の autopilot はメニュー開始のみ対応のため、このモードでは観戦しない |
 
 ### アセンションについて（重要）
 
