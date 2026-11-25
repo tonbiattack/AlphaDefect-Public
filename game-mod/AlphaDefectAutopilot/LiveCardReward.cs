@@ -98,6 +98,7 @@ internal static class CardRewardScreenPatch
     static void Postfix(IReadOnlyList<CardCreationResult> __0, IReadOnlyList<CardRewardAlternative> __1,
                         NCardRewardSelectionScreen __result)
     {
+        if (MentorClient.Enabled) return;      // mentor モードでは画面は相手に任せる
         try
         {
             LiveCardReward.Capture(__result, __0, __1);
