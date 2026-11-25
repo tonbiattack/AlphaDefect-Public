@@ -509,6 +509,7 @@ internal static class OutOfCombat
     static string _lastMoveDest = "";
     static long _lastMoveAt;
     static int _moveSkips;
+    static int _moveAttempts;
     static long _roomEnteredAt;
     static string _currentRoomName = "";
 
@@ -738,60 +739,60 @@ internal static class OutOfCombat
     /// </summary>
     static void MoveTo(MapPoint dest, RunState run, Player me)
     {
-        // 同じ目的地へ連続で積まない（移動の演出中に何度も積むと二重操作になる）。
         long now = System.Environment.TickCount64;
         string key = $"{dest.coord.col},{dest.coord.row}";
-        if (key == _lastMoveDest)
+        if (key != _lastMoveDest)
         {
-            // 同じ目的地への再試行は 3 秒以上あける。何度も駄目なら安全停止する
-            // （毎フレーム積むと二重操作になり、ログも埋まる）。
-            if (now - _lastMoveAt < 3000)
-            {
-                _moveSkips++;
-                if (_moveSkips == 4)
-                    Bridge.LogLine($"[map] move to {key} does not seem to take effect");
-                if (_moveSkips >= 8) PanelState.AutoStop("map move had no effect: " + key);
-                return;
-            }
-            _moveSkips++;
-            if (_moveSkips >= 8)
-            {
-                PanelState.AutoStop("map move had no effect: " + key);
-                return;
-            }
-        }
-        else
-        {
+            _lastMoveDest = key;
+            _lastMoveAt = 0;
+            _moveAttempts = 0;
             _moveSkips = 0;
         }
-        _lastMoveDest = key;
+        if (now - _lastMoveAt < 3000)
+        {
+            // 同じ目的地への二重操作はしない（演出・入室の途中で積むと壊れる）
+            _moveSkips++;
+            if (_moveSkips >= 8) PanelState.AutoStop("map move had no effect: " + key);
+            return;
+        }
         _lastMoveAt = now;
-        // シングルプレイなので、ホストと同じ「移動」を直接積むのが最も確実
-        // （投票は出所の判定で捨てられ、点のクリックは画面外のノードで無視されることがある）。
+        _moveAttempts++;
+
+        // 1 回目: ゲーム本来の移動アクション（演出つき）。
+        if (_moveAttempts == 1)
+        {
+            try
+            {
+                RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
+                    new MegaCrit.Sts2.Core.GameActions.MoveToMapCoordAction(me, dest.coord));
+                Bridge.LogLine($"[map] move → ({dest.coord.col},{dest.coord.row}) {dest.PointType}");
+                return;
+            }
+            catch (Exception e)
+            {
+                Bridge.LogLine("[map] move enqueue failed: " + e.GetType().Name + ": " + e.Message);
+            }
+        }
+
+        // 2 回目以降: 演出を飛ばして直接入室する（ボスなどで演出が進まないとき）。
         try
         {
-            RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
-                new MegaCrit.Sts2.Core.GameActions.MoveToMapCoordAction(me, dest.coord));
-            Bridge.LogLine($"[map] move → ({dest.coord.col},{dest.coord.row})");
+            var coord = dest.coord;
+            AsyncGate.Run("map enter", async () =>
+            {
+                await RunManager.Instance.FadeOut();
+                await RunManager.Instance.EnterMapCoord(coord);
+                _ = RunManager.Instance.FadeIn();
+            });
+            Bridge.LogLine($"[map] enter → ({dest.coord.col},{dest.coord.row}) {dest.PointType}"
+                           + $" (attempt {_moveAttempts})");
             return;
         }
         catch (Exception e)
         {
-            Bridge.LogLine("[map] move enqueue failed: " + e.GetType().Name + ": " + e.Message);
+            Bridge.LogLine("[map] enter failed: " + e.GetType().Name + ": " + e.Message);
         }
-        if (ClickMapPoint(dest.coord))
-        {
-            Bridge.LogLine($"[map] clicked point ({dest.coord.col},{dest.coord.row})");
-            return;
-        }
-        var vote = new MapVote
-        {
-            coord = dest.coord,
-            mapGenerationCount = RunManager.Instance.MapSelectionSynchronizer.MapGenerationCount,
-        };
-        var source = new MapLocation(run.CurrentMapCoord, run.CurrentActIndex);
-        RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new VoteForMapCoordAction(me, source, vote));
-        Bridge.LogLine($"[map] vote → ({dest.coord.col},{dest.coord.row})");
+        PanelState.AutoStop("map move failed: " + key);
     }
 
     /// <summary>地図の点をクリックする（NMapPoint.OnRelease → 画面が正しい出所で移動する）。</summary>
