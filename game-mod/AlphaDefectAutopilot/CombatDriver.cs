@@ -40,6 +40,40 @@ internal static class CombatDriver
     static int _sameFrame;
     static bool _wasInCombat;
     static string _lastWaitingRoom = "";
+    /// <summary>前回と同じ状態（＝直前に実行した行動が効いていない）なら、その候補を外して送り直す。</summary>
+    static bool SendDecision(Decision d, RunSession session, string meta)
+    {
+        byte[] frame = Observation.Build(session, d, labels: true).Serialize();
+        string digest = Digest(frame);
+        if (_lastExecutedLabel != null && digest == _lastFrameDigest)
+        {
+            int removed = d.Choices.RemoveAll(c => c.Label == _lastExecutedLabel);
+            if (removed > 0)
+            {
+                Bridge.LogLine($"[driver] {_lastExecutedLabel} had no effect; trying another candidate");
+                frame = Observation.Build(session, d, labels: true).Serialize();
+                digest = Digest(frame);
+            }
+            if (d.Choices.Count == 0)
+            {
+                PanelState.AutoStop("no candidate changes the state");
+                return false;
+            }
+        }
+        _lastFrameDigest = digest;
+        Bridge.SendState(frame, _seq++, meta);
+        return true;
+    }
+
+    static string Digest(byte[] frame)
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        return Convert.ToHexString(sha.ComputeHash(frame));
+    }
+
+    static string? _lastFrameDigest;
+    static string? _lastExecutedLabel;
+
     static bool _prevInCombat;
     static bool _cardRewardStop;
 
@@ -168,17 +202,9 @@ internal static class CombatDriver
             var d = BuildDecision(me, pcs);
             if (d.Choices.Count == 0) return;
             var session = new RunSession { Steps = _steps };
-            var frame = Observation.Build(session, d, labels: true).Serialize();
-            string digest = Convert.ToHexString(SHA256.HashData(frame)).Substring(0, 16);
-            if (digest == _lastDigest) _sameFrame++; else { _sameFrame = 0; _lastDigest = digest; }
-            if (_sameFrame >= MaxSameFrame)
-            {
-                Bridge.LogLine($"same frame {_sameFrame} times; stopping (no progress)");
-                Bridge.Stop("no-progress");
-                return;
-            }
             string character = me.Character?.Id?.Entry ?? "";
-            Bridge.SendState(frame, _seq++, $"\"character\":\"{character}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"turn\":{pcs.TurnNumber}");
+            if (!SendDecision(d, session, $"\"character\":\"{character}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"turn\":{pcs.TurnNumber}"))
+                return;
             _decision = d;
             _awaiting = true;
             _deadline = now + ActionTimeoutMs;
@@ -221,8 +247,8 @@ internal static class CombatDriver
                 return;
             }
             var session = new RunSession { Steps = _steps };
-            var frame = Observation.Build(session, d, labels: true).Serialize();
-            Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            if (!SendDecision(d, session, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}"))
+                return;
             _awaitEpoch = PanelState.Epoch;
             _decision = d;
             _awaiting = true;
@@ -268,8 +294,8 @@ internal static class CombatDriver
         {
             var d = LiveCardSelect.Build(run);
             if (d == null) { _nextAt = now + 200; return; }     // 自動解決した等
-            var frame = Observation.Build(new RunSession { Steps = _steps }, d, labels: true).Serialize();
-            Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            if (!SendDecision(d, new RunSession { Steps = _steps }, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}"))
+                return;
             _awaitEpoch = PanelState.Epoch;
             _decision = d;
             _awaiting = true;
@@ -296,6 +322,7 @@ internal static class CombatDriver
         }
         var choice = d.Choices[idx];
         LastNote = choice.Label;
+        _lastExecutedLabel = choice.Label;
         _steps++;                    // 意思決定の数（ヘッダ 13）。局面が同じ間は増やさない（重複検出のため）
         try
         {
