@@ -120,6 +120,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--install-shortcuts", action="store_true", help="デスクトップとスタートメニューにショートカットを作る")
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("mentor", help="spire-mentor に画面を任せ、判断だけ AI にやらせる（実験）")
+    p.add_argument("--runs", type=int, default=1, help="spire-mentor に回させるランの数")
+    p.add_argument("--no-launch", action="store_true", help="ゲームを起動しない（設定だけ）")
+    p.add_argument("--log", default="", help="推論サーバのログ（JSONL）")
+    p.add_argument("--keep-listening", action="store_true", help="ゲームが終わっても待ち続ける")
+    p.add_argument("--idle-timeout", type=float, default=30.0, help="接続が切れてから終了するまで（秒）")
+    p.add_argument("--control-port", type=int, default=0, help="操作 HTTP のポート（既定 18766）")
+    p.add_argument("--character", default="auto", help="キャラ（auto / DEFECT / IRONCLAD / SILENT）")
+
     p = sub.add_parser("measure", help="実ゲームで複数ランを回して勝敗・到達階を記録する")
     p.add_argument("--runs", type=int, default=1, help="回すラン数（seed は MEAS1.. または --seeds）")
     p.add_argument("--seeds", default="", help="カンマ区切りの seed（指定すると --runs より優先）")
@@ -188,6 +197,7 @@ def _dispatch(a) -> int:
         "mod": cmd_mod,
         "launch": cmd_launch,
         "measure": cmd_measure,
+        "mentor": cmd_mentor,
         "versions": cmd_versions,
     }[a.command](a)
 
@@ -586,6 +596,43 @@ def cmd_launch(a) -> int:
 
 
 # ---------------------------------------------------------------- measure
+
+
+def cmd_mentor(a) -> int:
+    """spire-mentor に画面操作を任せ、判断だけをこのリポジトリのモデルにやらせる。"""
+    from . import measure as M
+    from . import paths
+    from . import steam as _steam
+
+    install = _steam.find_install()
+    if install is None:
+        print("ゲームが見つかりません（Steam のインストール先を確認してください）。")
+        return 1
+    spire = install.path / "mods" / "SpireMentor" / "SpireMentor.conf"
+    if not spire.is_file():
+        print("spire-mentor が入っていません（docs/ja/oss-operation-layer.md の手順で導入してください）。")
+        return 1
+    M._set_spire_autostart(install, True, max(1, a.runs))
+    flag = M._mentor_flag(install)
+    flag.parent.mkdir(parents=True, exist_ok=True)
+    flag.write_text("1", encoding="utf-8")
+    print(f"spire-mentor: {a.runs} ラン / mentor フラグ: {flag}")
+    if a.no_launch:
+        return 0
+    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", a.character,
+            "--no-stdin"]
+    if a.keep_listening:
+        argv.append("--keep-listening")
+    argv += ["--idle-timeout", str(a.idle_timeout)]
+    if a.log:
+        argv += ["--log", a.log]
+    if a.control_port:
+        argv += ["--control-port", str(a.control_port)]
+    print("推論サーバを起動します（Ctrl+C で終了）")
+    import subprocess
+
+    subprocess.run(argv, cwd=str(paths.REPO), check=False)
+    return 0
 
 
 def cmd_measure(a) -> int:
