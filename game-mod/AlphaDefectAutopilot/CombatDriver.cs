@@ -388,7 +388,8 @@ internal static class CombatDriver
             {
                 if (!card.CanPlayTargeting(t)) continue;
                 var target = t;
-                d.Add(ActionKind.PlayCard, $"出 {card.Id.Entry}{TargetLabel(t)}", () => card.TryManualPlay(target), a: card, b: t);
+                string label = $"出 {card.Id.Entry}{TargetLabel(t)}";
+                d.Add(ActionKind.PlayCard, label, () => PlayChecked(card, target, label), a: card, b: t);
             }
         }
         foreach (var p in UsablePotions(me))
@@ -408,6 +409,36 @@ internal static class CombatDriver
     }
 
     static string TargetLabel(Creature? t) => t == null ? "" : t.IsPlayer ? " → 自己" : $" → {t.Monster?.Id.Entry}";
+
+    /// <summary>
+    /// 出牌を実行する前に、いま出せるかを確かめる。
+    /// 判断に時間がかかる間に状況（エネルギー・対象・フェーズ）が変わると、ゲーム側は出牌を
+    /// 受け付けず、何も起きないまま同じ判断を繰り返す（画面ではカードが何度も出てくるように見える）。
+    /// その場合はその候補を当面の候補から外す。
+    /// </summary>
+    static Task PlayChecked(CardModel card, Creature target, string label)
+    {
+        try
+        {
+            if (!card.CanPlayTargeting(target))
+            {
+                Bridge.LogEvent($"[driver] play refused (the state changed): {label}");
+                _failedLabels.Add(label);
+                return Task.CompletedTask;
+            }
+        }
+        catch (Exception e)
+        {
+            Bridge.LogEvent("[driver] play check failed: " + e.GetType().Name);
+            return Task.CompletedTask;
+        }
+        if (!card.TryManualPlay(target))
+        {
+            Bridge.LogEvent($"[driver] play refused by the game: {label}");
+            _failedLabels.Add(label);
+        }
+        return Task.CompletedTask;
+    }
 
     static IEnumerable<PotionModel> UsablePotions(Player me) =>
         me.CanUseOrRemovePotions && !me.Creature.IsDead
