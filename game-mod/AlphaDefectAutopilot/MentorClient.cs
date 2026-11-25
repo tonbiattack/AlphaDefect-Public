@@ -187,6 +187,7 @@ internal static class MentorClient
                 "event" => OutOfCombat.BuildEventDecisionForMentor(run, me),
                 "map_select" => BuildMapDecision(run),
                 "shop" => OutOfCombat.BuildShopDecisionForMentor(run, me),
+                "card_select" => BuildCardSelectDecision(me, root),
                 "reward_screen" => LiveRewards.Active ? LiveRewards.Build(me) : null,
                 _ => null,
             };
@@ -430,6 +431,37 @@ internal static class MentorClient
         }
     }
 
+    /// <summary>選牌（カード選択）の候補を、相手の cards[] とデッキから作る。</summary>
+    static Decision? BuildCardSelectDecision(Player me, JsonElement root)
+    {
+        try
+        {
+            if (!root.TryGetProperty("cards", out var cardsEl) || cardsEl.ValueKind != JsonValueKind.Array)
+                return null;
+            var owned = new List<CardModel>();
+            foreach (var pile in new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust })
+            {
+                try { owned.AddRange(pile.GetPile(me).Cards); } catch { }
+            }
+            try { owned.AddRange(me.Deck.Cards); } catch { }   // デッキから選ぶ系（鍛冶など）
+            var d = new Decision(DecisionKind.CardSelect);
+            foreach (var el in cardsEl.EnumerateArray())
+            {
+                string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
+                    ? idEl.GetString() : null;
+                if (id == null) continue;
+                var card = owned.FirstOrDefault(c => string.Equals(c.Id.Entry, id, StringComparison.OrdinalIgnoreCase));
+                if (card == null) continue;
+                d.Add(ActionKind.SelectCard, "选 " + card.Id.Entry, () => { }, a: card);
+            }
+            return d.Choices.Count == 0 ? null : d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     static int ReadInt(JsonElement root, string name)
     {
         if (!root.TryGetProperty(name, out var v)) return -1;
@@ -524,6 +556,8 @@ internal static class MentorClient
                 return "{\"action\":\"choose\",\"index\":" + ProceedIndex() + "}";
             if (choice.Kind == ActionKind.TakeReward)
                 return "{\"action\":\"choose\",\"index\":" + RewardOptionIndex(choice) + "}";
+            if (choice.Kind == ActionKind.SelectCard && choice.A is CardModel picked)
+                return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(picked) + "}";
             if (choice.Kind == ActionKind.CardRewardAlt)
                 return "{\"action\":\"skip\"}";      // カード報酬のスキップ等
             if (choice.Kind == ActionKind.PickCardReward && choice.A is CardModel rewardCard)
