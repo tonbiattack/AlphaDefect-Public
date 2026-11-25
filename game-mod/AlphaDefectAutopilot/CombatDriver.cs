@@ -436,6 +436,8 @@ internal static class CombatDriver
     }
 
     /// <summary>ヘッドレスの CombatDecision と同じ候補（手札×対象、薬水、ターン終了）。</summary>
+    public static Decision BuildCombatDecision(Player me, PlayerCombatState pcs) => BuildDecision(me, pcs);
+
     static Decision BuildDecision(Player me, PlayerCombatState pcs)
     {
         var d = new Decision(DecisionKind.Combat) { Context = $"第 {pcs.TurnNumber} 回合" };

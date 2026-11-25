@@ -103,6 +103,44 @@ spire-mentor/
 結論: アダプタは「MOD 側でフレームを作って外部へ送る」形が唯一現実的。PoC の次の段階で、
 spire-mentor の MOD にフレーム送信フックを足す（またはうちの MOD に画面駆動を取り込む）方向で検証する。
 
+## 3.6 モデルを接続した PoC（2026-11-25、実機）
+
+**spire-mentor に画面を駆動させ、判断だけを AlphaDefect のモデルに任せる**実験を実装した
+（`game-mod/AlphaDefectAutopilot/MentorClient.cs`）。既定は無効で、
+`mods/AlphaDefectAutopilot/mentor.txt` があるときだけ有効になる。
+
+仕組み:
+
+1. この MOD はゲーム内で動いているので、ゲームのオブジェクトから**そのまま**うちのフレームを作れる
+   （`Observation.Build`。語彙・候補 index・行動の意味は普段と同一）。
+2. spire-mentor の TCP（127.0.0.1:9002）に**クライアントとして接続**（ゲーム内なので loopback で届く）。
+3. `combat_action` が来たら、うちの戦闘候補を作ってフレームを推論サーバ（WSL, 18765）へ送り、
+   返ってきた index を spire-mentor の `play` / `end_turn` / `potion` に翻訳して返す。
+4. それ以外の判断（報酬・店・休息など）は、いまは合法な既定（先頭の選択肢）で返す。
+   `run_config` には `start_run`（DEFECT / A0）を返す。
+
+実機での結果（v0.111.1）:
+
+| 確認 | 結果 |
+|---|---|
+| 接続 | `[mentor] connected to spire-mentor on 127.0.0.1:9002` |
+| ランの開始 | `answered run_config with start_run` → `Starting run 1/10` |
+| モデルの判断が合法に実行される | `{"action":"play","card_index":2,"target_index":0,...}` を返し、spire-mentor が `Playing DEFEND_DEFECT` として実行。`end_turn` も同様 |
+| 戦闘の完了 | `Combat finished` まで到達（画面上は「戦闘開始」、左上にうちの推奨、上部に Spire Mentor の Autopilot 表示） |
+| 推論サーバ | `action` 75 件超（モデルが判断している） |
+
+分かったこと:
+
+- **`request_id` は JSON 文字列で返す**必要がある（数値だと spire-mentor が捨てる）。
+- うちの候補 → 相手の行動の対応は、カードは手札の参照一致で index、対象は敵リストの順で index を取れば一致した。
+- この構成なら **うちのエンコーダ・語彙・候補 index・モデルをそのまま**使える（モデル置換なし）。
+
+制約・未対応:
+
+- 報酬・店・休息・選牌などはまだ既定の選択。次は同じ仕組みで候補を対応付ける。
+- 有効化すると、こちらの選牌器とドライバは止まる（spire-mentor と衝突するため）。
+- 起動は手動（`mentor.txt` を置く）。#21 のランチャーからの切替は未実装。
+
 ## 4. 判断（3案の比較）
 
 | 観点 | 全面置換（spire-mentor を操作基盤に） | 部分再利用（画面駆動・プロトコルを採用） | 既存MODの修正（現状の継続） |
