@@ -26,6 +26,7 @@ internal static class Bridge
     static volatile bool _stopped;
     static volatile bool _paused;
     static volatile int _pendingAction = -1;
+    static int _sentEpoch;
     static int _obsFormat;
     static bool _formatApplied;
     public static bool RunReported;
@@ -55,13 +56,23 @@ internal static class Bridge
             Interlocked.Exchange(ref _lastProbeTicks, now);
             Outbox.Enqueue("{\"t\":\"probe\",\"data\":" + Probe.Snapshot() + "}");
         }
-        if (_stream == null || _paused) return;
+        try
+        {
+            // パネルとキーは、停止中・手動中でも操作できるように先に動かす
+            PanelState.PollKeys();
+            ControlPanel.Tick();
+        }
+        catch (Exception e)
+        {
+            LogLine("panel tick failed: " + e.GetType().Name + ": " + e.Message);
+        }
+        if (_stream == null) return;
         try
         {
             ApplyFormat();
             Overlay.Tick();
             Launcher.Tick();
-            CombatDriver.Tick();
+            if (PanelState.CanAct || PanelState.AwaitingApproval) CombatDriver.Tick();
         }
         catch (Exception e)
         {
@@ -69,17 +80,20 @@ internal static class Bridge
         }
     }
 
-    /// <summary>推論サーバから受け取った行動の添字。-1 は無し（取り出すと消費される）。</summary>
-    public static int TakeAction()
+    /// <summary>実行してよい行動の添字（確認モードで許可待ちなら -1）。</summary>
+    public static int TakeAction() => PanelState.TryTakePending(out int idx) ? idx : -1;
+
+    /// <summary>パネルの状態をサーバへ知らせる（/status と表示を一致させる）。</summary>
+    public static void SendPanel(string json)
     {
-        int v = Interlocked.Exchange(ref _pendingAction, -1);
-        return v;
+        Outbox.Enqueue("{\"t\":\"panel\",\"state\":" + json + "}");
     }
 
     /// <summary>観測フレームを送る（base64）。</summary>
     public static void SendState(byte[] frame, int seq, string metaJson)
     {
         if (_stream == null || _stopped) return;
+        _sentEpoch = PanelState.MarkSent();
         string b64 = Convert.ToBase64String(frame);
         Outbox.Enqueue("{\"t\":\"state\",\"seq\":" + seq + ",\"frame\":\"" + b64 + "\",\"meta\":{" + metaJson + "}}");
     }
@@ -91,8 +105,8 @@ internal static class Bridge
         Outbox.Enqueue("{\"t\":\"done\",\"win\":" + (win ? "true" : "false") + ",\"floor\":" + floor + ",\"act\":" + act + "}");
     }
 
-    /// <summary>返ってきた行動を画面に出す（候補は candidates から素朴に読む）。</summary>
-    static void ShowAction(int index, string label, string prob, string line)
+    /// <summary>候補（candidates）を「添字:名前 確率」の並びにする。</summary>
+    static List<string> ParseCandidates(string line, int max = 4)
     {
         var top = new List<string>();
         int at = line.IndexOf("\"candidates\":[[", StringComparison.Ordinal);
@@ -107,11 +121,19 @@ internal static class Bridge
                 string name = bits[1].Trim().Trim('"');
                 string p = bits[2].Trim(' ', ']', '}', '"');
                 top.Add($"{num}:{name} {p}");
-                if (top.Count >= 4) break;
+                if (top.Count >= max) break;
             }
         }
+        return top;
+    }
+
+    static string ShowActionCandidates(string line) => string.Join("  ", ParseCandidates(line));
+
+    /// <summary>返ってきた行動を画面に出す（候補は candidates から素朴に読む）。</summary>
+    static void ShowAction(int index, string label, string prob, string line)
+    {
         double.TryParse(prob, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double pv);
-        Overlay.SetAction(index, label, pv, string.Join("  ", top));
+        Overlay.SetAction(index, label, pv, ShowActionCandidates(line));
     }
 
     static void ApplyFormat()
@@ -148,6 +170,7 @@ internal static class Bridge
                 client.Connect(Host, Port);
                 var stream = client.GetStream();
                 _stream = stream;
+                PanelState.SetConnected(true);
                 _paused = false;                  // 新しいセッションは動いている状態から
                 SendRaw(stream, Hello());
                 LogLine($"connected to {Host}:{Port}");
@@ -162,6 +185,7 @@ internal static class Bridge
             finally
             {
                 _stream = null;
+                PanelState.SetConnected(false);
                 try { client?.Close(); } catch { /* 閉じるだけ */ }
             }
             if (!_stopped) Thread.Sleep(2000);
@@ -212,34 +236,35 @@ internal static class Bridge
                     LogLine($"welcome: run={Field(line, "run")} obs_format={Field(line, "obs_format")}");
                     Overlay.SetStatus($"観戦中（観測形式 {Field(line, "obs_format")}）");
                     if (int.TryParse(Field(line, "obs_format"), out int fmt)) _obsFormat = fmt;
+                    PanelState.Report();
                     break;
                 case "control":
                     string state = Field(line, "state");
-                    _paused = state == "paused";
                     if (state == "stopped")
                     {
                         // サーバ側の都合（待ち時間切れ・操作者の停止）で切れただけかもしれない。
                         // ゲームは止めず、行動を止めて再接続を待つ。
-                        _paused = true;
+                        PanelState.SetPaused(true, "server stopped");
+                        PanelState.RestoreTimeScale();
                         LogLine("session stopped by server: " + Field(line, "reason"));
                     }
                     else
                     {
-                        _paused = state == "paused";
+                        PanelState.SetPaused(state == "paused", "server");
                         LogLine($"control: {state}");
                     }
+                    break;
+                case "command":
+                    // HTTP / ランチャーからの操作（パネルと同じ入口）
+                    PanelState.Apply(Field(line, "name"), Field(line, "value"), fromUser: false);
+                    LogLine($"command: {Field(line, "name")} {Field(line, "value")}");
                     break;
                 case "error":
                     LogLine("server error: " + Field(line, "msg"));
                     break;
                 case "speed":
-                    if (double.TryParse(Field(line, "scale"), System.Globalization.NumberStyles.Float,
-                                        System.Globalization.CultureInfo.InvariantCulture, out double scale))
-                    {
-                        Godot.Engine.TimeScale = Math.Clamp(scale, 0.1, 20.0);
-                        LogLine("game speed set to " + Godot.Engine.TimeScale);
-                        Overlay.SetStatus($"速度 {Godot.Engine.TimeScale:0.##}x");
-                    }
+                    PanelState.Apply("speed", Field(line, "scale"), fromUser: false);
+                    Overlay.SetStatus($"速度 {Godot.Engine.TimeScale:0.##}x");
                     break;
                 case "start":
                     Launcher.Request(Field(line, "character") + "|" + Field(line, "ascension") + "|"
@@ -249,7 +274,10 @@ internal static class Bridge
                 case "action":
                     if (int.TryParse(Field(line, "index"), out int idx))
                     {
-                        Interlocked.Exchange(ref _pendingAction, idx);
+                        double prob = 0;
+                        double.TryParse(Field(line, "prob"), System.Globalization.NumberStyles.Float,
+                                        System.Globalization.CultureInfo.InvariantCulture, out prob);
+                        PanelState.OnAction(idx, _sentEpoch, Field(line, "label"), prob, ShowActionCandidates(line));
                         LogLine($"action: index={idx} p={Field(line, "prob")} {Field(line, "label")}");
                         ShowAction(idx, Field(line, "label"), Field(line, "prob"), line);
                     }

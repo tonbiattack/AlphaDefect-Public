@@ -64,7 +64,8 @@ internal static class Overlay
         var layer = new CanvasLayer { Name = "AlphaDefectOverlay", Layer = 120 };
         var box = new VBoxContainer
         {
-            Position = new Vector2(24, 20),
+            // パネル（左上、y=178）の下に置いて重ならないようにする
+            Position = new Vector2(16, 396),
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         _status = MakeLabel(17, new Color(0.8f, 0.9f, 1f));

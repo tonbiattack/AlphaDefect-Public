@@ -59,4 +59,7 @@
     <Content Include="$(ObsTree)/../catalog/vocab.txt" Link="vocab.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="keys.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None>
+  </ItemGroup>
 </Project>

@@ -30,6 +30,8 @@ public static class ModEntry
             string modDir = Path.GetDirectoryName(typeof(ModEntry).Assembly.Location) ?? ".";
             string vocab = Path.Combine(modDir, "vocab.txt");
             Sts2Headless.Vocab.Load(vocab);
+            PanelState.LoadKeys();
+            PanelState.Changed += PanelState.Report;
             MegaCrit.Sts2.Core.Logging.Log.Info($"[AlphaDefect] vocab loaded ({Sts2Headless.Vocab.Count} keys) from {vocab}");
             Bridge.Start();                 // パッチが失敗しても通信と記録は生きるように先に立てる
             OutOfCombat.Install();
