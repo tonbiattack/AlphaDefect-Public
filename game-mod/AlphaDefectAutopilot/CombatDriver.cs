@@ -46,14 +46,20 @@ internal static class CombatDriver
         byte[] frame = Observation.Build(session, d, labels: true).Serialize();
         string digest = Digest(frame);
         string signature = StateSignature();
-        // 行動の直後はゲーム側の反映（部屋移動・演出）がまだのことがある。少し待ってから判定する。
-        bool settled = System.Environment.TickCount64 - _lastExecuteAt >= 1500;
-        if (settled && _lastExecutedLabel != null && _lastSignature == signature)
+        long nowTick = System.Environment.TickCount64;
+        if (signature != _lastSignature) _signatureChangedAt = nowTick;
+        // 同じ状態が 1.5 秒以上続いているときだけ「効いていない」と判断する
+        // （部屋移動や演出の途中で誤判定しないため）。
+        bool settled = nowTick - _signatureChangedAt >= 1500;
+        // 効かない行動の判定は「戦闘の出牌」と「選牌」だけに使う。
+        // 部屋移動・報酬・退出は演出や画面遷移に時間がかかり、誤判定しやすい。
+        bool filterable = d.Kind == DecisionKind.Combat || d.Kind == DecisionKind.CardSelect;
+        if (filterable && settled && _lastExecutedLabel != null && _lastSignature == signature)
         {
             if (_failedLabels.Add(_lastExecutedLabel))
                 Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect; excluding it");
         }
-        if (_failedLabels.Count > 0)
+        if (filterable && _failedLabels.Count > 0)
         {
             int removed = d.Choices.RemoveAll(c => _failedLabels.Contains(c.Label));
             if (removed > 0)
@@ -69,7 +75,6 @@ internal static class CombatDriver
         }
         _lastFrameDigest = digest;
         _lastSignature = signature;
-        _lastSignatureAt = System.Environment.TickCount64;
         _sentContext = ContextKey();
         Bridge.SendState(frame, _seq++, meta);
         return true;
@@ -98,7 +103,7 @@ internal static class CombatDriver
 
     static string _stateKey = "";
     static string _lastSignature = "";
-    static long _lastSignatureAt;
+    static long _signatureChangedAt;
     static long _lastExecuteAt;
 
     /// <summary>ゲームの状態そのものの指紋（フレームの Steps は毎回変わるので使わない）。</summary>
