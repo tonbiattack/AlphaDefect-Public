@@ -46,7 +46,9 @@ internal static class CombatDriver
         byte[] frame = Observation.Build(session, d, labels: true).Serialize();
         string digest = Digest(frame);
         string signature = StateSignature();
-        if (_lastExecutedLabel != null && _lastSignature == signature)
+        // 行動の直後はゲーム側の反映（部屋移動・演出）がまだのことがある。少し待ってから判定する。
+        bool settled = System.Environment.TickCount64 - _lastExecuteAt >= 1500;
+        if (settled && _lastExecutedLabel != null && _lastSignature == signature)
         {
             if (_failedLabels.Add(_lastExecutedLabel))
                 Bridge.LogEvent($"[driver] {_lastExecutedLabel} had no effect; excluding it");
@@ -67,6 +69,7 @@ internal static class CombatDriver
         }
         _lastFrameDigest = digest;
         _lastSignature = signature;
+        _lastSignatureAt = System.Environment.TickCount64;
         _sentContext = ContextKey();
         Bridge.SendState(frame, _seq++, meta);
         return true;
@@ -95,6 +98,8 @@ internal static class CombatDriver
 
     static string _stateKey = "";
     static string _lastSignature = "";
+    static long _lastSignatureAt;
+    static long _lastExecuteAt;
 
     /// <summary>ゲームの状態そのものの指紋（フレームの Steps は毎回変わるので使わない）。</summary>
     static string StateSignature()
@@ -409,6 +414,7 @@ internal static class CombatDriver
         var choice = d.Choices[idx];
         LastNote = choice.Label;
         _lastExecutedLabel = choice.Label;
+        _lastExecuteAt = System.Environment.TickCount64;
         _steps++;                    // 意思決定の数（ヘッダ 13）。局面が同じ間は増やさない（重複検出のため）
         try
         {
