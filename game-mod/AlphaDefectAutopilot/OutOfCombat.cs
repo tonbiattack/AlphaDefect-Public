@@ -425,6 +425,28 @@ internal static class OutOfCombat
     static bool _entryLogged;
     static bool _sawRoomScreen;
     static bool _mapLogged;
+    static bool _mapTreeLogged;
+
+    /// <summary>地図画面のノード構成を 1 回だけ記録する（点ボタンが見つからないときの手がかり）。</summary>
+    static void DumpMapTree()
+    {
+        try
+        {
+            var screen = MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance;
+            if (screen == null)
+            {
+                Bridge.LogLine("[map] tree: NMapScreen.Instance is null");
+                return;
+            }
+            var types = screen.FindChildren("*", "", true, false).Take(40)
+                .Select(n => n.GetType().Name).ToList();
+            Bridge.LogLine("[map] tree: " + string.Join(", ", types));
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[map] tree dump failed: " + e.GetType().Name);
+        }
+    }
 
     /// <summary>地図の点をクリックする（NMapPoint.OnRelease → 画面が正しい出所で投票する）。</summary>
     static bool ClickMapPoint(MapCoord coord)
