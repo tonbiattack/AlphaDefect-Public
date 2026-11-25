@@ -298,6 +298,13 @@ def run_once_mentor(install, runs_in_session: int = 1, *, timeout: float = 1800.
                 break
             time.sleep(1.0)
         L.launch_game(install, [])
+        # ゲームが立ち上がるまで待つ（起動直後に「動いていない」と判断して落とさない）
+        spawn_deadline = time.time() + 120
+        while time.time() < spawn_deadline and not _game_running():
+            time.sleep(2.0)
+        if not _game_running():
+            log("  ゲームが起動しませんでした")
+            return []
         while time.time() - started < timeout:
             if not _game_running():
                 time.sleep(3.0)

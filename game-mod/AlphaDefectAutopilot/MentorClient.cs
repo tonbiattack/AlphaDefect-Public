@@ -46,6 +46,7 @@ internal static class MentorClient
     static int _replies;
     static int _ignored;
     static bool _discardNext;
+    static bool _reportedEnd;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -159,6 +160,12 @@ internal static class MentorClient
             // 返すと相手が「不正な返答」として再送し、ループになる。
             if (kind is "game_over" or "run_complete")
             {
+                if (_reportedEnd)
+                {
+                    Bridge.LogEvent($"[mentor] '{kind}' after the run already ended; ignoring");
+                    return;
+                }
+                _reportedEnd = true;
                 bool win = root.TryGetProperty("win", out var w) && w.ValueKind == JsonValueKind.True;
                 int floor = ReadInt(root, "floor");
                 int act = ReadInt(root, "act");
@@ -180,6 +187,7 @@ internal static class MentorClient
             }
             if (kind == "run_config")
             {
+                _reportedEnd = false;      // 次のラン
                 // ランの開始もこちらで決める（Defect / A0 / 乱数 seed）
                 SendReply(WithIds("{\"action\":\"start_run\",\"character\":\"DEFECT\",\"ascension\":0,\"seed\":null}", requestId, stateId));
                 Bridge.LogEvent("[mentor] answered run_config with start_run (DEFECT, A0)");
