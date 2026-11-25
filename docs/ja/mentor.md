@@ -15,6 +15,9 @@ Spire Mentor に画面操作を任せ、判断だけ AlphaDefect のモデルに
 # ゲーム内で選んで開始（自動開始しない）
 ./play.sh mentor --character select
 
+# Windows のランチャーから（メニュー 5 番）
+launch.cmd
+
 # 設定だけ書いて、あとで起動する
 ./play.sh mentor --character SILENT --ascension 5 --seed 4242 --no-launch
 
@@ -80,6 +83,19 @@ A0 以外を試すには、ゲーム内でそのキャラのアセンション�
 | v0.113.1 | REGENT | untested（`--allow-untested` が必要） |
 
 未対応の版・キャラ・重み不足は、その場ではっきり断ります（別キャラのモデルで代用しません）。
+
+## 表示（HUD・ログ・計測）
+
+- ゲームログ: `[mentor] answered run_config: SILENT / A0 / seed=31337`
+- 推論サーバのログ: `{"event":"runconfig","character":"SILENT","ascension":0,"seed":31337}`
+- 状態の要約（probe）にも載ります（HUD・`/status`・計測から見える）:
+
+```json
+{"character": "Silent", "mentor_character": "SILENT", "mentor_ascension": 0, "mentor_seed": 31337}
+```
+
+シードを指定しない場合は `seed: null`（乱数）として扱い、ゲームが決めた実際のシードは
+`run_state` の `seed` に現れます（ログに残ります）。
 
 ## 記録
 

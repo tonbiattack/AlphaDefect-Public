@@ -27,6 +27,7 @@ echo   1. AI 観戦（推論サーバ＋MOD）
 echo   2. 通常プレイ（MOD なし）
 echo   3. 状態を見る
 echo   4. 推論サーバを止める
+echo   5. Mentor 観戦（キャラ・アセンション・シードを指定）
 echo   Q. 終了
 echo.
 set "CHOICE="
@@ -41,6 +42,24 @@ if /i "%CHOICE%"=="2" (
 )
 if /i "%CHOICE%"=="3" (
   wsl.exe --cd "%~dp0." -- bash -lc "./play.sh launch --status"
+  echo.
+  pause
+  goto :menu
+)
+if /i "%CHOICE%"=="5" (
+  set "MCHAR="
+  set "MASC="
+  set "MSEED="
+  set /p "MCHAR=キャラ (DEFECT / REGENT / SILENT / auto / select) [auto]: "
+  if "%MCHAR%"=="" set "MCHAR=auto"
+  set /p "MASC=アセンション 0-10 [0]: "
+  if "%MASC%"=="" set "MASC=0"
+  set /p "MSEED=シード（整数、空でランダム）: "
+  if "%MSEED%"=="" (
+    wsl.exe --cd "%~dp0." -- bash -lc "./play.sh launch mentor --character '%MCHAR%' --ascension %MASC%"
+  ) else (
+    wsl.exe --cd "%~dp0." -- bash -lc "./play.sh launch mentor --character '%MCHAR%' --ascension %MASC% --seed %MSEED%"
+  )
   echo.
   pause
   goto :menu

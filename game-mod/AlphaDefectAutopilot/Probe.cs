@@ -45,6 +45,12 @@ internal static class Probe
                 sb.Append(",\"max_hp\":").Append(me.Creature?.MaxHp ?? 0);
                 sb.Append(",\"gold\":").Append(me.Gold);
                 sb.Append(",\"deck\":").Append(me.Deck?.Cards?.Count ?? 0);
+                if (MentorClient.Enabled && MentorClient.RunCharacter.Length > 0)
+                {
+                    sb.Append(",\"mentor_character\":\"").Append(Escape(MentorClient.RunCharacter)).Append('"');
+                    sb.Append(",\"mentor_ascension\":").Append(MentorClient.RunAscension);
+                    sb.Append(",\"mentor_seed\":").Append(MentorClient.RunSeed?.ToString() ?? "null");
+                }
             }
         }
         catch (Exception e)

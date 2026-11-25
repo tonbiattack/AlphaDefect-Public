@@ -30,6 +30,11 @@ internal static class MentorClient
 {
     public static bool Enabled { get; private set; }
 
+    /// <summary>いま開始したランの設定（HUD・計測用）。</summary>
+    public static string RunCharacter { get; private set; } = "";
+    public static int RunAscension { get; private set; }
+    public static int? RunSeed { get; private set; }
+
     const int Port = 9002;
     static TcpClient? _client;
     static NetworkStream? _stream;
@@ -638,6 +643,9 @@ internal static class MentorClient
         string seedText = cfg.Seed is int si ? si.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null";
         string reply = "{\"action\":\"start_run\",\"character\":\"" + character + "\",\"ascension\":" + ascension
                        + ",\"seed\":" + (cfg.Seed is int ? seedText : "null") + "}";
+        RunCharacter = character;
+        RunAscension = ascension;
+        RunSeed = cfg.Seed;
         Bridge.LogEvent($"[mentor] answered run_config: {character} / A{ascension} / seed={(cfg.Seed is int ? seedText : "random")}");
         Bridge.SendRunConfig(character, ascension, cfg.Seed);
         SendReply(WithIds(reply, requestId, stateId));

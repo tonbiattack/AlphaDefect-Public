@@ -105,10 +105,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--stop-after", type=int, default=0, help="--simulate でこの歩数で打ち切る（0 は最後まで）")
 
     p = sub.add_parser("launch", help="Windows から 1 クリックで起動する（通常プレイ / AI 観戦）")
-    p.add_argument("mode", nargs="?", choices=["normal", "ai"], help="normal=MODなし、ai=推論サーバ＋MOD")
+    p.add_argument("mode", nargs="?", choices=["normal", "ai", "mentor"],
+                   help="normal=MODなし、ai=推論サーバ＋MOD、mentor=spire-mentor 連携")
     p.add_argument("--character", default="auto", help="AI モードのキャラ（auto でゲーム側の選択に合わせる）")
     p.add_argument("--speed", type=float, default=1.0, help="AI モードの速度（Godot の TimeScale）")
     p.add_argument("--seed", default="", help="AI モードのシード（空ならランダム）")
+    p.add_argument("--ascension", type=int, default=0, help="Mentor モードのアセンション 0〜10")
     p.add_argument("--no-autostart", dest="autostart", action="store_false", help="ランを自動で始めない（自分で開始する）")
     p.add_argument("--no-wait", dest="wait", action="store_false", help="ゲームの終了を待たない（サーバは残す）")
     p.add_argument("--dry-run", action="store_true", help="起動内容を表示するだけ")
@@ -596,6 +598,9 @@ def cmd_launch(a) -> int:
         got = L.control(cmd)
         print(json.dumps(got or {"error": "推論サーバが応答しません"}, ensure_ascii=False))
         return 0 if got else 1
+    if a.mode == "mentor":
+        return _start_mentor(character=a.character, ascension=a.ascension, seed=a.seed,
+                             runs=1, launch=not a.dry_run)
     return L.start(a.mode, character=a.character, speed=a.speed, seed=a.seed,
                    autostart=a.autostart, wait=a.wait, dry_run=a.dry_run)
 
@@ -603,9 +608,15 @@ def cmd_launch(a) -> int:
 # ---------------------------------------------------------------- measure
 
 
-def cmd_mentor(a) -> int:
-    """spire-mentor に画面操作を任せ、判断だけをこのリポジトリのモデルにやらせる。"""
+def _start_mentor(character: str, ascension: int, seed, runs: int, launch: bool,
+                  log: str = "", keep_listening: bool = True, idle_timeout: float = 0.0,
+                  allow_untested: bool = False) -> int:
+    """spire-mentor に画面を任せ、判断だけをこのリポジトリのモデルにやらせる（共通処理）。"""
+    import subprocess
+    import time
+
     from . import measure as M
+    from . import mentorcfg as MC
     from . import paths
     from . import steam as _steam
 
@@ -613,55 +624,95 @@ def cmd_mentor(a) -> int:
     if install is None:
         print("ゲームが見つかりません（Steam のインストール先を確認してください）。")
         return 1
-    if a.status:
-        from . import mentorcfg as MC_STATUS
-
-        print(MC_STATUS.describe(install))
-        print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC_STATUS.available_characters(install.version)))
-        return 0
     spire = install.path / "mods" / "SpireMentor" / "SpireMentor.conf"
     if not spire.is_file():
         print("spire-mentor が入っていません（docs/ja/oss-operation-layer.md の手順で導入してください）。")
         return 1
-    from . import mentorcfg as MC
-
     try:
-        choice = MC.resolve(install.version, a.character, a.ascension, a.seed,
-                            allow_untested=a.allow_untested)
-    except (LocalError, UnsupportedVersion) as e:   # はっきり断る
+        choice = MC.resolve(install.version, character, ascension, seed, allow_untested=allow_untested)
+    except (LocalError, UnsupportedVersion) as e:
         print(f"開始できません: {e}", file=sys.stderr)
         print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC.available_characters(install.version)))
         return 2
     MC.write(install, choice)
     if choice.character == "select":
-        # ゲーム内で選んで開始するモード: こちらからは開始しない（spire-mentor の autopilot は
-        # メニューからの開始だけに対応するため、AI は接続だけして観戦しない）。
-        M._set_spire_autostart(install, False, max(1, a.runs))
+        M._set_spire_autostart(install, False, max(1, runs))
         print("開始しません（ゲーム内でキャラを選んで開始してください）。"
               "このモードでは spire-mentor の autopilot は動きません。")
     else:
-        M._set_spire_autostart(install, True, max(1, a.runs))
+        M._set_spire_autostart(install, True, max(1, runs))
     flag = M._mentor_flag(install)
     flag.parent.mkdir(parents=True, exist_ok=True)
     flag.write_text("1", encoding="utf-8")
-    print(f"spire-mentor: {a.runs} ラン / {install.version}")
+    print(f"spire-mentor: {runs} ラン / {install.version}")
     print("開始設定: " + MC.describe(install))
-    if a.no_launch:
+    if not launch:
         return 0
-    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", a.character,
-            "--no-stdin"]
-    if a.keep_listening:
-        argv.append("--keep-listening")
-    argv += ["--idle-timeout", str(a.idle_timeout)]
-    if a.log:
-        argv += ["--log", a.log]
-    if a.control_port:
-        argv += ["--control-port", str(a.control_port)]
-    print("推論サーバを起動します（Ctrl+C で終了）")
-    import subprocess
 
-    subprocess.run(argv, cwd=str(paths.REPO), check=False)
+    from . import launcher as L
+
+    # こちらは「待ち受けだけ」の推論サーバ。ランの開始と画面遷移は spire-mentor が行う。
+    if not L.game_running():
+        M._set_spire_autostart(install, True, max(1, runs))
+    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", character, "--no-stdin"]
+    if keep_listening:
+        argv.append("--keep-listening")
+    argv += ["--idle-timeout", str(idle_timeout)]
+    if log:
+        argv += ["--log", log]
+    server_log = paths.home() / "logs" / "mentor-server.log"
+    server_log.parent.mkdir(parents=True, exist_ok=True)
+    with server_log.open("ab") as fh:
+        server_proc = subprocess.Popen(argv, cwd=str(paths.REPO), stdout=fh, stderr=subprocess.STDOUT,
+                                       start_new_session=True)
+    print(f"推論サーバを起動しました（PID {server_proc.pid}、ログ {server_log}）")
+    try:
+        for _ in range(60):
+            if L.control("status") is not None:
+                break
+            time.sleep(1.0)
+        L.launch_game(install, [])
+        print("ゲームを起動しました（spire-mentor がランを始めます）。")
+        # Steam 経由の起動はプロセスが現れるまで少し間がある。すぐ「終わった」と判断しない。
+        spawn_deadline = time.time() + 120
+        while time.time() < spawn_deadline and not L.game_running():
+            time.sleep(2.0)
+        while L.game_running():
+            time.sleep(3.0)
+    except KeyboardInterrupt:
+        print("\n中断しました", file=sys.stderr)
+    finally:
+        try:
+            os.killpg(os.getpgid(server_proc.pid), 15)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
     return 0
+
+
+def cmd_mentor(a) -> int:
+    """spire-mentor に画面操作を任せ、判断だけをこのリポジトリのモデルにやらせる。"""
+    from . import mentorcfg as MC
+    from . import steam as _steam
+
+    install = _steam.find_install()
+    if install is None:
+        print("ゲームが見つかりません（Steam のインストール先を確認してください）。")
+        return 1
+    if a.status:
+        print(MC.describe(install))
+        print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC.available_characters(install.version)))
+        return 0
+    return _start_mentor(
+        character=a.character,
+        ascension=a.ascension,
+        seed=a.seed,
+        runs=a.runs,
+        launch=not a.no_launch,
+        log=a.log,
+        keep_listening=a.keep_listening,
+        idle_timeout=a.idle_timeout,
+        allow_untested=a.allow_untested,
+    )
 
 
 def cmd_measure(a) -> int:
