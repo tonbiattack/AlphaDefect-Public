@@ -425,6 +425,8 @@ internal static class OutOfCombat
     static bool _entryLogged;
     static bool _sawRoomScreen;
     static bool _mapLogged;
+
+    static bool _mapWaitLogged;
     static long _roomEnteredAt;
     static string _currentRoomName = "";
 
@@ -622,7 +624,33 @@ internal static class OutOfCombat
         {
             Context = $"第 {run.CurrentActIndex + 1} 幕 {(cur == null ? "起点" : $"({cur.coord.col},{cur.coord.row})")}",
         };
+        if (MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance == null)
+        {
+            if (!_mapWaitLogged)
+            {
+                _mapWaitLogged = true;
+                Bridge.LogLine("[map] waiting for the map screen");
+            }
+            return null;                        // 画面が開いてから投票する
+        }
+        _mapWaitLogged = false;
         var travel = RunSessionMap.Travelable(run).OrderBy(p => p.coord.col).ToList();
+        if (!_mapLogged)
+        {
+            _mapLogged = true;
+            var map = run.Map;
+            var cp = run.CurrentMapPoint;
+            Bridge.LogLine("[map] diag visited=[" + string.Join(" ", run.VisitedMapCoords.Select(c => $"({c.col},{c.row})")) + "]"
+                           + " currentPoint=" + (cp == null ? "(none)" : $"({cp.coord.col},{cp.coord.row})")
+                           + " currentCoord=" + (run.CurrentMapCoord.HasValue
+                               ? "(" + run.CurrentMapCoord.Value.col + "," + run.CurrentMapCoord.Value.row + ")"
+                               : "(null)")
+                           + " mapLocation=" + (run.MapLocation.coord.HasValue
+                               ? "(" + run.MapLocation.coord.Value.col + "," + run.MapLocation.coord.Value.row + ")"
+                               : "(null)")
+                           + " start=(" + map.StartingMapPoint.coord.col + "," + map.StartingMapPoint.coord.row + ")"
+                           + " rows=" + map.GetRowCount());
+        }
         if (!_mapLogged)
         {
             _mapLogged = true;
@@ -640,8 +668,15 @@ internal static class OutOfCombat
                     coord = dest.coord,
                     mapGenerationCount = RunManager.Instance.MapSelectionSynchronizer.MapGenerationCount,
                 };
+                // 出所は実行時の現在地（決定時だと部屋を出た直後で古いことがある）
+                // 投票の出所は「その瞬間に居るノード」。UI と同じく CurrentMapCoord から作るが、
+                // 部屋を出た直後はまだ更新されていないことがあるので、実行時に読む。
+                var source = new MapLocation(run.CurrentMapCoord, run.CurrentActIndex);
+                Bridge.LogLine($"[map] vote → ({dest.coord.col},{dest.coord.row}) "
+                               + $"from ({(source.coord.HasValue ? source.coord.Value.col.ToString() : "null")},"
+                               + $"{(source.coord.HasValue ? source.coord.Value.row.ToString() : "null")})");
                 RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
-                    new VoteForMapCoordAction(me, run.MapLocation, vote));
+                    new VoteForMapCoordAction(me, source, vote));
             }, a: p);
         }
         AddPotionActions(me, d);
