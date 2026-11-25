@@ -6,6 +6,8 @@
 #   launcher.cmd をダブルクリック（推奨）
 #   または: powershell -NoProfile -ExecutionPolicy Bypass -STA -File launcher.ps1
 
+param([switch]$AutoStart)
+
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
@@ -142,8 +144,45 @@ $txtOut.Size = New-Object System.Drawing.Size(710, 270)
 $txtOut.Font = New-Object System.Drawing.Font("Consolas", 9)
 $form.Controls.Add($txtOut)
 
+$script:logTimer = New-Object System.Windows.Forms.Timer
+$script:logTimer.Interval = 400
+$script:logTimer.Add_Tick({
+    $line = $null
+    while ($script:logQueue.TryDequeue([ref]$line)) {
+        if ($line) { $txtOut.AppendText($line + "`r`n") }
+    }
+})
+$script:logTimer.Start()
+
 function Log($text) {
     $txtOut.AppendText("[" + (Get-Date -Format "HH:mm:ss") + "] " + $text + "`r`n")
+}
+
+# 実行ログを非同期で受けるためのキュー（プロセスの出力スレッドから書く）
+$script:logQueue = New-Object System.Collections.Concurrent.ConcurrentQueue[string]
+
+function LogAsync([string]$text) {
+    if ($null -ne $script:logQueue) { $script:logQueue.Enqueue($text) }
+}
+
+function Start-Wsl([string]$command, [string]$label) {
+    # wsl.exe を Process で直接起動し、出力を GUI に流す（Start-Process だと引数の引用が壊れる）
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = "wsl.exe"
+    $psi.Arguments = "--cd `"$linuxRepo`" -- bash -lc `"$command`""
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+    $proc.add_OutputDataReceived({ param($sender, $e) if ($e.Data) { LogAsync $e.Data } })
+    $proc.add_ErrorDataReceived({ param($sender, $e) if ($e.Data) { LogAsync ("[stderr] " + $e.Data) } })
+    [void]$proc.Start()
+    $proc.BeginOutputReadLine()
+    $proc.BeginErrorReadLine()
+    LogAsync ("$label を開始しました（PID " + $proc.Id + "）")
+    return $proc
 }
 
 function Invoke-Wsl([string[]]$cmdArgs) {
@@ -163,27 +202,31 @@ $btnStart.Add_Click({
 
     if ($rbNormal.Checked) {
         Log "通常プレイで起動します"
-        Start-Process -WindowStyle Hidden -FilePath "wsl.exe" -ArgumentList @("--cd", $linuxRepo, "--", "bash", "-lc", "./play.sh launch normal")
+        $script:proc = Start-Wsl "./play.sh launch normal" "通常プレイ"
         return
     }
     if ($rbAI.Checked) {
         $cmd = "./play.sh launch ai --character '$($cbChar.SelectedItem)' --speed $($numSpeed.Value) --pacing $pacing"
         if ($seed) { $cmd += " --seed $seed" }
         Log ("AI 観戦で起動: " + $cmd)
-        Start-Process -WindowStyle Hidden -FilePath "wsl.exe" -ArgumentList @("--cd", $linuxRepo, "--", "bash", "-lc", "$cmd")
+        $script:proc = Start-Wsl $cmd "AI 観戦"
         return
     }
     # Mentor
     $cmd = "./play.sh mentor --character '$($cbChar.SelectedItem)' --ascension $($numAsc.Value) --runs $($numRuns.Value)"
     if ($seed) { $cmd += " --seed $seed" }
     Log ("Mentor 観戦で起動: " + $cmd)
-    Start-Process -WindowStyle Hidden -FilePath "wsl.exe" -ArgumentList @("--cd", $linuxRepo, "--", "bash", "-lc", "$cmd")
+    $script:proc = Start-Wsl $cmd "Mentor 観戦"
     Log "ウィンドウが出たら、ゲーム画面を確認してください。"
 })
 
 $btnStop.Add_Click({
     Log "停止します"
-    Start-Process -WindowStyle Hidden -FilePath "wsl.exe" -ArgumentList @("--cd", $linuxRepo, "--", "bash", "-lc", "./play.sh launch --stop >/dev/null 2>&1; pkill -f 'local mentor'; pkill -f 'local autopilot'; true")
+    if ($script:proc -and -not $script:proc.HasExited) {
+        try { $script:proc.Kill() } catch { }
+        Log "起動したプロセスを止めました"
+    }
+    [void](Start-Wsl "./play.sh launch --stop >/dev/null 2>&1; pkill -f 'local mentor'; pkill -f 'local autopilot'; true" "停止")
     Log "停止を要求しました（ゲームは閉じません）"
 })
 
@@ -210,5 +253,13 @@ $btnManual.Add_Click({
 
 Log "リポジトリ（WSL）: $linuxRepo"
 Log "起動ボタンを押すと、ゲームが立ち上がります。"
+
+$form.Add_Shown({
+    if ($AutoStart) {
+        Log "自動起動（-AutoStart）: 起動します"
+        Start-Sleep -Milliseconds 400
+        $btnStart.PerformClick()
+    }
+})
 
 [void]$form.ShowDialog()
