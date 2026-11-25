@@ -251,6 +251,93 @@ def measure(seeds: list[str], character: str = "DEFECT", ascension: int = 0, *,
     return rows
 
 
+def _spire_conf_path(install) -> Path:
+    return install.path / "mods" / "SpireMentor" / "SpireMentor.conf"
+
+
+def _set_spire_autostart(install, enabled: bool, num_runs: int) -> None:
+    path = _spire_conf_path(install)
+    if not path.is_file():
+        return
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["auto_start"] = bool(enabled)
+    data["num_runs"] = int(num_runs)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _mentor_flag(install) -> Path:
+    return install.path / "mods" / "AlphaDefectAutopilot" / "mentor.txt"
+
+
+def run_once_mentor(install, runs_in_session: int = 1, *, timeout: float = 1800.0,
+                    character: str = "DEFECT", log=print) -> list[dict]:
+    """Spire Mentor モードでランを回し、終わったランを記録する（MentorClient 経由）。
+
+    推論サーバは起動するだけで、ランの開始・画面遷移は spire-mentor が行う。
+    終了は MentorClient が game_over/run_complete を done として送ってくるので、
+    サーバの JSONL から拾って 1 ラン 1 行にする。
+    """
+    rows: list[dict] = []
+    started = time.time()
+    started_iso = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    flag = _mentor_flag(install)
+    flag.parent.mkdir(parents=True, exist_ok=True)
+    flag.write_text("1", encoding="utf-8")
+    _set_spire_autostart(install, True, runs_in_session)
+    log_path = paths.home() / "logs" / f"mentor-{time.strftime('%Y%m%d-%H%M%S')}.jsonl"
+    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", "auto",
+            "--no-stdin", "--keep-listening", "--control-port", str(L.DEFAULT_CONTROL_PORT),
+            "--log", str(log_path)]
+    server = subprocess.Popen(argv, cwd=str(paths.REPO), stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, start_new_session=True)
+    log("  Mentor モードで起動（推論サーバ + ゲーム）")
+    try:
+        deadline = time.time() + 120
+        while time.time() < deadline:
+            if L.control_status() is not None:
+                break
+            time.sleep(1.0)
+        L.launch_game(install, [])
+        while time.time() - started < timeout:
+            if not _game_running():
+                time.sleep(3.0)
+                break
+            time.sleep(5.0)
+    finally:
+        try:
+            if server.poll() is None:
+                os.killpg(os.getpgid(server.pid), signal.SIGTERM)
+                try:
+                    server.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    os.killpg(os.getpgid(server.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+        _kill_game(log=log)
+        flag.unlink(missing_ok=True)
+        _set_spire_autostart(install, False, runs_in_session)
+        # 終わったランをサーバのログから拾う
+        try:
+            if log_path.is_file():
+                for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if row.get("event") != "done":
+                        continue
+                    rows.append(RunRow(seed="mentor", character=character, ascension=0,
+                                       game=install.version, mod_version="", model=character,
+                                       win=bool(row.get("win")), floor=row.get("floor"),
+                                       actions=0, seconds=0.0,
+                                       result="finished" if row.get("floor") else "stalled",
+                                       reason="game over" if row.get("floor") else "restart",
+                                       started=started_iso).to_dict())
+        except OSError:
+            pass
+    return rows
+
+
 def summarize(rows: list[dict]) -> str:
     played = [r for r in rows if r["result"] == "finished"]
     wins = [r for r in played if r["win"]]
