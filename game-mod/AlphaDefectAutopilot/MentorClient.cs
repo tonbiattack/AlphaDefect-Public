@@ -47,6 +47,7 @@ internal static class MentorClient
     static int _ignored;
     static bool _discardNext;
     static bool _reportedEnd;
+    static int _cardRewardSkips;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -199,7 +200,7 @@ internal static class MentorClient
             Decision? d = kind switch
             {
                 "combat_action" => me.PlayerCombatState == null ? null : CombatDriver.BuildCombatDecision(me, me.PlayerCombatState),
-                "card_reward" => LiveCardReward.Active ? LiveCardReward.Build() : null,
+                "card_reward" => BuildCardRewardDecision(me, root),
                 "rest_site" => BuildRestDecision(),
                 "event" => OutOfCombat.BuildEventDecisionForMentor(run, me),
                 "map_select" => BuildMapDecision(run),
@@ -450,6 +451,48 @@ internal static class MentorClient
         }
     }
 
+    /// <summary>カード報酬の候補を、相手の cards[] から作る（mentor モードではこちらの捕捉が無い）。</summary>
+    static Decision? BuildCardRewardDecision(Player me, JsonElement root)
+    {
+        try
+        {
+            if (!root.TryGetProperty("cards", out var cardsEl) || cardsEl.ValueKind != JsonValueKind.Array)
+                return null;
+            var d = new Decision(DecisionKind.CardReward);
+            foreach (var el in cardsEl.EnumerateArray())
+            {
+                string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
+                    ? idEl.GetString() : null;
+                if (id == null) continue;
+                var card = FindOwnedCard(me, id);
+                if (card == null) continue;
+                var c = card;
+                d.Add(ActionKind.PickCardReward, "选 " + c.Id.Entry, () => { }, a: c);
+            }
+            d.Add(ActionKind.CardRewardAlt, "跳过", () => { }, key: "SKIP");
+            return d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    static CardModel? FindOwnedCard(Player me, string id)
+    {
+        foreach (var pile in new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust })
+        {
+            try
+            {
+                var found = pile.GetPile(me).Cards.FirstOrDefault(c => string.Equals(c.Id.Entry, id, StringComparison.OrdinalIgnoreCase));
+                if (found != null) return found;
+            }
+            catch { }
+        }
+        try { return me.Deck.Cards.FirstOrDefault(c => string.Equals(c.Id.Entry, id, StringComparison.OrdinalIgnoreCase)); }
+        catch { return null; }
+    }
+
     /// <summary>カードパック（bundles[]）の候補を、その並びのまま作る。</summary>
     static Decision? BuildCardBundleDecision(JsonElement root)
     {
@@ -613,9 +656,19 @@ internal static class MentorClient
             if (choice.Kind == ActionKind.SelectCard && choice.A is CardModel picked)
                 return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(picked) + "}";
             if (choice.Kind == ActionKind.CardRewardAlt)
-                return "{\"action\":\"skip\"}";      // カード報酬のスキップ等
+            {
+                // スキップを繰り返すと報酬画面がカード報酬を開き直して止まることがある。
+                // 2 回目からは先頭のカードを取って画面を閉じる（ルールベースの代替であることはログに残す）。
+                _cardRewardSkips++;
+                if (_cardRewardSkips <= 1) return "{\"action\":\"skip\"}";
+                Bridge.LogEvent("[mentor] card reward re-opened after a skip; taking the first card instead");
+                return "{\"action\":\"choose\",\"index\":0}";
+            }
             if (choice.Kind == ActionKind.PickCardReward && choice.A is CardModel rewardCard)
+            {
+                _cardRewardSkips = 0;
                 return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(rewardCard) + "}";
+            }
             if (choice.Kind == ActionKind.UsePotion && choice.A is PotionModel potion)
             {
                 var run = RunManager.Instance.DebugOnlyGetState();
