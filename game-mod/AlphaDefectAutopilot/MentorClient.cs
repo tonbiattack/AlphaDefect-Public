@@ -170,6 +170,14 @@ internal static class MentorClient
                 bool win = root.TryGetProperty("win", out var w) && w.ValueKind == JsonValueKind.True;
                 int floor = ReadInt(root, "floor");
                 int act = ReadInt(root, "act");
+                // `run_complete` は幕の区切りでも送られてくることがある（floor 0）。
+                // 本当の終了は `game_over`（勝敗つき）だけを採用する。
+                if (kind != "game_over" || floor <= 0)
+                {
+                    Bridge.LogEvent($"[mentor] '{kind}' without a usable end (win={win} floor={floor}); not recording it");
+                    _reportedEnd = false;
+                    return;
+                }
                 Bridge.LogEvent($"[mentor] run finished: win={win} floor={floor} act={act}");
                 Bridge.SendDone(win, floor, act);
                 return;
