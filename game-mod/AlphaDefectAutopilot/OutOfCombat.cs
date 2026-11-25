@@ -155,6 +155,20 @@ internal static class OutOfCombat
     }
 
     /// <summary>イベントの選択（エンジンの EventDecision と同じ。Neow もここで進む）。</summary>
+    /// <summary>イベントの候補を読むだけ（Mentor 連携用。押さない）。</summary>
+    public static Decision? BuildEventDecisionForMentor(RunState run, Player me)
+    {
+        if (run.CurrentRoom is not EventRoom) return null;
+        try
+        {
+            return EventDecision(run, me);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     static Decision? EventDecision(RunState run, Player me)
     {
         var ev = RunManager.Instance.EventSynchronizer.GetLocalEvent();
