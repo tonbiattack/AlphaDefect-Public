@@ -454,5 +454,5 @@ internal static class PanelState
                + "}";
     }
 
-    static void Log(string message) => Bridge.LogLine("[panel] " + message);
+    static void Log(string message) => Bridge.LogEvent("[panel] " + message);
 }
