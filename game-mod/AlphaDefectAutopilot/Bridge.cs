@@ -77,7 +77,7 @@ internal static class Bridge
                 MentorClient.Tick();
                 return;
             }
-            if (PanelState.CanAct || PanelState.AwaitingApproval) CombatDriver.Tick();
+            if (PanelState.CanAct || PanelState.AwaitingApproval || PanelState.Advising) CombatDriver.Tick();
         }
         catch (Exception e)
         {

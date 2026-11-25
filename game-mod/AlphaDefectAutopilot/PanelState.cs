@@ -50,6 +50,9 @@ internal static class PanelState
     /// <summary>手動・停止・切断のどれでもない（AI が自分で打ってよい）。</summary>
     public static bool CanAct => Mode == RunMode.Auto && !_paused && _connected;
 
+    /// <summary>手動プレイ中でも推奨だけは出す（実行はしない）。</summary>
+    public static bool Advising => Mode == RunMode.Manual && _connected;
+
     /// <summary>確認モード: 応答が来たら実行せず、ユーザーの許可を待つ。</summary>
     public static bool AwaitingApproval => Confirm && _pendingIndex >= 0 && !_approved && Mode == RunMode.Auto;
 

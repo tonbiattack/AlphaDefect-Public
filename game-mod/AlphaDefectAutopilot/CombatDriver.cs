@@ -231,7 +231,7 @@ internal static class CombatDriver
         var pcs = me.PlayerCombatState;
         long now = Environment.TickCount64;
         if (PanelState.AwaitingApproval) return;      // ユーザーの許可待ち: 新しい状態は送らない
-        if (!PanelState.CanAct) return;
+        if (!PanelState.CanAct && !PanelState.Advising) return;
         // 選牌待ち（捨てる・強化する等）は戦闘の内外を問わず先に片付ける
         if (LiveCardSelect.Active)
         {
@@ -281,6 +281,14 @@ internal static class CombatDriver
             int idx = Bridge.TakeAction();
             if (idx >= 0)
             {
+                if (PanelState.Advising)
+                {
+                    // 手動プレイ中: 推奨を表示するだけで実行しない（HUD は OnAction が更新済み）
+                    _awaiting = false;
+                    _decision = null;
+                    _nextAt = Environment.TickCount64 + 1200;   // 手札が変われば出し直す
+                    return;
+                }
                 Execute(idx);
                 return;
             }
