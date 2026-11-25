@@ -114,3 +114,12 @@ curl -s -X POST -d '{"command":"stopcombat on"}' http://127.0.0.1:18766/control
 
 未検証: 実際にキーを押しての動作（F6〜F10・Alt+[ ]）。パネルのボタンは Godot の `Button.Pressed`
 を呼ぶだけで、HTTP と同じ `PanelState.Apply` を通ります（そこは実機で確認済み）。
+
+## 手動プレイ中の推奨（#2）
+
+パネルで「手動にする」（または `{"command":"manual"}`）にすると、AI は実行しませんが、
+**推奨だけは表示し続けます**（`推奨: [13] 出 GO_FOR_THE_EYES → PHANTASMAL_GARDENER p=0.534`）。
+
+- 推論は非同期のまま。状態が変わったら新しい判断で出し直します
+- 古い応答は捨てます（`epoch` 照合）
+- 実行はしません（手動操作を妨げません）
