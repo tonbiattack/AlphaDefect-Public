@@ -77,6 +77,15 @@ class FileTest(unittest.TestCase):
 
         return Install()
 
+    def test_auto_order_lists_validated_characters(self):
+        choice = M.resolve(VERSION, "auto", 0, None)
+        self.assertEqual(choice.auto_order, ("DEFECT", "REGENT", "SILENT"))
+        with tempfile.TemporaryDirectory() as tmp:
+            install = self._install(Path(tmp))
+            path = M.write(install, choice)
+            data = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(data["auto_order"], ["DEFECT", "REGENT", "SILENT"])
+
     def test_write_read_clear(self):
         with tempfile.TemporaryDirectory() as tmp:
             install = self._install(Path(tmp))

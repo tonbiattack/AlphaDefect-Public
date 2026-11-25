@@ -91,6 +91,30 @@ A0 以外を試すには、ゲーム内でそのキャラのアセンション�
 
 ゲーム側のログにも `[mentor] answered run_config: REGENT / A0 / seed=999` として残ります。
 
+## 観戦の間隔（#52）
+
+Mentor モードでも、**判断を先に HUD に出してから、設定した実時間だけ待って実行**します
+（Godot のメインスレッドは止めません）。
+
+```bash
+# 行動の間隔（ミリ秒）。0 = 最速、500 = 通常、1500 = 観戦、3000 = 学習
+curl -s -X POST -H 'Content-Type: application/json' \
+  -d '{"command":"pacing 1500"}' http://127.0.0.1:18766/control
+```
+
+- パネルの「間隔」ボタン、ショートカットでも同じ値を変えられます
+- 実行前に HUD へ `[idx] 行動名（1500 ms 待って実行）` を出します
+- **一時停止中は実行しません**（再開すると、状態が変わっていなければ実行、変わっていれば破棄）
+- **1手実行**は 1 回だけ実行してから自動で一時停止します
+- 実行直前に `state_id` を確認し、古い判断は捨てます（`dropped a stale action` とログ）
+
+実測（v0.111.1、DEFECT）:
+
+```
+[mentor] chosen: 出 GO_FOR_THE_EYES → EXOSKELETON (wait 1500 ms, combat_action)
+[mentor] chosen: 出 SYNCHRONIZE (wait 1500 ms, combat_action)
+```
+
 ## 既存の設定との関係
 
 - 速度・行動間隔・入場待ち・一時停止・1手実行・手動切替・通常プレイ起動は、これまでどおりです
