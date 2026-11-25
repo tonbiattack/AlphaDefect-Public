@@ -38,6 +38,8 @@ internal static class PanelState
     public static bool Confirm { get; private set; }
     public static double Speed { get; private set; } = 1.0;
     public static int PacingMs { get; private set; } = 0;
+    /// <summary>部屋に入ってから操作を始めるまでの待ち（観戦用）。TimeScale に依存しない実時間。</summary>
+    public static int EntryDelayMs { get; private set; } = 1500;
     public static bool StopOnCombatEnd { get; private set; }
     public static bool StopOnCardReward { get; private set; }
     public static int Epoch => _epoch;
@@ -115,6 +117,9 @@ internal static class PanelState
             case "pacing":
                 if (int.TryParse(value, out int ms)) SetPacing(ms);
                 break;
+            case "entry":
+                if (int.TryParse(value, out int entryMs)) SetEntryDelay(entryMs);
+                break;
             case "stopcombat":
                 StopOnCombatEnd = string.IsNullOrEmpty(value) ? !StopOnCombatEnd : value is "on" or "true" or "1";
                 Log("stop_on_combat_end=" + StopOnCombatEnd);
@@ -189,6 +194,13 @@ internal static class PanelState
         Speed = Math.Clamp(speed, 0.1, 20.0);
         Godot.Engine.TimeScale = Speed;      // ゲームの演出速度
         Log($"speed={Speed:0.##} ({(fromUser ? "panel" : "server")})");
+        Changed?.Invoke();
+    }
+
+    static void SetEntryDelay(int ms)
+    {
+        EntryDelayMs = Math.Clamp(ms, 0, 8000);
+        Log("entry_delay=" + EntryDelayMs + "ms");
         Changed?.Invoke();
     }
 
@@ -433,6 +445,7 @@ internal static class PanelState
                + $"\"confirm\":{(Confirm ? "true" : "false")},"
                + $"\"speed\":{Speed.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)},"
                + $"\"pacing_ms\":{PacingMs},"
+               + $"\"entry_ms\":{EntryDelayMs},"
                + $"\"stop_combat_end\":{(StopOnCombatEnd ? "true" : "false")},"
                + $"\"stop_card_reward\":{(StopOnCardReward ? "true" : "false")},"
                + $"\"connected\":{(_connected ? "true" : "false")},"
