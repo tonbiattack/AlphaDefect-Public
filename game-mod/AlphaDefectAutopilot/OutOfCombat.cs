@@ -528,6 +528,26 @@ internal static class OutOfCombat
     static string _currentRoomName = "";
 
     /// <summary>宝箱: 開けて、遺物が 1 件なら取り、複数なら選ぶ。</summary>
+    /// <summary>宝箱の遺物候補を読むだけ（Mentor 連携用。開けも選びも押さない）。</summary>
+    public static Decision? BuildTreasureDecisionForMentor(RunState run, Player me)
+    {
+        if (run.CurrentRoom is not TreasureRoom) return null;
+        try
+        {
+            var relics = RunManager.Instance.TreasureRoomRelicSynchronizer.CurrentRelics;
+            if (relics == null || relics.Count == 0) return null;
+            var d = new Decision(DecisionKind.Treasure);
+            for (int i = 0; i < relics.Count; i++)
+                d.Add(ActionKind.PickRelic, "拿 " + relics[i].Id.Entry, () => { }, a: relics[i]);
+            d.Add(ActionKind.SkipRelic, "跳过", () => { }, key: "SKIP");
+            return d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     static Decision? TreasureDecision(TreasureRoom room, Player me)
     {
         if (!_chestOpened)

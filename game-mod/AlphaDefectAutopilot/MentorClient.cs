@@ -205,6 +205,8 @@ internal static class MentorClient
                 "map_select" => BuildMapDecision(run),
                 "shop" => OutOfCombat.BuildShopDecisionForMentor(run, me),
                 "card_select" => BuildCardSelectDecision(me, root),
+                "treasure" => OutOfCombat.BuildTreasureDecisionForMentor(run, me),
+                "card_bundle" => BuildCardBundleDecision(root),
                 "reward_screen" => LiveRewards.Active ? LiveRewards.Build(me) : null,
                 _ => null,
             };
@@ -448,6 +450,35 @@ internal static class MentorClient
         }
     }
 
+    /// <summary>カードパック（bundles[]）の候補を、その並びのまま作る。</summary>
+    static Decision? BuildCardBundleDecision(JsonElement root)
+    {
+        try
+        {
+            if (!root.TryGetProperty("bundles", out var bundles) || bundles.ValueKind != JsonValueKind.Array)
+                return null;
+            var d = new Decision(DecisionKind.Bundle);
+            int i = 0;
+            foreach (var bundle in bundles.EnumerateArray())
+            {
+                int index = i;
+                string label = "パック " + (i + 1);
+                if (bundle.ValueKind == JsonValueKind.Object && bundle.TryGetProperty("cards", out var cards)
+                    && cards.ValueKind == JsonValueKind.Array && cards.GetArrayLength() > 0)
+                {
+                    label = "パック " + (i + 1) + " (" + cards.GetArrayLength() + "枚)";
+                }
+                d.Add(ActionKind.PickBundle, label, () => { }, f0: index);
+                i++;
+            }
+            return d.Choices.Count == 0 ? null : d;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>選牌（カード選択）の候補を、相手の cards[] とデッキから作る。</summary>
     static Decision? BuildCardSelectDecision(Player me, JsonElement root)
     {
@@ -565,6 +596,12 @@ internal static class MentorClient
                 return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", rest.OptionId) + "}";
             if (choice.Kind == ActionKind.MapMove && choice.A is MegaCrit.Sts2.Core.Map.MapPoint point)
                 return "{\"index\":" + MapNodeIndex(point.coord) + "}";
+            if (choice.Kind == ActionKind.PickRelic && choice.A is RelicModel relic)
+                return "{\"action\":\"choose\",\"index\":" + IndexOf(_lastMessage, "options", "id", relic.Id.Entry) + "}";
+            if (choice.Kind == ActionKind.SkipRelic)
+                return "{\"action\":\"skip\"}";
+            if (choice.Kind == ActionKind.PickBundle)
+                return "{\"action\":\"choose\",\"index\":" + ((int)choice.F0) + "}";
             if (choice.Kind == ActionKind.Buy)
                 return "{\"action\":\"choose\",\"index\":" + ShopOptionIndex(choice) + "}";
             if (choice.Kind == ActionKind.Leave && _pendingKind == "shop")
