@@ -66,6 +66,7 @@ internal static class MentorClient
         string? flag = Environment.GetEnvironmentVariable("ALPHADEFECT_MENTOR");
         string modDir = Path.GetDirectoryName(typeof(MentorClient).Assembly.Location) ?? ".";
         Enabled = flag is "1" or "true" or "yes" || File.Exists(Path.Combine(modDir, "mentor.txt"));
+        _lastMessageAt = Enabled ? Environment.TickCount64 : 0;
         if (!Enabled) return;
         Bridge.LogEvent("[mentor] experimental mode: spire-mentor drives, our model decides");
         new Thread(Supervise) { IsBackground = true, Name = "MentorClient" }.Start();
@@ -118,6 +119,7 @@ internal static class MentorClient
     public static void Tick()
     {
         if (!Enabled) return;
+        Watchdog(Environment.TickCount64);
         PumpReady();
         // 推論の返答待ちの間は、次のメッセージを処理しない（pending を上書きしない）
         if (!_awaiting)
@@ -222,8 +224,30 @@ internal static class MentorClient
         _heldLogged = false;
     }
 
+    static long _lastMessageAt;
+    static int _stallWarned;
+
+    /// <summary>止まったときの保険: 判断が来ないまま時間が過ぎたら記録し、長引けば安全停止する。</summary>
+    static void Watchdog(long now)
+    {
+        if (_lastMessageAt == 0) return;
+        long idle = now - _lastMessageAt;
+        if (idle > 30000 && _stallWarned == 0)
+        {
+            _stallWarned = 1;
+            Bridge.LogEvent($"[mentor] no decision for {idle / 1000}s; the game may be waiting on a screen we do not answer");
+        }
+        if (idle > 90000 && _stallWarned == 1 && !PanelState.Paused)
+        {
+            _stallWarned = 2;
+            PanelState.AutoStop("mentor: no decision from the game for 90 s");
+        }
+    }
+
     static void HandleMessage(string line)
     {
+        _lastMessageAt = Environment.TickCount64;
+        _stallWarned = 0;
         try
         {
             using var doc = JsonDocument.Parse(line);
@@ -895,8 +919,19 @@ internal static class MentorClient
         var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)
                    ?? new Dictionary<string, JsonElement>();
         var outDict = new Dictionary<string, object?>();
-        foreach (var kv in dict) outDict[kv.Key] = kv.Value.ValueKind == JsonValueKind.Number
-            ? kv.Value.GetInt32() : kv.Value.GetString();
+        foreach (var kv in dict)
+        {
+            object? value = kv.Value.ValueKind switch
+            {
+                JsonValueKind.Number => kv.Value.TryGetInt32(out int n) ? n : kv.Value.GetDouble(),
+                JsonValueKind.String => kv.Value.GetString(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                _ => JsonSerializer.Deserialize<object>(kv.Value.GetRawText()),
+            };
+            outDict[kv.Key] = value;
+        }
         // spire-mentor は request_id を「JSON 文字列」で返すことを要求する（数値だと捨てられる）
         if (requestId >= 0) outDict["request_id"] = requestId.ToString();
         if (stateId >= 0) outDict["state_id"] = stateId;

@@ -165,3 +165,15 @@ curl -s -X POST -H 'Content-Type: application/json' \
 イベントの「融合」のように**複数枚えらぶ**選択では、モデルは 1 枚しか返せないため、
 `min_select` 枚を**先頭から**選びます（ルール。ログに `card_select needs N cards: choosing the first K by rule`）。
 これが無いと `card_select reply rejected` を繰り返して進行不能になります。
+
+## 止まったときの保険
+
+- 30 秒ひと言も判断が来なければ、ログに `no decision for 30s` を出します
+- 90 秒たっても来なければ `auto stop: mentor: no decision from the game for 90 s` で**安全停止**し、
+  画面が止まったまま放置されないようにします
+
+## 複数枚のカード選択（イベント等）
+
+複数枚えらぶ選択では、`min_select` 枚を先頭から選びます（ルール）。
+その返答は `indices` 配列で送ります。配列を送る経路で例外が出ていた不具合も修正済みです
+（`message handling failed: InvalidOperationException` が出て返事が送られず停止していました）。
