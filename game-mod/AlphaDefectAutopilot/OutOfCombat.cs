@@ -426,6 +426,57 @@ internal static class OutOfCombat
     static bool _sawRoomScreen;
     static bool _mapLogged;
 
+    /// <summary>地図の点をクリックする（NMapPoint.OnRelease → 画面が正しい出所で投票する）。</summary>
+    static bool ClickMapPoint(MapCoord coord)
+    {
+        try
+        {
+            var screen = MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance;
+            if (screen == null || !Godot.GodotObject.IsInstanceValid(screen)) return false;
+            foreach (var node in screen.FindChildren("*", "", true, false))
+            {
+                if (node is not MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapPoint point) continue;
+                if (point.Point.coord != coord) continue;
+                if (point is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable) return false;
+                if (!clickable.IsEnabled) return false;
+                AsyncGate.RunSync("map click", () => clickable.EmitSignal(
+                    MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[map] point click failed: " + e.GetType().Name + ": " + e.Message);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 経路投票の出所を、いまの RunState の現在地に合わせる。
+    /// 部屋を出た直後は MapSelectionSynchronizer が古い出所（開始前の座標）を持ったままで、
+    /// 投票が「出所が違う」として捨てられることがあるため。
+    /// </summary>
+    static void SyncAcceptingSource(RunState run)
+    {
+        try
+        {
+            var sync = RunManager.Instance.MapSelectionSynchronizer;
+            var field = sync.GetType().GetField("_acceptingVotesFromSource",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (field == null) return;
+            if (field.GetValue(sync) is not MapLocation current) return;
+            var want = run.MapLocation;
+            if (current.actIndex == want.actIndex && Nullable.Equals(current.coord, want.coord)) return;
+            sync.OnLocationChanged(want);
+            Bridge.LogLine($"[map] accepting source synced to act {want.actIndex} coord "
+                           + (want.coord.HasValue ? $"({want.coord.Value.col},{want.coord.Value.row})" : "(null)"));
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[map] source sync failed: " + e.GetType().Name + ": " + e.Message);
+        }
+    }
+
     static bool _mapWaitLogged;
     static long _roomEnteredAt;
     static string _currentRoomName = "";
