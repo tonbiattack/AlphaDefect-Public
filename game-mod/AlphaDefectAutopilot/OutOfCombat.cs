@@ -448,30 +448,7 @@ internal static class OutOfCombat
         }
     }
 
-    /// <summary>地図の点をクリックする（NMapPoint.OnRelease → 画面が正しい出所で投票する）。</summary>
-    static bool ClickMapPoint(MapCoord coord)
-    {
-        try
-        {
-            var screen = MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance;
-            if (screen == null || !Godot.GodotObject.IsInstanceValid(screen)) return false;
-            foreach (var node in screen.FindChildren("*", "", true, false))
-            {
-                if (node is not MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapPoint point) continue;
-                if (point.Point.coord != coord) continue;
-                if (point is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable) return false;
-                if (!clickable.IsEnabled) return false;
-                AsyncGate.RunSync("map click", () => clickable.EmitSignal(
-                    MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
-                return true;
-            }
-        }
-        catch (Exception e)
-        {
-            Bridge.LogLine("[map] point click failed: " + e.GetType().Name + ": " + e.Message);
-        }
-        return false;
-    }
+
 
     /// <summary>
     /// 経路投票の出所を、いまの RunState の現在地に合わせる。
@@ -500,6 +477,9 @@ internal static class OutOfCombat
     }
 
     static bool _mapWaitLogged;
+    static string _lastMoveDest = "";
+    static long _lastMoveAt;
+    static int _moveSkips;
     static long _roomEnteredAt;
     static string _currentRoomName = "";
 
@@ -704,56 +684,96 @@ internal static class OutOfCombat
                 _mapWaitLogged = true;
                 Bridge.LogLine("[map] waiting for the map screen");
             }
-            return null;                        // 画面が開いてから投票する
+            return null;                        // 画面が開いてから動かす
         }
         _mapWaitLogged = false;
         var travel = RunSessionMap.Travelable(run).OrderBy(p => p.coord.col).ToList();
         if (!_mapLogged)
         {
             _mapLogged = true;
-            var map = run.Map;
-            var cp = run.CurrentMapPoint;
-            Bridge.LogLine("[map] diag visited=[" + string.Join(" ", run.VisitedMapCoords.Select(c => $"({c.col},{c.row})")) + "]"
-                           + " currentPoint=" + (cp == null ? "(none)" : $"({cp.coord.col},{cp.coord.row})")
-                           + " currentCoord=" + (run.CurrentMapCoord.HasValue
-                               ? "(" + run.CurrentMapCoord.Value.col + "," + run.CurrentMapCoord.Value.row + ")"
-                               : "(null)")
-                           + " mapLocation=" + (run.MapLocation.coord.HasValue
-                               ? "(" + run.MapLocation.coord.Value.col + "," + run.MapLocation.coord.Value.row + ")"
-                               : "(null)")
-                           + " start=(" + map.StartingMapPoint.coord.col + "," + map.StartingMapPoint.coord.row + ")"
-                           + " rows=" + map.GetRowCount());
-        }
-        if (!_mapLogged)
-        {
-            _mapLogged = true;
-            Bridge.LogLine($"[map] visited={run.VisitedMapCoords.Count} current={cur?.coord.col},{cur?.coord.row} "
-                           + $"act={run.CurrentActIndex} travelable={travel.Count}: "
-                           + string.Join(", ", travel.Select(p => $"({p.coord.col},{p.coord.row}){p.PointType}")));
+            Bridge.LogLine($"[map] visited={string.Join(" ", run.VisitedMapCoords.Select(c => $"({c.col},{c.row})"))}"
+                           + $" travelable={string.Join(" ", travel.Select(p => $"({p.coord.col},{p.coord.row}){p.PointType}"))}");
         }
         foreach (var p in travel)
         {
             var dest = p;
-            d.Add(ActionKind.MapMove, $"→ ({p.coord.col},{p.coord.row}) {p.PointType}", () =>
-            {
-                var vote = new MapVote
-                {
-                    coord = dest.coord,
-                    mapGenerationCount = RunManager.Instance.MapSelectionSynchronizer.MapGenerationCount,
-                };
-                // 出所は実行時の現在地（決定時だと部屋を出た直後で古いことがある）
-                // 投票の出所は「その瞬間に居るノード」。UI と同じく CurrentMapCoord から作るが、
-                // 部屋を出た直後はまだ更新されていないことがあるので、実行時に読む。
-                var source = new MapLocation(run.CurrentMapCoord, run.CurrentActIndex);
-                Bridge.LogLine($"[map] vote → ({dest.coord.col},{dest.coord.row}) "
-                               + $"from ({(source.coord.HasValue ? source.coord.Value.col.ToString() : "null")},"
-                               + $"{(source.coord.HasValue ? source.coord.Value.row.ToString() : "null")})");
-                RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
-                    new VoteForMapCoordAction(me, source, vote));
-            }, a: p);
+            d.Add(ActionKind.MapMove, $"→ ({p.coord.col},{p.coord.row}) {p.PointType}", () => MoveTo(dest, run, me), a: p);
         }
         AddPotionActions(me, d);
         return d;
+    }
+
+    /// <summary>
+    /// 次のノードへ移る。シングルプレイなのでホストと同じ「移動」を直接積む（投票は出所の
+    /// 判定で捨てられることがある）。画面の点があればプレイヤーと同じクリックを優先する。
+    /// </summary>
+    static void MoveTo(MapPoint dest, RunState run, Player me)
+    {
+        // 同じ目的地へ連続で積まない（移動の演出中に何度も積むと二重操作になる）。
+        long now = System.Environment.TickCount64;
+        string key = $"{dest.coord.col},{dest.coord.row}";
+        if (key == _lastMoveDest && now - _lastMoveAt < 1500)
+        {
+            _moveSkips++;
+            if (_moveSkips == 6)
+                Bridge.LogLine($"[map] move to {key} does not seem to take effect; stopping to avoid a loop");
+            if (_moveSkips >= 6) PanelState.AutoStop("map move had no effect: " + key);
+            return;
+        }
+        _lastMoveDest = key;
+        _lastMoveAt = now;
+        _moveSkips = 0;
+        // シングルプレイなので、ホストと同じ「移動」を直接積むのが最も確実
+        // （投票は出所の判定で捨てられ、点のクリックは画面外のノードで無視されることがある）。
+        try
+        {
+            RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(
+                new MegaCrit.Sts2.Core.GameActions.MoveToMapCoordAction(me, dest.coord));
+            Bridge.LogLine($"[map] move → ({dest.coord.col},{dest.coord.row})");
+            return;
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[map] move enqueue failed: " + e.GetType().Name + ": " + e.Message);
+        }
+        if (ClickMapPoint(dest.coord))
+        {
+            Bridge.LogLine($"[map] clicked point ({dest.coord.col},{dest.coord.row})");
+            return;
+        }
+        var vote = new MapVote
+        {
+            coord = dest.coord,
+            mapGenerationCount = RunManager.Instance.MapSelectionSynchronizer.MapGenerationCount,
+        };
+        var source = new MapLocation(run.CurrentMapCoord, run.CurrentActIndex);
+        RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new VoteForMapCoordAction(me, source, vote));
+        Bridge.LogLine($"[map] vote → ({dest.coord.col},{dest.coord.row})");
+    }
+
+    /// <summary>地図の点をクリックする（NMapPoint.OnRelease → 画面が正しい出所で移動する）。</summary>
+    static bool ClickMapPoint(MapCoord coord)
+    {
+        try
+        {
+            var screen = MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.Instance;
+            if (screen == null || !Godot.GodotObject.IsInstanceValid(screen)) return false;
+            foreach (var node in screen.FindChildren("*", "", true, false))
+            {
+                if (node is not MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapPoint point) continue;
+                if (point.Point.coord != coord) continue;
+                if (point is not MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl clickable) return false;
+                if (!clickable.IsEnabled) return false;
+                AsyncGate.RunSync("map click", () => clickable.EmitSignal(
+                    MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl.SignalName.Released, clickable));
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+            Bridge.LogLine("[map] point click failed: " + e.GetType().Name + ": " + e.Message);
+        }
+        return false;
     }
 
     static void AddPotionActions(Player me, Decision d)
