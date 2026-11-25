@@ -49,6 +49,9 @@ internal static class MentorClient
     static bool _reportedEnd;
     static int _cardRewardSkips;
     static int _crystalReplies;
+    static int _crystalStateId = -1;
+    static int _crystalSameState;
+    static int _crystalCells = 1;
     static int _unmapped;
     static string? _lastMessage;
 
@@ -220,9 +223,21 @@ internal static class MentorClient
                             if (firstCell < 0) firstCell = i;
                         }
                         index = last >= 0 ? last : Math.Max(0, firstCell);
+                        _crystalCells = Math.Max(1, last >= 0 ? last : firstCell + 1);
                     }
                 }
                 catch { }
+                // 同じ state_id で何度も聞かれるなら、こちらの index が受け付けられていない。
+                // セルを順に試して、必ず前へ進むようにする（無限ループの保険）。
+                if (stateId >= 0 && stateId == _crystalStateId) _crystalSameState++;
+                else { _crystalStateId = stateId; _crystalSameState = 0; }
+                if (_crystalSameState >= 2)
+                {
+                    int cells = Math.Max(1, _crystalCells);
+                    index = (_crystalSameState - 2) % cells;
+                    Bridge.LogEvent($"[mentor] crystal_sphere: same state asked {_crystalSameState} times; trying index {index}");
+                }
+                _crystalCells = Math.Max(1, _crystalCells);
                 if (_crystalReplies++ < 3)
                     Bridge.LogEvent($"[mentor] crystal_sphere: rule-based answer (index {index}); the minigame is not modelled");
                 SendReply(WithIds("{\"index\":" + index + "}", requestId, stateId));

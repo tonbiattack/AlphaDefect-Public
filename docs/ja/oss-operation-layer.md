@@ -169,7 +169,8 @@ mentor フラグと spire-mentor の autostart を設定して推論サーバを
 安全）、モデルの「受け取る」候補を相手の `pick_reward` の同じ順に当てるようにした（実測 5 件）。
 また `run_complete` は幕の区切りでも送られてくるため、終了記録は `game_over`（floor > 0）だけを採用するようにした。
 
-水晶球（`crystal_sphere`）は**モデルではなくルール**で答える（`proceed` があればそれを、無ければ先頭の未公開セル。
+水晶球（`crystal_sphere`）は**モデルではなくルール**で答え、同じ state_id で繰り返し聞かれた場合は
+セルを順に試して必ず前へ進む（無限ループの保険）（`proceed` があればそれを、無ければ先頭の未公開セル。
 `index` だけを返す形式）。以前は `choose index 0` を返して相手に拒否され続け、イベントで止まっていた。
 ルールであることはログに残す。
 
@@ -199,7 +200,9 @@ Mentor モード（`mentor.txt`）で通しランを回した結果:
 Mentor 経由の実ゲームで **第3幕ボスを撃破して勝利**した（ゲームログ: `Entering Boss (Act 3, Floor 15)` →
 `Victory! Run completed and returned to main menu`）。デッキ 37 枚、floor 46 時点で hp 63/82。
 
-ただし記録側は `win=False floor=48 act=3` と**敗北として扱っていた**。`game_over` の勝敗は
+2 例目でも勝利（同じく act 3 ボス撃破）を確認し、記録は **`win=True floor=48 act=3`** と正しく残った
+（`victory` / `result` を読む修正の実機確認）。1 例目は記録側の不具合で `win=False floor=48 act=3` と
+**敗北として扱っていた**。`game_over` の勝敗は
 `win` ではなく `victory`（bool）と `result`（"victory"）で来るため。現在はこの 2 つを読むように修正済み
 （修正後の実機確認はこれから）。
 
