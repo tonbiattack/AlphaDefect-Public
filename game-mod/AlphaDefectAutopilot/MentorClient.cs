@@ -168,7 +168,14 @@ internal static class MentorClient
                     return;
                 }
                 _reportedEnd = true;
-                bool win = root.TryGetProperty("win", out var w) && w.ValueKind == JsonValueKind.True;
+                // 勝敗は `victory`（bool）か `result`（"victory"）で来る。`win` は無い。
+                bool win = false;
+                if (root.TryGetProperty("victory", out var v))
+                    win = v.ValueKind == JsonValueKind.True;
+                if (!win && root.TryGetProperty("result", out var res) && res.ValueKind == JsonValueKind.String)
+                    win = string.Equals(res.GetString(), "victory", StringComparison.OrdinalIgnoreCase);
+                if (!win && root.TryGetProperty("win", out var w) && w.ValueKind == JsonValueKind.True)
+                    win = true;
                 int floor = ReadInt(root, "floor");
                 int act = ReadInt(root, "act");
                 // `run_complete` は幕の区切りでも送られてくることがある（floor 0）。

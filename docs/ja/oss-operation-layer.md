@@ -194,6 +194,15 @@ Mentor モード（`mentor.txt`）で通しランを回した結果:
 - 併用時にこちらの報酬画面パッチが相手の画面に触れないよう、mentor モードでは
   こちらの `NRewardsScreen` / `NCardRewardSelectionScreen` の捕捉を無効化した。
 
+### 初の実ゲーム勝利（2026-11-25）
+
+Mentor 経由の実ゲームで **第3幕ボスを撃破して勝利**した（ゲームログ: `Entering Boss (Act 3, Floor 15)` →
+`Victory! Run completed and returned to main menu`）。デッキ 37 枚、floor 46 時点で hp 63/82。
+
+ただし記録側は `win=False floor=48 act=3` と**敗北として扱っていた**。`game_over` の勝敗は
+`win` ではなく `victory`（bool）と `result`（"victory"）で来るため。現在はこの 2 つを読むように修正済み
+（修正後の実機確認はこれから）。
+
 ## 3.8 3系統の比較（2026-11-25、同一重み）
 
 | 系統 | 設定 | 結果（実測） |
