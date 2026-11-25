@@ -56,6 +56,23 @@ internal static class PanelState
     /// <summary>確認モード: 応答が来たら実行せず、ユーザーの許可を待つ。</summary>
     public static bool AwaitingApproval => Confirm && _pendingIndex >= 0 && !_approved && Mode == RunMode.Auto;
 
+    static readonly List<string> RecentActions = new();
+
+    /// <summary>実行した行動を履歴に残す（#52。ターン・カード・確率・結果）。</summary>
+    public static void RecordAction(string text)
+    {
+        try
+        {
+            RecentActions.Insert(0, text);
+            if (RecentActions.Count > 4) RecentActions.RemoveAt(RecentActions.Count - 1);
+            Overlay.SetHistory(RecentActions);
+        }
+        catch (Exception)
+        {
+            // 表示できなくても進行は止めない
+        }
+    }
+
     /// <summary>観戦用: これから実行する判断を先に出す（HUD 用）。</summary>
     public static void SetPreview(string text)
     {
