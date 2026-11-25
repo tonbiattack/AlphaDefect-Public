@@ -63,6 +63,8 @@ spire-mentor/
 | クライアント接続（Windows 側） | 成功。`run_config` を受信 |
 | クライアント駆動の開始 | `start_run` を返すとラン開始（`Starting run 1/10`） |
 | 画面の駆動 | `reward_screen` / `card_reward` を 50 回以上処理（`Handling screen: NCardRewardSelectionScreen` 等） |
+| 判断の網羅（同一セッション内の実測メッセージ数） | `combat_action` 287 / `reward_screen` 15 / `card_select` 2 / `rest_site` 1 / `treasure` 1 / `map_select` 22 / `event` 10 / `game_over` 3 / `run_complete` 3 |
+| ランの完走 | 単純エージェントでもゲームオーバーまで到達し、次のランを開始（`run_complete` 3 回） |
 
 分かった問題点:
 
@@ -75,6 +77,31 @@ spire-mentor/
    (a) ファイアウォール開放、(b) Windows 側に中継を置く、(c) MOD を「外へ接続する」向きに小改造、のいずれかが要る。
    #21 の「クリックだけで動く」を保つなら (c) か (b) が望ましい。
 3. 依存 MOD（BaseLib）が必須。導入は MIT のリリースを `mods/BaseLib/` に置くだけ。
+
+## 3.5 変換アダプタの実現可能性（観測エンコーダ・語彙・候補 index を保つ）
+
+要件: 学習済みモデルは置換せず、観測エンコーダ・語彙・合法手の順序・候補 index・行動の意味・
+モデル版を保つ。隠し情報は使わない。
+
+分かったこと:
+
+- spire-mentor のクライアント側が受け取るのは **JSON**（`combat_action` には手札の合法性・対象候補・山札・
+  敵・オーブ・薬・`available_actions` まで含まれる）。うちのエンコーダは **ゲームのオブジェクト**
+  （`RunState` / `Decision` / `CardModel` …）を受け取ってフレームを作るので、JSON から同じバイト列を
+  作るには語彙・ID・順序の対応表を一から作ることになり、**同一分布を保証できない**（モデルの入力が変わる）。
+- ただし、うちのエンコーダは C# で、いまも MOD 内でコンパイルしている。したがって現実的なのは
+  「spire-mentor の MOD 側に、うちのエンコーダを呼ぶ小さなフックを足す」案:
+  - 判断の直前に、その MOD が持っているゲームオブジェクトから `Observation.Build(...)` でフレームを作り、
+    外部（WSL）へ送る。外部はフレームで推論し、**候補 index** を返す。
+  - 候補の順序は、spire-mentor の `hand[]`/`options[]` の並びと、うちの `Decision.Choices` の並びを
+    一致させる必要がある（`combat_action` の `card_index` は手札 index、`target_index` は `enemies[]`
+    または `valid_target_indices` 基準）。ここは**対応表をテストで固定**できる。
+  - これは MIT のフォークで可能（著作権表示と出典を残す）。ただし MOD の更新追従が必要。
+- 逆に「外部で JSON → うちのフレーム」は、語彙（2287 キー）・エンティティ順・特徴量の再現が必要で、
+  回帰の危険が大きい。**採用しない**。
+
+結論: アダプタは「MOD 側でフレームを作って外部へ送る」形が唯一現実的。PoC の次の段階で、
+spire-mentor の MOD にフレーム送信フックを足す（またはうちの MOD に画面駆動を取り込む）方向で検証する。
 
 ## 4. 判断（3案の比較）
 
@@ -99,7 +126,10 @@ spire-mentor/
 
 ## 5. 未検証・残課題
 
-- spire-mentor の **戦闘** を外部エージェントで最後まで戦わせた確認（今回の PoC は報酬画面までの到達）。
+- spire-mentor の戦闘を**うちのモデル**で戦わせる確認（PoC は単純エージェント。戦闘の判断自体は
+  `combat_action` 287 件で動作を確認済み）。
+- **WSL から 9002 へは接続できない**ことを再確認（`127.0.0.1`/`localhost` とも Connection refused）。
+  Windows 側クライアントでは接続できる。ファイアウォール開放・Windows 中継・外向き改造のいずれかが必要。
 - WSL 側の推論から spire-mentor に接続する経路（現状は Windows 側クライアントのみ）。
 - うちのモデルの観測を spire-mentor の JSON から再構成する場合の情報充足（隠し情報は使わない）。
 - 鍛冶・選牌の停止が、spire-mentor の画面駆動で実際に解消するかの実測（同一 seed での比較）。

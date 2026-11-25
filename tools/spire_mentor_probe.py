@@ -77,13 +77,19 @@ def reply_for(msg: dict) -> dict:
     elif kind in ("card_select",):
         cards = msg.get("cards") or []
         out = {"action": "choose", "index": 0} if cards else {"action": "skip"}
-    elif kind in ("card_reward", "card_bundle", "boss_relic", "treasure", "reward_screen",
-                  "shop", "rest_site", "event", "crystal_sphere"):
+    elif kind == "reward_screen":
+        # 取り終えたら proceed を選ぶ（末尾の proceed を優先）
+        options = [o for o in (msg.get("options") or []) if isinstance(o, dict)]
+        proceed = [o for o in options if str(o.get("action", "")).lower() == "proceed"]
+        out = {"action": "choose", "index": int(proceed[-1]["index"])} if proceed else \
+              {"action": "choose", "index": int(options[0].get("index", 0)) if options else 0}
+    elif kind == "card_reward":
+        cards = msg.get("cards") or []
+        out = {"action": "choose", "index": 0} if cards else {"action": "skip"}
+    elif kind in ("card_bundle", "boss_relic", "treasure", "shop", "rest_site", "event",
+                  "crystal_sphere"):
         index = _first_enabled(msg.get("options"))
-        if index is None and kind == "card_reward":
-            out = {"action": "skip"}
-        else:
-            out = {"action": "choose", "index": index if index is not None else 0}
+        out = {"action": "choose", "index": index if index is not None else 0}
     elif kind in ("game_over", "run_complete", "error", "pong"):
         return {}
     else:
