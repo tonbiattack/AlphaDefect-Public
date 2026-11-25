@@ -120,6 +120,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--install-shortcuts", action="store_true", help="デスクトップとスタートメニューにショートカットを作る")
     p.add_argument("--json", action="store_true")
 
+    p = sub.add_parser("measure", help="実ゲームで複数ランを回して勝敗・到達階を記録する")
+    p.add_argument("--runs", type=int, default=1, help="回すラン数（seed は MEAS1.. または --seeds）")
+    p.add_argument("--seeds", default="", help="カンマ区切りの seed（指定すると --runs より優先）")
+    p.add_argument("--character", default="DEFECT")
+    p.add_argument("--ascension", type=int, default=0)
+    p.add_argument("--timeout", type=float, default=900.0, help="1 ランの上限秒数")
+    p.add_argument("--out", default="", help="記録先の JSONL（既定 ~/.local/share/sls2/runs/measure.jsonl）")
+    p.add_argument("--summary", action="store_true", help="記録済みの集計だけを出す")
+
     p = sub.add_parser("mod", help="ゲーム側 MOD（観戦用）の導入・撤去・状態")
     p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
     p.add_argument("--force", action="store_true", help="キャッシュがあってもビルドし直す")
@@ -176,6 +185,7 @@ def _dispatch(a) -> int:
         "replay": cmd_replay,
         "mod": cmd_mod,
         "launch": cmd_launch,
+        "measure": cmd_measure,
         "versions": cmd_versions,
     }[a.command](a)
 
@@ -571,6 +581,36 @@ def cmd_launch(a) -> int:
         return 0 if got else 1
     return L.start(a.mode, character=a.character, speed=a.speed, seed=a.seed,
                    autostart=a.autostart, wait=a.wait, dry_run=a.dry_run)
+
+
+# ---------------------------------------------------------------- measure
+
+
+def cmd_measure(a) -> int:
+    from . import measure as M
+
+    out = Path(a.out) if a.out else M.DEFAULT_OUT
+    if a.summary:
+        rows = []
+        if out.is_file():
+            for line in out.read_text(encoding="utf-8").splitlines():
+                try:
+                    rows.append(json.loads(line))
+                except ValueError:
+                    continue
+        print(M.summarize(rows))
+        return 0
+    seeds = [s.strip() for s in a.seeds.split(",") if s.strip()]
+    if not seeds:
+        seeds = [f"MEAS{i}" for i in range(1, a.runs + 1)]
+    try:
+        rows = M.measure(seeds, a.character, a.ascension, timeout=a.timeout, out=out)
+    except KeyboardInterrupt:
+        print("\n中断しました（ここまでの記録は残っています）")
+        return 130
+    print()
+    print(M.summarize(rows))
+    return 0
 
 
 # ---------------------------------------------------------------- versions

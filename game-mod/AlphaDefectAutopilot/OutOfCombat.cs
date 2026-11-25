@@ -66,6 +66,8 @@ internal static class OutOfCombat
             _restChosen = false;
             _failedLeaves = 0;
             _leaveStuckLogged = false;
+            _lastLeaveAttempt = 0;
+            _firstFailedAt = 0;
             _sawRoomScreen = false;
             _screenClosedLogged = false;
             _restLogged = false;
@@ -256,26 +258,42 @@ internal static class OutOfCombat
 
     static int _failedLeaves;
     static bool _leaveStuckLogged;
+    static long _lastLeaveAttempt;
+    static long _firstFailedAt;
+    const long LeaveRetryMs = 1200;      // 退出の再試行は 1.2 秒以上あける（演出待ちを潰さない）
+    const int LeaveGiveUpCount = 4;      // 4 回失敗し、かつ
+    const long LeaveGiveUpMs = 6000;     // 最初の失敗から 6 秒経っても駄目なら安全停止
     static bool _screenClosedLogged;
 
     /// <summary>部屋を出る。押せなかったら数える（押せないまま何度も選ばないため）。</summary>
     static void LeaveVia(string roomTypeName)
     {
+        long now = System.Environment.TickCount64;
+        if (now - _lastLeaveAttempt < LeaveRetryMs)
+        {
+            Bridge.LogLine($"[room] leave attempt spacing ({now - _lastLeaveAttempt}ms); waiting");
+            return;                                  // 連打しない（演出待ちを潰さない）
+        }
+        _lastLeaveAttempt = now;
         if (PressRoomProceed(roomTypeName))
         {
             _roomLeft = true;
             _failedLeaves = 0;
+            _firstFailedAt = 0;
             return;
         }
+        if (_failedLeaves == 0) _firstFailedAt = now;
         _failedLeaves++;
-        if (_failedLeaves == 3)
-            Bridge.LogLine($"[room] cannot leave {roomTypeName} (proceed is disabled); stopping instead of retrying");
+        Bridge.LogLine($"[room] cannot leave {roomTypeName} yet (attempt {_failedLeaves}, "
+                       + $"{now - _firstFailedAt}ms since the first attempt)");
     }
 
-    /// <summary>退出できないまま繰り返していないか。3 回失敗したら安全停止する。</summary>
+    /// <summary>退出できないまま繰り返していないか。十分待っても駄目なら安全停止する。</summary>
     static bool LeaveIsStuck()
     {
-        if (_failedLeaves < 3) return false;
+        long now = System.Environment.TickCount64;
+        if (_failedLeaves < LeaveGiveUpCount) return false;
+        if (_firstFailedAt > 0 && now - _firstFailedAt < LeaveGiveUpMs) return false;
         if (!_leaveStuckLogged)
         {
             _leaveStuckLogged = true;

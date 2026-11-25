@@ -36,6 +36,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | 25 | [The livestream setup of 2026-11-17](25_live_fool_search_and_engine.md) (branch `game-v0.113.0`) | the Fool at v24,181, tree search in boss and elite fights and its measurements, the live adapter, the v0.113.1 engine with state cloning and speed patches |
 | 26 | [The Ironclad and the Necrobinder](26_ironclad_and_necrobinder.md) (branch `game-v0.113.0`) | the two v0.113.1 lines behind `weights-v6`, observation format 28 (and 29), recycling, how to run the networks, the checks of the code |
 | — | [Windows one-click launcher (Japanese)](ja/launcher.md) | normal play vs AI watch mode from a double click, detection, safety, controls |
+| — | [Measuring runs in the real game (Japanese)](ja/measure.md) | batch runs, recorded fields, caveats |
 | — | [In-game control panel (Japanese)](ja/panel.md) | speed, pause, single-step, manual mode, confirm mode, shortcuts |
 | — | [Watching the network play in the real game (Japanese)](ja/autopilot.md) | the bridge protocol, the game-side mod, the control plane (pause/resume/stop/speed), what is implemented and what is not |
 | — | [Running a network locally (Japanese)](ja/local-run.md) | setup on Windows 11 / WSL2, one Ascension-10 run on the CPU, supported game versions, the shared inference API |
