@@ -37,6 +37,7 @@ C_DONE = "done"          # 1 ラン終了（勝敗つき）
 C_PROBE = "probe"        # MOD が読める公開状態の要約（観測フレームを送る前段）
 C_PANEL = "panel"        # MOD のパネル状態（自動/手動・停止・速度・間隔・接続）
 C_LOG = "log"
+C_RUNCONFIG = "runconfig"   # ラン開始設定（キャラ・アセンション・シード）
 C_BYE = "bye"
 S_SPEED = "speed"         # ゲーム側の演出速度（Godot の TimeScale）
 S_COMMAND = "command"     # ゲーム内パネルと同じ操作（step / manual / auto / pacing …）
@@ -143,6 +144,12 @@ def state(frame: bytes, seq: int, **meta: Any) -> dict:
 def probe(data: dict, **extra: Any) -> dict:
     """MOD から送る状態の要約。行動は返さない（ログと同期の確認用）。"""
     return {"t": C_PROBE, "data": dict(data), **extra}
+
+
+def runconfig(character: str, ascension: int, seed) -> dict:
+    """ラン開始設定（Mentor の run_config 応答で決めた内容）。"""
+    return {"t": C_RUNCONFIG, "character": str(character), "ascension": int(ascension),
+            "seed": (int(seed) if isinstance(seed, int) else None)}
 
 
 def done(win: bool, floor: int, act: int, **extra: Any) -> dict:

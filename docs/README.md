@@ -37,6 +37,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | 26 | [The Ironclad and the Necrobinder](26_ironclad_and_necrobinder.md) (branch `game-v0.113.0`) | the two v0.113.1 lines behind `weights-v6`, observation format 28 (and 29), recycling, how to run the networks, the checks of the code |
 | — | [Windows one-click launcher (Japanese)](ja/launcher.md) | normal play vs AI watch mode from a double click, detection, safety, controls |
 | — | [Survey of OSS game-operation layers (Japanese)](ja/oss-operation-layer.md) | candidates, licences, PoC with spire-mentor, partial-reuse decision |
+| — | [Mentor mode settings: character, ascension, seed (Japanese)](ja/mentor.md) | `local mentor` options, how run_config is answered, what is verified |
 | — | [Third-party code and data (Japanese)](ja/third-party.md) | what is used (spire-mentor, BaseLib), what is never committed (game assets), attribution rules |
 | — | [Measuring runs in the real game (Japanese)](ja/measure.md) | batch runs, recorded fields, caveats |
 | — | [In-game control panel (Japanese)](ja/panel.md) | speed, pause, single-step, manual mode, confirm mode, shortcuts |

@@ -103,6 +103,14 @@ internal static class Bridge
         Outbox.Enqueue("{\"t\":\"state\",\"seq\":" + seq + ",\"frame\":\"" + b64 + "\",\"meta\":{" + metaJson + "}}");
     }
 
+    /// <summary>ラン開始設定（キャラ・アセンション・シード）をサーバへ知らせる。</summary>
+    public static void SendRunConfig(string character, int ascension, int? seed)
+    {
+        string seedText = seed is int s ? s.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null";
+        Outbox.Enqueue("{\"t\":\"runconfig\",\"character\":\"" + character + "\",\"ascension\":" + ascension
+                       + ",\"seed\":" + seedText + "}");
+    }
+
     public static void SendDone(bool win, int floor, int act)
     {
         if (_stream == null) return;
