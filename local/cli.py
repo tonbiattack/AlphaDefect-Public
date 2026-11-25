@@ -128,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timeout", type=float, default=900.0, help="1 ランの上限秒数")
     p.add_argument("--out", default="", help="記録先の JSONL（既定 ~/.local/share/sls2/runs/measure.jsonl）")
     p.add_argument("--summary", action="store_true", help="記録済みの集計だけを出す")
+    p.add_argument("--backend", choices=["own", "mentor"], default="own",
+                   help="own=独自MOD、mentor=spire-mentor に画面を任せモデルで判断")
 
     p = sub.add_parser("mod", help="ゲーム側 MOD（観戦用）の導入・撤去・状態")
     p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
@@ -604,6 +606,22 @@ def cmd_measure(a) -> int:
     if not seeds:
         seeds = [f"MEAS{i}" for i in range(1, a.runs + 1)]
     try:
+        if a.backend == "mentor":
+            import json as _json
+
+            from . import launcher as _L
+            from . import steam as _steam
+
+            install = _steam.find_install()
+            rows = M.run_once_mentor(install, runs_in_session=max(1, a.runs), timeout=a.timeout)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            with out.open("a", encoding="utf-8") as fh:
+                for row in rows:
+                    fh.write(_json.dumps(row, ensure_ascii=False) + "\n")
+            _ = _L
+            print()
+            print(M.summarize(rows))
+            return 0
         rows = M.measure(seeds, a.character, a.ascension, timeout=a.timeout, out=out)
     except KeyboardInterrupt:
         print("\n中断しました（ここまでの記録は残っています）")

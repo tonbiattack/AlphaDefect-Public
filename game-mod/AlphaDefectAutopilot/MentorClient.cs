@@ -157,7 +157,16 @@ internal static class MentorClient
             _lastMessage = line;
             // 返事が要らないメッセージ（エラー通知・完了通知など）には返さない。
             // 返すと相手が「不正な返答」として再送し、ループになる。
-            if (kind is "error" or "pong" or "snapshot_saved" or "run_complete" or "game_over"
+            if (kind is "game_over" or "run_complete")
+            {
+                bool win = root.TryGetProperty("win", out var w) && w.ValueKind == JsonValueKind.True;
+                int floor = ReadInt(root, "floor");
+                int act = ReadInt(root, "act");
+                Bridge.LogEvent($"[mentor] run finished: win={win} floor={floor} act={act}");
+                Bridge.SendDone(win, floor, act);
+                return;
+            }
+            if (kind is "error" or "pong" or "snapshot_saved"
                 or "combat_ended" or "annotation" or "advice_request" or "human_action")
             {
                 if (kind == "error" && _ignored < 20)
