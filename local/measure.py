@@ -207,7 +207,8 @@ def run_once(seed: str, character: str = "DEFECT", ascension: int = 0, *, timeou
             elif row.result == "stalled":
                 panel = info.get("panel") or {}
                 stall = (info.get("stalls") or [""])[-1]
-                row.reason = f"paused ({stall or f'mode={panel.get('mode')}'})"
+                how = "paused" if panel.get("paused") else "no progress"
+                row.reason = stall or f"{how} (mode={panel.get('mode')})"
             else:
                 row.reason = row.result
             hello = info["hello"] or {}
