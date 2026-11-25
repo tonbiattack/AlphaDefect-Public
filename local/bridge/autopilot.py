@@ -97,6 +97,9 @@ class Autopilot:
         self.merge = merge
         self.obs_format = obs_format
         self.autostart = autostart            # "DEFECT|0|SEED|regular" 形式（接続時に start を送る）
+        self.panel: dict | None = None        # MOD から届くパネルの状態（表示の同期用）
+        # 接続し直したときに同じ操作を送り直すための控え（操作名 → メッセージ）
+        self.pending_controls: dict[str, dict] = {}
 
         self.state = "idle"          # idle / running / paused / stopped / error
         self.speed = 1.0
@@ -115,6 +118,7 @@ class Autopilot:
         return self.state == "running"
 
     def pause(self, reason: str = "operator") -> list[dict]:
+        self.pending_controls["pause"] = P.control("paused", reason)
         if self.state in ("stopped", "error"):
             return []
         if self.state != "paused":
@@ -124,6 +128,7 @@ class Autopilot:
         return [P.control(P.CONTROL_PAUSED, reason)]
 
     def resume(self) -> list[dict]:
+        self.pending_controls.pop("pause", None)
         if self.state != "paused":
             return []
         self.state = "running"
@@ -138,6 +143,7 @@ class Autopilot:
         return [P.speed(self.speed)]
 
     def stop(self, reason: str = "operator") -> list[dict]:
+        self.pending_controls.pop("pause", None)
         if self.state == "stopped":
             return []
         self.state = "stopped"
@@ -145,6 +151,50 @@ class Autopilot:
         self.stats.finished = time.time()
         self.log("stop", {"reason": reason, **self.stats.to_dict()})
         return [P.control(P.CONTROL_STOPPED, reason)]
+
+    def step(self) -> list[dict]:
+        """1 手だけ進める（ゲーム内パネルの「1手」と同じ）。"""
+        self.log("step", {})
+        return [P.command("step")]
+
+    def set_mode(self, mode: str) -> list[dict]:
+        """auto / manual を切り替える（手動では AI が操作しない）。"""
+        mode = mode.lower()
+        if mode not in ("auto", "manual"):
+            raise AutopilotError(f"モードは auto か manual です: {mode}")
+        self.log("mode", {"mode": mode})
+        msg = P.command(mode)
+        self.pending_controls["mode"] = msg
+        return [msg]
+
+    def set_confirm(self, on: bool) -> list[dict]:
+        """各判断の前に止めて、候補と確率を見せてから実行する。"""
+        self.log("confirm", {"on": on})
+        msg = P.command("confirm-on" if on else "confirm-off")
+        self.pending_controls["confirm"] = msg
+        return [msg]
+
+    def set_pacing(self, ms: int) -> list[dict]:
+        """行動の間隔（ミリ秒）。速度（TimeScale）とは独立。"""
+        ms = max(0, min(int(ms), 10000))
+        self.log("pacing", {"ms": ms})
+        msg = P.command("pacing", ms)
+        self.pending_controls["pacing"] = msg
+        return [msg]
+
+    def set_stop_points(self, combat_end: bool | None = None, card_reward: bool | None = None) -> list[dict]:
+        out = []
+        if combat_end is not None:
+            self.log("stop_point", {"where": "combat_end", "on": combat_end})
+            msg = P.command("stopcombat", "on" if combat_end else "off")
+            self.pending_controls["stopcombat"] = msg
+            out.append(msg)
+        if card_reward is not None:
+            self.log("stop_point", {"where": "card_reward", "on": card_reward})
+            msg = P.command("stopreward", "on" if card_reward else "off")
+            self.pending_controls["stopreward"] = msg
+            out.append(msg)
+        return out
 
     def hold_ms(self) -> int:
         """MOD に指示する待ち時間（速度倍率で割る）。"""
@@ -164,6 +214,9 @@ class Autopilot:
             self.state = "running"
         self.log("start", {"character": self.character, "run": self.run_id})
         out = [P.welcome(self.run_id, P.PROTOCOL_VERSION, self.character, self.speed, self.obs_format), P.speed(self.speed)]
+        # 接続前に操作していた内容（停止・手動・確認・間隔・停止点）を送り直す。
+        # これが無いと、つなぎ直したあとに勝手に動き出してしまう。
+        out.extend(self.pending_controls.values())
         if self.autostart:
             out.append(self._start_message(self.autostart))
         return out
@@ -190,6 +243,14 @@ class Autopilot:
             data = dict(msg.get("data") or {})
             self.stats.probes += 1
             self.log("probe", {"data": data, "n": self.stats.probes})
+            return []
+        if kind == P.C_PANEL:
+            state = dict(msg.get("state") or {})
+            self.panel = state
+            # MOD が正なので、サーバ側の state も合わせる（/status とランチャーの表示を一致させる）
+            if self.state not in ("stopped", "error", "error-stopped"):
+                self.state = "paused" if state.get("paused") else "running"
+            self.log("panel", state)
             return []
         if kind == P.C_LOG:
             self.log("mod-log", {"level": msg.get("level"), "msg": msg.get("msg")})
@@ -314,6 +375,7 @@ class Autopilot:
     def summary(self) -> dict:
         return {
             "run": self.run_id,
+            "panel": self.panel,
             "character": self.character,
             "state": self.state,
             "reason": self.stopped_reason,

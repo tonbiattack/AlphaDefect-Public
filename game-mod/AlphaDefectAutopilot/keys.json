@@ -1,0 +1,10 @@
+{
+ "enabled": true,
+ "hide": "F6",
+ "pause": "F7",
+ "step": "F8",
+ "mode": "F9",
+ "confirm": "F10",
+ "speed_down": "Alt+BracketLeft",
+ "speed_up": "Alt+BracketRight"
+}

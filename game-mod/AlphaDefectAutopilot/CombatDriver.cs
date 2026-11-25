@@ -27,6 +27,8 @@ internal static class CombatDriver
 {
     const int ActionTimeoutMs = 15000;   // 行動が返らないときの諦め
     const int SettleMs = 350;            // 実行後、ゲームが落ち着くまで次の判断を待つ
+    /// <summary>行動の間の待ち時間（パネルの「間隔」が指定されていればそちら）。</summary>
+    static int EffectiveSettle() => Math.Max(SettleMs, PanelState.PacingMs);
     const int MaxSameFrame = 6;          // 同じフレームが続いたら止める（手が効いていない）
 
     static Decision? _decision;
@@ -38,15 +40,42 @@ internal static class CombatDriver
     static int _sameFrame;
     static bool _wasInCombat;
     static string _lastWaitingRoom = "";
+    static bool _prevInCombat;
+    static bool _cardRewardStop;
+
+    /// <summary>戦闘終了・カード報酬で自動停止する（設定されているときだけ）。</summary>
+    static void AutoStopPoints()
+    {
+        bool inCombat = SafeInCombat();
+        if (_prevInCombat && !inCombat && PanelState.StopOnCombatEnd)
+            PanelState.AutoStop("combat finished");
+        _prevInCombat = inCombat;
+
+        bool cardReward = LiveCardReward.Active;
+        if (cardReward && !_cardRewardStop && PanelState.StopOnCardReward)
+        {
+            _cardRewardStop = true;
+            PanelState.AutoStop("card reward screen");
+        }
+        if (!cardReward) _cardRewardStop = false;
+    }
     static long _lastDiag;
     static int _steps;
+    static int _awaitEpoch;
 
     public static string LastNote { get; private set; } = "";
     public static int Seq => _seq;
 
     public static void Tick()
     {
-        if (Bridge.Stopped || Bridge.Paused) return;
+        if (Bridge.Stopped) return;
+        AutoStopPoints();
+        if (_awaiting && _awaitEpoch != PanelState.Epoch)
+        {
+            // 手動切り替え・1 手実行・再開で古い判断は無効。応答は捨てて次の状態から作り直す。
+            _awaiting = false;
+            Bridge.LogLine("epoch changed: dropped the waiting decision");
+        }
         RunState? run;
         try
         {
@@ -66,6 +95,8 @@ internal static class CombatDriver
         var me = run.Players[0];
         var pcs = me.PlayerCombatState;
         long now = Environment.TickCount64;
+        if (PanelState.AwaitingApproval) return;      // ユーザーの許可待ち: 新しい状態は送らない
+        if (!PanelState.CanAct) return;
         // 選牌待ち（捨てる・強化する等）は戦闘の内外を問わず先に片付ける
         if (LiveCardSelect.Active)
         {
@@ -161,6 +192,7 @@ internal static class CombatDriver
         {
             int idx = Bridge.TakeAction();
             if (idx >= 0) { Execute(idx); return; }
+            if (PanelState.AwaitingApproval && now < _deadline) return;   // 許可待ち
             if (now > _deadline) { _awaiting = false; }
             return;
         }
@@ -186,6 +218,7 @@ internal static class CombatDriver
             var session = new RunSession { Steps = _steps };
             var frame = Observation.Build(session, d, labels: true).Serialize();
             Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            _awaitEpoch = PanelState.Epoch;
             _decision = d;
             _awaiting = true;
             _deadline = now + ActionTimeoutMs;
@@ -210,6 +243,7 @@ internal static class CombatDriver
         {
             int idx = Bridge.TakeAction();
             if (idx >= 0) { Execute(idx); return; }
+            if (PanelState.AwaitingApproval) return;      // 確認モード: 許可待ちのまま待つ
             if (now > _deadline) _awaiting = false;
             return;
         }
@@ -220,6 +254,7 @@ internal static class CombatDriver
             if (d == null) { _nextAt = now + 200; return; }     // 自動解決した等
             var frame = Observation.Build(new RunSession { Steps = _steps }, d, labels: true).Serialize();
             Bridge.SendState(frame, _seq++, $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp}");
+            _awaitEpoch = PanelState.Epoch;
             _decision = d;
             _awaiting = true;
             _deadline = now + ActionTimeoutMs;
@@ -236,7 +271,8 @@ internal static class CombatDriver
         var d = _decision;
         _decision = null;
         _awaiting = false;
-        _nextAt = Environment.TickCount64 + SettleMs;
+        _nextAt = Environment.TickCount64 + EffectiveSettle();
+        PanelState.AfterStep();
         if (d == null || idx < 0 || idx >= d.Choices.Count)
         {
             Bridge.LogLine($"action index out of range: {idx}");

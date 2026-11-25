@@ -35,9 +35,12 @@ C_HELLO = "hello"
 C_STATE = "state"
 C_DONE = "done"          # 1 ラン終了（勝敗つき）
 C_PROBE = "probe"        # MOD が読める公開状態の要約（観測フレームを送る前段）
+C_PANEL = "panel"        # MOD のパネル状態（自動/手動・停止・速度・間隔・接続）
 C_LOG = "log"
 C_BYE = "bye"
 S_SPEED = "speed"         # ゲーム側の演出速度（Godot の TimeScale）
+S_COMMAND = "command"     # ゲーム内パネルと同じ操作（step / manual / auto / pacing …）
+S_PANEL = "panel"         # MOD → サーバ: パネルの状態（/status と表示を一致させる）
 S_START = "start"         # ゲーム側で 1 局を始める（観戦の起動を簡単にする）
 S_WELCOME = "welcome"
 S_ACTION = "action"
@@ -163,6 +166,19 @@ def start(character: str, ascension: int = 0, seed: str = "ALPHADEFECT", encount
         "seed": seed,
         "encounter": encounter,
     }
+
+
+def command(name: str, value: object | None = None) -> dict:
+    """ゲーム内パネルと同じ操作を MOD へ送る。"""
+    msg = {"t": S_COMMAND, "name": str(name)}
+    if value is not None:
+        msg["value"] = str(value)
+    return msg
+
+
+def panel(state: dict) -> dict:
+    """MOD から送られてくるパネルの状態（そのまま返す）。"""
+    return {"t": S_PANEL, "state": state}
 
 
 def speed(scale: float) -> dict:

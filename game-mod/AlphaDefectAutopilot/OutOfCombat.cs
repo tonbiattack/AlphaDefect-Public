@@ -31,6 +31,7 @@ internal static class OutOfCombat
     static bool _shopLeft;
     static int _restWaits;
     static bool _roomLeft;
+    static bool _eventLeft;
     static object? _lastRoom;
 
     public static void Install()
@@ -52,6 +53,7 @@ internal static class OutOfCombat
             _lastRoom = run.CurrentRoom;
             _shopLeft = false;
             _roomLeft = false;
+            _eventLeft = false;
             _chestOpened = false;
             _relicDecided = false;
         }
@@ -69,7 +71,22 @@ internal static class OutOfCombat
         if (run.CurrentRoom is EventRoom)
         {
             if (EventDecision(run, me) is { } ev) return ev;
-            // イベントが終わったのに部屋が残っている: 画面の「続ける」は押さず、地図の判断で抜ける
+            // イベントが終わったのに部屋が残っている: 画面の「続ける」を押して抜ける
+            // （NEventRoom は終了時に PROCEED の 1 択を作り、押すと Proceed() が走る）
+            if (!_eventLeft)
+            {
+                _eventLeft = true;
+                try
+                {
+                    _ = MegaCrit.Sts2.Core.Nodes.Rooms.NEventRoom.Proceed();
+                    Bridge.LogLine("event finished: pressed continue");
+                }
+                catch (Exception e)
+                {
+                    Bridge.LogLine("event continue failed: " + e.GetType().Name + ": " + e.Message);
+                }
+                return null;
+            }
             return MapDecision(run, me);
         }
         // 戦闘が終わって報酬も閉じたあとは、部屋のオブジェクトがまだ CombatRoom のことがある。

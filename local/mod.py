@@ -65,7 +65,8 @@ def status(install: GameInstall) -> ModState:
             built_for = json.loads(stamp.read_text(encoding="utf-8")).get("game_version")
         except (OSError, ValueError):
             built_for = None
-    installed = (target / f"{MOD_ID}.dll").is_file() and (target / f"{MOD_ID}.json").is_file() and (target / "vocab.txt").is_file()
+    installed = (target / f"{MOD_ID}.dll").is_file() and (target / f"{MOD_ID}.json").is_file() \
+        and (target / "vocab.txt").is_file() and (target / "keys.json").is_file()
     return ModState(
         installed=installed,
         path=target,
@@ -126,7 +127,7 @@ def install(install: GameInstall, log=print, force: bool = False, allow_running:
     if (target / f"{MOD_ID}.dll").is_file():
         same = _digest(target / f"{MOD_ID}.dll") == _digest(out / f"{MOD_ID}.dll") and \
                _digest(target / f"{MOD_ID}.json") == _digest(out / f"{MOD_ID}.json")
-    for name in (f"{MOD_ID}.dll", f"{MOD_ID}.json", "vocab.txt"):
+    for name in (f"{MOD_ID}.dll", f"{MOD_ID}.json", "vocab.txt", "keys.json"):
         if not same or not (target / name).is_file():
             shutil.copy2(out / name, target / name)
     (target / STAMP_NAME).write_text(

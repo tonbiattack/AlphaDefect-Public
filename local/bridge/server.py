@@ -22,12 +22,19 @@ from . import protocol as P
 from .autopilot import Autopilot
 
 HELP = """操作:
-  pause      一時停止（MOD は次の行動を待つ）
-  resume     再開
-  stop       即時停止（止まったまま。再開は MOD を起動し直す）
-  speed N    速度倍率 0.1〜20（MOD に渡す待ち時間が 1/N になる）
-  status     いまの状態と手数の表示
-  help       この一覧
+  pause        一時停止（MOD は次の行動を待つ）
+  resume       再開
+  stop         即時停止（止まったまま。再開は MOD を起動し直す）
+  speed N      ゲームの演出速度 0.1〜20（Godot の TimeScale）
+  step         1 手だけ実行して再び止める
+  manual       手動に切り替える（AI は操作しない。ゲームは止めない）
+  auto         AI 自動に戻す
+  confirm on|off  各判断の前に止めて、候補を見せてから実行する
+  pacing N     行動の間隔（ミリ秒）。速度とは独立
+  stopcombat on|off  戦闘終了で自動停止
+  stopreward on|off  カード報酬画面で自動停止
+  status       いまの状態と手数の表示
+  help         この一覧
 """
 
 
@@ -98,6 +105,22 @@ class _Controls:
                 self.stop_event.set()
             elif cmd == "speed":
                 self._send(self.ap.set_speed(float(parts[1])))
+            elif cmd == "step":
+                self._send(self.ap.step())
+            elif cmd in ("manual", "auto"):
+                self._send(self.ap.set_mode(cmd))
+            elif cmd in ("confirm", "confirm-on", "confirm-off"):
+                on = cmd != "confirm-off"
+                if cmd == "confirm" and len(parts) > 1:
+                    on = parts[1].lower() not in ("off", "false", "0", "no")
+                self._send(self.ap.set_confirm(on))
+            elif cmd == "pacing":
+                self._send(self.ap.set_pacing(int(parts[1])))
+            elif cmd in ("stopcombat", "stopreward"):
+                on = len(parts) < 2 or parts[1].lower() not in ("off", "false", "0", "no")
+                self._send(self.ap.set_stop_points(
+                    combat_end=on if cmd == "stopcombat" else None,
+                    card_reward=on if cmd == "stopreward" else None))
             elif cmd == "status":
                 print(_status_text(self.ap), flush=True)
             elif cmd in ("help", "h", "?"):
@@ -126,7 +149,17 @@ class _Controls:
 def _status_text(ap: Autopilot) -> str:
     s = ap.stats
     result = f" / 結果 {s.result}" if s.result else ""
-    return (f"[autopilot] {ap.state} / キャラ {ap.character} / 速度 {ap.speed}倍"
+    panel = ""
+    if ap.panel:
+        p = ap.panel
+        mode = "手動" if p.get("mode") == "manual" else "自動"
+        paused = "停止" if p.get("paused") else "実行"
+        panel = f" / パネル {mode}・{paused}"
+        if p.get("confirm"):
+            panel += "・確認"
+        if p.get("pacing_ms"):
+            panel += f"・間隔{p['pacing_ms']}ms"
+    return (f"[autopilot] {ap.state} / キャラ {ap.character} / 速度 {ap.speed}倍{panel}"
             f" / 状態 {s.states} / 行動 {s.actions} / 重複 {s.duplicates} / {s.seconds:.0f} 秒{result}")
 
 
