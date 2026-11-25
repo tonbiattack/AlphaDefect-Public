@@ -104,6 +104,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--asc", type=int, default=10, help="--simulate のアセンション")
     p.add_argument("--stop-after", type=int, default=0, help="--simulate でこの歩数で打ち切る（0 は最後まで）")
 
+    p = sub.add_parser("launch", help="Windows から 1 クリックで起動する（通常プレイ / AI 観戦）")
+    p.add_argument("mode", nargs="?", choices=["normal", "ai"], help="normal=MODなし、ai=推論サーバ＋MOD")
+    p.add_argument("--character", default="auto", help="AI モードのキャラ（auto でゲーム側の選択に合わせる）")
+    p.add_argument("--speed", type=float, default=1.0, help="AI モードの速度（Godot の TimeScale）")
+    p.add_argument("--seed", default="", help="AI モードのシード（空ならランダム）")
+    p.add_argument("--no-autostart", dest="autostart", action="store_false", help="ランを自動で始めない（自分で開始する）")
+    p.add_argument("--no-wait", dest="wait", action="store_false", help="ゲームの終了を待たない（サーバは残す）")
+    p.add_argument("--dry-run", action="store_true", help="起動内容を表示するだけ")
+    p.add_argument("--status", action="store_true", help="いまの状態を表示する")
+    p.add_argument("--stop", action="store_true", help="推論サーバを止める")
+    p.add_argument("--pause", action="store_true")
+    p.add_argument("--resume", action="store_true")
+    p.add_argument("--set-speed", type=float, default=None, help="動いている推論サーバの速度を変える")
+    p.add_argument("--install-shortcuts", action="store_true", help="デスクトップとスタートメニューにショートカットを作る")
+    p.add_argument("--json", action="store_true")
+
     p = sub.add_parser("mod", help="ゲーム側 MOD（観戦用）の導入・撤去・状態")
     p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
     p.add_argument("--force", action="store_true", help="キャッシュがあってもビルドし直す")
@@ -159,6 +175,7 @@ def _dispatch(a) -> int:
         "autopilot": cmd_autopilot,
         "replay": cmd_replay,
         "mod": cmd_mod,
+        "launch": cmd_launch,
         "versions": cmd_versions,
     }[a.command](a)
 
@@ -529,6 +546,31 @@ def cmd_mod(a) -> int:
     print()
     print(M.gameplay_note())
     return 0
+
+
+# ---------------------------------------------------------------- launch
+
+
+def cmd_launch(a) -> int:
+    from . import launcher as L
+
+    if a.install_shortcuts:
+        L.install_shortcuts()
+        return 0
+    if a.status or (a.mode is None and not (a.stop or a.pause or a.resume or a.set_speed is not None)):
+        print(L.status_text())
+        if a.mode is None and not a.json:
+            print("\n使い方: python -m local launch normal|ai [--character auto] [--speed 2] [--seed ABC]")
+        return 0
+    if a.stop:
+        return L.stop_server()
+    if a.pause or a.resume or a.set_speed is not None:
+        cmd = "pause" if a.pause else ("resume" if a.resume else f"speed {a.set_speed}")
+        got = L.control(cmd)
+        print(json.dumps(got or {"error": "推論サーバが応答しません"}, ensure_ascii=False))
+        return 0 if got else 1
+    return L.start(a.mode, character=a.character, speed=a.speed, seed=a.seed,
+                   autostart=a.autostart, wait=a.wait, dry_run=a.dry_run)
 
 
 # ---------------------------------------------------------------- versions
