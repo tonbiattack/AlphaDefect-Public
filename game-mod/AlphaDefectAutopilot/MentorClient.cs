@@ -1150,7 +1150,28 @@ internal static class MentorClient
                         if (ReferenceEquals(p, potion)) { slot = slotCount; break; }
                         slotCount++;
                     }
-                    if (slot >= 0) return $"{{\"action\":\"potion\",\"slot\":{slot}}}";
+                    if (slot >= 0)
+                    {
+                        // 敵を対象にするポーションは target_index も送る（#67）
+                        if (choice.B is Creature target)
+                        {
+                            var cs = me.Creature.CombatState;
+                            int targetIndex = -1;
+                            if (cs != null)
+                            {
+                                int k = 0;
+                                foreach (var c in cs.Creatures)
+                                {
+                                    if (c.IsPlayer || !c.IsAlive) continue;
+                                    if (ReferenceEquals(c, target)) { targetIndex = k; break; }
+                                    k++;
+                                }
+                            }
+                            if (targetIndex >= 0)
+                                return $"{{\"action\":\"potion\",\"slot\":{slot},\"target_index\":{targetIndex}}}";
+                        }
+                        return $"{{\"action\":\"potion\",\"slot\":{slot}}}";
+                    }
                 }
                 return "{\"action\":\"end_turn\"}";
             }
