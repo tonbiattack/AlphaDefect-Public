@@ -118,6 +118,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dry-run", action="store_true", help="起動内容を表示するだけ")
     p.add_argument("--status", action="store_true", help="いまの状態を表示する")
     p.add_argument("--stop", action="store_true", help="推論サーバを止める")
+    p.add_argument("--safe-mode", action="store_true",
+                   help="AI を止めて素の状態にする（サーバ停止・autopilot 無効・Mentor のフラグ削除）")
     p.add_argument("--pause", action="store_true")
     p.add_argument("--step", action="store_true", help="1 手だけ実行する")
     p.add_argument("--manual", action="store_true", help="手動（AI は推奨のみ表示）")
@@ -592,13 +594,37 @@ def cmd_launch(a) -> int:
     if a.install_shortcuts:
         L.install_shortcuts()
         return 0
-    if a.status or (a.mode is None and not (a.stop or a.pause or a.resume or a.set_speed is not None)):
+    if a.status or (a.mode is None and not (a.stop or a.safe_mode or a.pause or a.resume
+                                             or a.set_speed is not None or a.step or a.manual)):
         print(L.status_text())
         if a.mode is None and not a.json:
             print("\n使い方: python -m local launch normal|ai [--character auto] [--speed 2] [--seed ABC]")
         return 0
     if a.stop:
         return L.stop_server()
+    if a.safe_mode:
+        # 「MOD なしで普通に遊ぶ」ための後片付け: AI を止め、自動開始の設定も戻す
+        import subprocess
+
+        from . import measure as M
+        from . import steam as _steam
+
+        L.stop_server(log=lambda *_args, **_kw: None)
+        install = _steam.find_install()
+        if install is not None:
+            try:
+                M._set_spire_autostart(install, False, 1)
+            except (LocalError, OSError):
+                pass
+            try:
+                M._mentor_flag(install).unlink(missing_ok=True)
+            except OSError:
+                pass
+        for pattern in ("local mentor", "local autopilot"):
+            subprocess.run(["pkill", "-9", "-f", pattern], check=False)
+        print("AI を止めました（サーバ停止・autopilot 無効・Mentor フラグ削除）。"
+              "Steam から起動すれば普通に遊べます。")
+        return 0
     if a.pause or a.resume or a.set_speed is not None or a.step or a.manual:
         if a.pause:
             cmd = "pause"
@@ -669,6 +695,14 @@ def _start_mentor(character: str, ascension: int, seed, runs: int, launch: bool,
         return 0
 
     from . import launcher as L
+
+    # 前のセッションが残っていたら片付ける（二重起動で固まらないように）。
+    if L.control_status() is not None:
+        print("前のセッションが動いています。止めてから起動します。")
+        L.stop_server(log=lambda *_args, **_kw: None)
+        for pattern in ("local mentor", "local autopilot"):
+            subprocess.run(["pkill", "-9", "-f", pattern], check=False)
+        time.sleep(1.0)
 
     # こちらは「待ち受けだけ」の推論サーバ。ランの開始と画面遷移は spire-mentor が行う。
     if not L.game_running():

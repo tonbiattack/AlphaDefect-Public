@@ -28,6 +28,7 @@ UI に項目があることと、その設定が実際に効くことは別な�
 ### Windows（GUI）
 
 `launcher.cmd` をダブルクリック（デスクトップに「AlphaDefect ランチャー」ショートカットを作成済み）。
+中身は **Python 3 + Tk** の `launcher.py`（Windows 標準の Python で動く。`launcher.ps1` は旧版として残置）。
 
 1. モード: **Mentor 観戦（spire-mentor）** を選ぶ
 2. キャラ（`auto` / `DEFECT` / `REGENT` / `SILENT` / `select`）、アセンション、シード（乱数可）、ラン数を設定
@@ -170,3 +171,33 @@ UI に項目があることと、その設定が実際に効くことは別な�
 | 検証環境 | Windows 11 + WSL2、Spire Mentor（fork 元同期）、BaseLib 3.4.8 |
 | 実機で確認したこと | Mentor 起動・キャラ選択・シード固定/乱数・select の非開始・2 ランの連続実行・速度/間隔の HTTP 変更・休憩の回復 |
 | 未確認 | 3 ラン以上の連続実行、GUI からの速度/間隔の反映（Mentor）、既存ランへの接続、v0.113.1/v0.114.0 |
+
+---
+
+## 11. 普通に遊ぶ（MOD なし）
+
+AI に操作させずに自分で遊ぶときは、次のどれか。
+
+| 方法 | 手順 |
+|---|---|
+| **ゲームを Steam から起動** | ライブラリから起動するだけ。`SpireMentor.conf` の `auto_start` が false なら AI は動かない |
+| **ランチャーの「通常プレイ（MOD なし）」** | 押すと AI を止めて（サーバ停止・`auto_start` を false・`mentor.txt` 削除）からゲームを起動する |
+| **CLI** | `./play.sh launch --safe-mode` のあと、Steam から起動 |
+
+MOD 自体を外したい場合は、ゲームの「設定 → Modding」で個別に無効化するか、`mods/` から外す
+（戻すときは `python -m local mod install`）。
+
+---
+
+## 12. ランチャーの改良（2026-11-26）
+
+- **起動は必ず「前のセッションを止めてから」**: 停止を押さずに条件を変えて起動し直しても固まらない
+  - GUI は起動時に前のプロセスを kill し、`launch --stop` と `pkill` を実行
+  - CLI も、推論サーバが応答していれば「前のセッションが動いています。止めてから起動します。」と出して停止
+- 実行ログをそのまま GUI に流す（`-u` 相当のストリーミング）
+- キャラ一覧はゲーム版に合わせて動的（`local mentor --choices`）
+- 「通常プレイ」は **safe mode**（AI 停止＋自動開始オフ）を通してから起動
+- 技術スタックを **PowerShell + WinForms → Python 3 + Tk** に変更（Windows 標準の Python で動く。
+  文字コード・引数クォート・ウィンドウ操作の不安定さを避けるため）
+
+未検証: GUI のボタンを実際に連打したときの見た目（ロジックは CLI で確認済み）。
