@@ -570,31 +570,58 @@ internal static class MentorClient
     }
 
     /// <summary>直前に受け取った card_reward の cards[] から、同じカードの位置を返す。</summary>
+    static int _cardAmbiguous;
+    static int _cardNotFound;
+
+    /// <summary>
+    /// カードをメッセージの並びの index に写す。id だけでなく強化・コストも見て、
+    /// 同名カードの取り違えを避ける（#68）。見つからなければ -1。
+    /// </summary>
     static int CardIndexInMessage(CardModel card)
     {
         try
         {
-            if (_lastMessage == null) return 0;
+            if (_lastMessage == null) return -1;
             using var doc = JsonDocument.Parse(_lastMessage);
             if (!doc.RootElement.TryGetProperty("cards", out var cards) || cards.ValueKind != JsonValueKind.Array)
-                return 0;
+                return -1;
+            int best = -1, bestScore = -1, ties = 0;
             int i = 0;
             foreach (var el in cards.EnumerateArray())
             {
                 string? id = el.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String
                     ? idEl.GetString() : null;
-                if (string.Equals(id, card.Id.Entry, StringComparison.OrdinalIgnoreCase)) return i;
+                if (!string.Equals(id, card.Id.Entry, StringComparison.OrdinalIgnoreCase))
+                {
+                    i++;
+                    continue;
+                }
+                int score = 1;
+                bool upgraded = el.TryGetProperty("upgraded", out var upEl) && upEl.ValueKind == JsonValueKind.True;
+                if (upgraded == card.IsUpgraded) score += 2;
+                int? cost = el.TryGetProperty("cost", out var cEl) && cEl.ValueKind == JsonValueKind.Number
+                    && cEl.TryGetInt32(out int cv) ? cv : null;
+                if (cost != null && cost == card.EnergyCost?.GetResolved() ) score += 1;
+                if (score > bestScore) { bestScore = score; best = i; ties = 1; }
+                else if (score == bestScore) ties++;
                 i++;
             }
-            return 0;
+            if (best < 0)
+            {
+                if (_cardNotFound++ < 5)
+                    Bridge.LogEvent($"[mentor] card {card.Id.Entry} was not in the selection message; not guessing an index");
+                return -1;
+            }
+            if (ties > 1 && _cardAmbiguous++ < 5)
+                Bridge.LogEvent($"[mentor] card {card.Id.Entry} matched {ties} entries equally well; using index {best}");
+            return best;
         }
         catch
         {
-            return 0;
+            return -1;
         }
     }
 
-    /// <summary>店の商品を、相手の options（item.id）に合わせて index にする。</summary>
     static int ShopOptionIndex(Choice choice)
     {
         try
@@ -1118,7 +1145,8 @@ internal static class MentorClient
                         if (pickedIndices.Count >= _pendingMinSelect) return;
                         if (!pickedIndices.Contains(i)) pickedIndices.Add(i);
                     }
-                    Take(CardIndexInMessage(picked));
+                    int firstIndex = CardIndexInMessage(picked);
+                    if (firstIndex >= 0) Take(firstIndex);
                     foreach (var c in _pendingDecision.Choices)
                     {
                         if (c.Kind != ActionKind.SelectCard || c.A is not CardModel other) continue;
@@ -1137,7 +1165,13 @@ internal static class MentorClient
                     _pendingMinSelect = 0;
                     return "{\"action\":\"choose\",\"indices\":[" + string.Join(",", pickedIndices) + "]}";
                 }
-                return "{\"action\":\"choose\",\"indices\":[" + CardIndexInMessage(picked) + "]}";
+                int cardIndex = CardIndexInMessage(picked);
+                if (cardIndex < 0)
+                {
+                    Bridge.LogEvent($"[mentor] no index for {picked.Id.Entry}; answering with a legal default");
+                    return "{\"action\":\"choose\",\"indices\":[0]}";
+                }
+                return "{\"action\":\"choose\",\"indices\":[" + cardIndex + "]}";
             }
             if (choice.Kind == ActionKind.CardRewardAlt)
             {
