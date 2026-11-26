@@ -79,6 +79,23 @@ label-check: checked=100 mismatch=0
 - これは「観測のデコード経路（MOD の C# エンコーダ → python デコーダ）が同じ候補を作れている」ことの確認
 - サンプルは 100 件と少なく、全種別を網羅したとは言えない（戦闘中心）
 
+## 4.55 監査で見つけて直した「モデル判断が落ちる」不具合（#68）
+
+| 不具合 | 症状（実機ログ） | 修正 | 修正後の実測 |
+|---|---|---|---|
+| カードの同定 | id 一致の先頭、不明時は index 0 | id + 強化 + コストで採点、曖昧さをログ | 曖昧ログは同一カードが並ぶ画面のみ |
+| 報酬画面が候補ゼロ | `capture active but no candidates` | カード報酬だけなら「進む」を候補に | rule[reward_screen] 16 → 0 |
+| 対象 index | `invalid_target / target_index 1 is not a hittable enemy` ×10 | `combat.Enemies` 順で採番、狙えなければ狙える敵へ | invalid_target 0 |
+| ポーションのスロット | `empty_potion_slot` ×10 | 空きを含む `PotionSlots` で採番 | 0 |
+| 「判断の余地なし」画面 | event のルール代替 4 | `noop[event]` として区別 | rule から除外 |
+
+忠実性の実測（IRONCLAD / v0.114.0 / 1 ラン）:
+
+```
+修正前: rule[event=4,reward_screen=16,card_select=1] rejects=10
+修正後: rule[event=4,card_select=3]（event は後に noop へ） rejects=0
+```
+
 ## 4.6 休息所で休まない問題（2026-11-26、実機で修正確認）
 
 - **原因1**: 実機では `RunSession.RestHealInfo` が常に `(0,0,0)` を返していた。観測の休息オプションは
