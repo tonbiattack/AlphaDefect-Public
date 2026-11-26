@@ -232,6 +232,7 @@ internal static class MentorClient
     static readonly Dictionary<string, int> ModelCounts = new();
     static readonly Dictionary<string, int> RuleCounts = new();
     static int _rejects;
+    static int _errorLogged;
     static int _timeouts;
     static int _stale;
     static long _lastMessageAt;
@@ -302,12 +303,13 @@ internal static class MentorClient
             if (kind is "error" or "pong" or "snapshot_saved"
                 or "combat_ended" or "annotation" or "advice_request" or "human_action")
             {
-                if (kind == "error" && _ignored < 20)
+                if (kind == "error" && (_errorLogged < 10 || _errorLogged % 25 == 0))
                 {
                     string code = root.TryGetProperty("error", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() ?? "" : "";
                     string detail = root.TryGetProperty("detail", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() ?? "" : "";
                     _rejects++;
-                    Bridge.LogEvent($"[mentor] error from spire-mentor: {code} / {detail}");
+                    _errorLogged++;
+                    Bridge.LogEvent($"[mentor] error from spire-mentor: {code} / {detail} (total {_rejects})");
                 }
                 if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
                 return;
