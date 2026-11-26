@@ -338,6 +338,14 @@ class Autopilot:
         except Exception as e:                     # noqa: BLE001 - 例外時は必ず止める（要件）
             return self._fail(f"推論に失敗しました: {e}")
         ms = (time.perf_counter() - t0) * 1000
+        # 観測・候補の一致確認（#28）: MOD の候補とヘッドレス系デコードの突き合わせ
+        checked = getattr(self.decider, "label_checked", 0)
+        if checked and checked % 50 == 0:
+            self.log("label-check", {
+                "checked": checked,
+                "mismatch": getattr(self.decider, "label_mismatch", 0),
+                "first": getattr(self.decider, "label_first", None),
+            })
 
         answer = P.action(
             seq,

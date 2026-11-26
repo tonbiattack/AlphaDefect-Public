@@ -95,12 +95,14 @@ internal static class Bridge
     }
 
     /// <summary>観測フレームを送る（base64）。</summary>
-    public static void SendState(byte[] frame, int seq, string metaJson)
+    public static void SendState(byte[] frame, int seq, string metaJson, string labels = "")
     {
         if (_stream == null || _stopped) return;
         _sentEpoch = PanelState.MarkSent();
         string b64 = Convert.ToBase64String(frame);
-        Outbox.Enqueue("{\"t\":\"state\",\"seq\":" + seq + ",\"frame\":\"" + b64 + "\",\"meta\":{" + metaJson + "}}");
+        string labelsField = string.IsNullOrEmpty(labels) ? "" : ",\"labels\":\"" + labels.Replace("\"", "'") + "\"";
+        Outbox.Enqueue("{\"t\":\"state\",\"seq\":" + seq + ",\"frame\":\"" + b64
+                       + "\",\"meta\":{" + metaJson + labelsField + "}}");
     }
 
     /// <summary>ラン開始設定（キャラ・アセンション・シード）をサーバへ知らせる。</summary>

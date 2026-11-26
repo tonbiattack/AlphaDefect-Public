@@ -413,7 +413,8 @@ internal static class MentorClient
             _deadline = Environment.TickCount64 + 60000;   // 初回ロード等を見込んで長めに待つ
             Bridge.SendState(frame, _pendingSeq,
                 $"\"character\":\"{me.Character?.Id?.Entry ?? ""}\",\"act\":{run.CurrentActIndex},"
-                + $"\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"mentor\":true");
+                + $"\"floor\":{run.TotalFloor},\"hp\":{me.Creature.CurrentHp},\"mentor\":true",
+                CombatDriver.LabelsOf(d));
         }
         catch (Exception e)
         {

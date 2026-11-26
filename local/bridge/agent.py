@@ -24,6 +24,9 @@ class ModelDecider:
         self.merge = merge
         self.frames = 0
         self.seconds = 0.0
+        self.label_checked = 0       # ラベル比較した回数（#28）
+        self.label_mismatch = 0
+        self.label_first: dict | None = None
         self.character = policy.character
 
     @classmethod
@@ -43,6 +46,33 @@ class ModelDecider:
     def obs_format(self) -> int:
         return self.policy.asset.obs_format
 
+    # -- 観測・候補の一致確認（#28） --------------------------------------
+
+    def check_labels(self, frame: P.Frame, obs) -> None:
+        """MOD が作った候補ラベルと、こちら（ヘッドレス系）のデコード結果を突き合わせる。"""
+        raw = str(frame.meta.get("labels") or "")
+        if not raw:
+            return
+        mine = [s for s in raw.split("|")]
+        theirs = list(getattr(obs, "labels", []) or [])
+        self.label_checked += 1
+        n = min(len(mine), len(theirs))
+        diffs = [i for i in range(n) if mine[i] != theirs[i]]
+        if len(mine) != len(theirs):
+            diffs = diffs or [-1]
+        if diffs:
+            self.label_mismatch += 1
+            if self.label_first is None:
+                i = diffs[0]
+                self.label_first = {
+                    "index": i,
+                    "mod": mine[i] if 0 <= i < len(mine) else None,
+                    "headless": theirs[i] if 0 <= i < len(theirs) else None,
+                    "count_mod": len(mine),
+                    "count_headless": len(theirs),
+                }
+
+
     def __call__(self, frame: P.Frame) -> Decision:
         parse = self.policy.sts2env.protocol.parse
         try:
@@ -52,6 +82,7 @@ class ModelDecider:
                 "観測フレームを読めませんでした。MOD 側の観測形式とネットワークの学習形式が"
                 f"食い違っている可能性があります（{e}）"
             ) from e
+        self.check_labels(frame, obs)
         character = str(frame.meta.get("character") or "").upper()
         if character and character != self.policy.character:
             raise LocalError(
@@ -108,6 +139,19 @@ class AutoDecider:
     @property
     def obs_format(self):
         return None if self._inner is None else self._inner.obs_format
+
+    # 内側の整合チェックを外から読めるようにする（#28）
+    @property
+    def label_checked(self) -> int:
+        return 0 if self._inner is None else self._inner.label_checked
+
+    @property
+    def label_mismatch(self) -> int:
+        return 0 if self._inner is None else self._inner.label_mismatch
+
+    @property
+    def label_first(self):
+        return None if self._inner is None else self._inner.label_first
 
     def __call__(self, frame: P.Frame) -> Decision:
         ch = str(frame.meta.get("character") or "").upper()

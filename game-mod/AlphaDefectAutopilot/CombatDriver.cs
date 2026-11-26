@@ -78,7 +78,7 @@ internal static class CombatDriver
         _lastFrameDigest = digest;
         _lastSignature = signature;
         _sentContext = ContextKey();
-        Bridge.SendState(frame, _seq++, meta);
+        Bridge.SendState(frame, _seq++, meta, LabelsOf(d));
         return true;
     }
 
@@ -110,6 +110,20 @@ internal static class CombatDriver
     static long _lastExecuteAt;
 
     /// <summary>ゲームの状態そのものの指紋（フレームの Steps は毎回変わるので使わない）。</summary>
+    /// <summary>こちらの候補ラベル（python 側のデコード結果と突き合わせるため。#28）。</summary>
+    internal static string LabelsOf(Decision d)
+    {
+        try
+        {
+            var labels = d.Choices.Take(40).Select(c => c.Label.Replace("|", "/"));
+            return string.Join("|", labels);
+        }
+        catch (Exception)
+        {
+            return "";
+        }
+    }
+
     static string StateSignature()
     {
         try
