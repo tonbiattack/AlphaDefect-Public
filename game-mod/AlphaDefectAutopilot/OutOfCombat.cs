@@ -156,15 +156,26 @@ internal static class OutOfCombat
 
     /// <summary>イベントの選択（エンジンの EventDecision と同じ。Neow もここで進む）。</summary>
     /// <summary>イベントの候補を読むだけ（Mentor 連携用。押さない）。</summary>
+    static int _eventMissLogged;
+
     public static Decision? BuildEventDecisionForMentor(RunState run, Player me)
     {
         if (run.CurrentRoom is not EventRoom) return null;
         try
         {
-            return EventDecision(run, me);
+            var d = EventDecision(run, me);
+            if ((d == null || d.Choices.Count == 0) && _eventMissLogged++ < 5)
+            {
+                var ev = RunManager.Instance.EventSynchronizer.GetLocalEvent();
+                Bridge.LogEvent($"[event] no candidates (event={(ev == null ? "null" : ev.Id.Entry)},"
+                                + $" finished={(ev?.IsFinished)}, options={ev?.CurrentOptions.Count})");
+            }
+            return d;
         }
-        catch
+        catch (Exception e)
         {
+            if (_eventMissLogged++ < 5)
+                Bridge.LogEvent($"[event] decision failed: {e.GetType().Name}: {e.Message}");
             return null;
         }
     }
