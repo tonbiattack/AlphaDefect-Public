@@ -55,7 +55,9 @@ internal static class LiveRewards
         var d = new Decision(DecisionKind.Rewards) { Context = IsTerminal ? "战斗奖励" : "额外奖励" };
         foreach (var r in set.Rewards)
         {
-            if (r.SuccessfullySelected || r is CardReward) continue;   // カード報酬は飛ばす
+            // カード報酬も「取る」候補にする。取ると選牌が開き、card_reward の判断につながる。
+            // ここで飛ばすと、この画面からは「進む」しか出せずカードを取らないまま通過してしまう。
+            if (r.SuccessfullySelected) continue;
             var reward = r;
             d.Add(ActionKind.TakeReward, "领 " + Label(reward), () => Take(reward), a: reward);
         }
@@ -67,8 +69,7 @@ internal static class LiveRewards
             _logged.Add(set);
             Bridge.LogLine("reward candidates: " + string.Join(", ", set.Rewards.Select(r => (r.SuccessfullySelected ? "*" : "") + Label(r))));
         }
-        // 取れる報酬が 1 つも無い（残りがカード報酬だけ等）なら「進む」しかない。
-        // ここを出さないと候補ゼロになり、ルール既定に落ちてモデルの判断が使えなくなる（#68）。
+        // 取れる報酬が 1 つも無いなら「進む」しかない（候補ゼロでルール既定に落ちないように。#68）
         bool onlyProceed = d.Choices.Count == 0;
         if (nothingLeft || onlyProceed)
         {
