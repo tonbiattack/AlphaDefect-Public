@@ -55,6 +55,7 @@ internal static class MentorClient
     static int _cardRewardSkips;
     static int _crystalReplies;
     static int _multiSelectReplies;
+    static int _pendingMinSelect;
     static int _crystalStateId = -1;
     static int _crystalSameState;
     static int _crystalCells = 1;
@@ -149,6 +150,7 @@ internal static class MentorClient
             }
             if (Environment.TickCount64 > _deadline)
             {
+                _timeouts++;
                 Bridge.LogEvent("[mentor] inference timeout; answering with a legal default for " + _pendingKind);
                 Reply(-1);
                 _awaiting = false;
@@ -190,6 +192,7 @@ internal static class MentorClient
         {
             // 強調できなくても実行は続ける
         }
+        ModelCounts[_pendingKind] = ModelCounts.TryGetValue(_pendingKind, out int mc) ? mc + 1 : 1;
         Bridge.LogEvent($"[mentor] chosen: {label} (wait {wait} ms, {_pendingKind})");
         _awaiting = false;
         _pendingDecision = null;
@@ -208,6 +211,7 @@ internal static class MentorClient
         if (!step && System.Environment.TickCount64 < _readyAt) return;
         if (_readyStateId >= 0 && _readyStateId != _pendingStateId)
         {
+            _stale++;
             Bridge.LogEvent($"[mentor] dropped a stale action (state {_readyStateId} -> {_pendingStateId}): {_readyLabel}");
             _readyReply = null;
             MentorHighlight.Clear();
@@ -224,6 +228,12 @@ internal static class MentorClient
         _heldLogged = false;
     }
 
+    // 忠実性の集計（#68）: モデル判断・ルール代替・拒否・タイムアウトを種別ごとに数える
+    static readonly Dictionary<string, int> ModelCounts = new();
+    static readonly Dictionary<string, int> RuleCounts = new();
+    static int _rejects;
+    static int _timeouts;
+    static int _stale;
     static long _lastMessageAt;
     static int _stallWarned;
 
@@ -285,6 +295,7 @@ internal static class MentorClient
                     return;
                 }
                 Bridge.LogEvent($"[mentor] run finished: win={win} floor={floor} act={act}");
+                ReportFidelity();
                 Bridge.SendDone(win, floor, act);
                 return;
             }
@@ -295,6 +306,7 @@ internal static class MentorClient
                 {
                     string code = root.TryGetProperty("error", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() ?? "" : "";
                     string detail = root.TryGetProperty("detail", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() ?? "" : "";
+                    _rejects++;
                     Bridge.LogEvent($"[mentor] error from spire-mentor: {code} / {detail}");
                 }
                 if (_ignored++ < 5) Bridge.LogEvent($"[mentor] ignoring '{kind}' (no reply needed)");
@@ -312,14 +324,13 @@ internal static class MentorClient
                         cardCount = cardsEl.GetArrayLength();
                 }
                 catch { }
+                if (_multiSelectReplies++ < 5)
+                    Bridge.LogEvent($"[mentor] card_select: cards={cardCount} min={minSel} max={ReadInt(root, "max_select")} cancelable={ReadInt(root, "cancelable")}");
                 if (minSel > 1 && cardCount > 0)
                 {
-                    int k = Math.Min(minSel, cardCount);
-                    var indices = string.Join(",", Enumerable.Range(0, k));
-                    if (_multiSelectReplies++ < 5)
-                        Bridge.LogEvent($"[mentor] card_select needs {minSel} cards: choosing the first {k} by rule");
-                    SendReply(WithIds("{\"action\":\"choose\",\"indices\":[" + indices + "]}", requestId, stateId));
-                    return;
+                    // モデルに 1 枚目を選ばせ、残りは候補の並び順で埋める（先頭固定よりはモデルの意図を残す）
+                    _pendingMinSelect = Math.Min(minSel, cardCount);
+                    Bridge.LogEvent($"[mentor] card_select needs {minSel} cards: asking the model for the first pick");
                 }
             }
             if (kind == "crystal_sphere")
@@ -386,6 +397,7 @@ internal static class MentorClient
             if (d == null || d.Choices.Count == 0)
             {
                 _unmapped++;
+                RuleCounts[kind] = RuleCounts.TryGetValue(kind, out int rc) ? rc + 1 : 1;
                 if (_unmapped <= 5 || _unmapped % 50 == 0)
                     Bridge.LogEvent($"[mentor] '{kind}' has no model decision yet ({_unmapped}); replying with a legal default");
                 SendReply(DefaultReply(kind, root, requestId));
@@ -635,6 +647,21 @@ internal static class MentorClient
         catch
         {
             return 0;
+        }
+    }
+
+    /// <summary>忠実性の集計を 1 行で出す（モデル判断とルール代替の比率）。</summary>
+    static void ReportFidelity()
+    {
+        try
+        {
+            string model = string.Join(",", ModelCounts.Select(kv => $"{kv.Key}={kv.Value}"));
+            string rule = string.Join(",", RuleCounts.Select(kv => $"{kv.Key}={kv.Value}"));
+            Bridge.LogEvent($"[mentor] fidelity: model[{model}] rule[{rule}] rejects={_rejects} timeouts={_timeouts} stale={_stale}");
+        }
+        catch (Exception)
+        {
+            // 集計できなくても進行は止めない
         }
     }
 
@@ -1018,7 +1045,28 @@ internal static class MentorClient
             if (choice.Kind == ActionKind.TakeReward)
                 return "{\"action\":\"choose\",\"index\":" + RewardOptionIndex(choice) + "}";
             if (choice.Kind == ActionKind.SelectCard && choice.A is CardModel picked)
-                return "{\"action\":\"choose\",\"index\":" + CardIndexInMessage(picked) + "}";
+            {
+                if (_pendingMinSelect > 1 && _pendingDecision != null)
+                {
+                    // モデルの 1 枚目 + 残りは候補順（同じカードを重複させない）
+                    var pickedIndices = new List<int>();
+                    void Take(int i)
+                    {
+                        if (pickedIndices.Count >= _pendingMinSelect) return;
+                        if (!pickedIndices.Contains(i)) pickedIndices.Add(i);
+                    }
+                    Take(CardIndexInMessage(picked));
+                    foreach (var c in _pendingDecision.Choices)
+                    {
+                        if (c.Kind != ActionKind.SelectCard || c.A is not CardModel other) continue;
+                        Take(CardIndexInMessage(other));
+                        if (pickedIndices.Count >= _pendingMinSelect) break;
+                    }
+                    _pendingMinSelect = 0;
+                    return "{\"action\":\"choose\",\"indices\":[" + string.Join(",", pickedIndices) + "]}";
+                }
+                return "{\"action\":\"choose\",\"indices\":[" + CardIndexInMessage(picked) + "]}";
+            }
             if (choice.Kind == ActionKind.CardRewardAlt)
             {
                 // スキップを繰り返すと報酬画面がカード報酬を開き直して止まることがある。

@@ -533,6 +533,7 @@ internal static class CombatDriver
     /// </summary>
     static bool PotionsAllowed()
     {
+        if (MentorClient.Enabled) return true;      // Mentor 側が選牌・対象選択を処理する（#67）
         if (_potionsAllowed.HasValue) return _potionsAllowed.Value;
         bool allowed;
         try
