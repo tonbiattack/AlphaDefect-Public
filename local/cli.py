@@ -673,8 +673,10 @@ def _start_mentor(character: str, ascension: int, seed, runs: int, launch: bool,
     # こちらは「待ち受けだけ」の推論サーバ。ランの開始と画面遷移は spire-mentor が行う。
     if not L.game_running():
         M._set_spire_autostart(install, True, max(1, runs))
-    # 推論サーバはフレームのキャラでモデルを選ぶ（auto）。連続ランでキャラが変わっても追随する。
-    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", "auto", "--no-stdin"]
+    # 固定キャラなら、そのキャラのモデルを最初から読み込む（welcome で観測形式を伝えるため）。
+    # auto のときは最初のフレームのキャラで選ぶ（観測形式は伝わらないので注意）。
+    server_char = choice.character if choice.character not in ("auto", "select") else "auto"
+    argv = [str(paths.venv_python()), "-m", "local", "autopilot", "--character", server_char, "--no-stdin"]
     if keep_listening:
         argv.append("--keep-listening")
     argv += ["--idle-timeout", str(idle_timeout)]
