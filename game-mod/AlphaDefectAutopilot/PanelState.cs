@@ -208,7 +208,7 @@ internal static class PanelState
     /// <summary>1 手だけ実行してまた止める。応答待ちがあればそれを実行する。</summary>
     public static void Step()
     {
-        if (Mode != RunMode.Auto) return;
+        // 手動にした後でも「1手」で 1 回だけ進められるようにする（Mentor 連携では手動相当のことが多い）
         if (_pendingIndex >= 0 && !_approved)
         {
             _stepOnce = true;              // この 1 手のあとまた止める

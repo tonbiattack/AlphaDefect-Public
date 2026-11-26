@@ -156,7 +156,13 @@ class Autopilot:
     def step(self) -> list[dict]:
         """1 手だけ進める（ゲーム内パネルの「1手」と同じ）。"""
         self.log("step", {})
-        return [P.command("step")]
+        out: list[dict] = []
+        if self.state == "paused":
+            # 止めたままでは 1 手も進まない。いったん再開して 1 手だけ通す
+            self.state = "running"
+            out.append(P.control(P.CONTROL_RUNNING))
+        out.append(P.command("step"))
+        return out
 
     def set_mode(self, mode: str) -> list[dict]:
         """auto / manual を切り替える（手動では AI が操作しない）。"""
