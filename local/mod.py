@@ -210,3 +210,32 @@ def game_running() -> bool:
         return False
     text = (r.stdout or b"").decode("utf-8", errors="replace") + (r.stderr or b"").decode("utf-8", errors="replace")
     return "SlayTheSpire2" in text
+
+
+def disable(install: GameInstall, log=print) -> bool:
+    """mods フォルダを丸ごと退避して、MOD なし（元のプロファイル）で起動できるようにする。"""
+    live = mods_dir(install)
+    off = install.path / "mods.off"
+    if not live.is_dir():
+        log("MOD フォルダはありません（すでに MOD なしの状態です）。")
+        return False
+    if off.exists():
+        log("退避先 mods.off が既にあります。中身を確認してください。")
+        return False
+    live.rename(off)
+    log(f"MOD を外しました: {live.name} -> {off.name}（元のプロファイルで遊べます）")
+    return True
+
+
+def enable(install: GameInstall, log=print) -> bool:
+    live = mods_dir(install)
+    off = install.path / "mods.off"
+    if not off.is_dir():
+        log("退避された MOD はありません。")
+        return False
+    if live.exists():
+        log("mods が既にあります。中身を確認してください。")
+        return False
+    off.rename(live)
+    log(f"MOD を戻しました: {off.name} -> {live.name}")
+    return True

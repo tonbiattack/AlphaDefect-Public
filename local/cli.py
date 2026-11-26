@@ -156,7 +156,8 @@ def main(argv: list[str] | None = None) -> int:
                    help="own=独自MOD、mentor=spire-mentor に画面を任せモデルで判断")
 
     p = sub.add_parser("mod", help="ゲーム側 MOD（観戦用）の導入・撤去・状態")
-    p.add_argument("action", choices=["install", "remove", "status"], nargs="?", default="status")
+    p.add_argument("action", choices=["install", "remove", "status", "off", "on"], nargs="?", default="status",
+                   help="off=MOD を丸ごと外す（元のセーブで遊ぶ） / on=戻す")
     p.add_argument("--force", action="store_true", help="キャッシュがあってもビルドし直す")
 
     p = sub.add_parser("replay", help="1 局打って、ブラウザのリプレイで AI の判断を観戦する")
@@ -565,6 +566,10 @@ def cmd_mod(a) -> int:
             print(f"  ビルド時の版: {st.built_for or '?'}" + ("（今のゲームと違います。入れ直してください）" if st.stale else ""))
         print()
         print(M.gameplay_note())
+        return 0
+    if a.action in ("off", "on"):
+        fn = M.enable if a.action == "on" else M.disable
+        fn(install)
         return 0
     if a.action == "remove":
         removed = M.remove(install)
