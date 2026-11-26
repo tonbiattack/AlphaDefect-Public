@@ -95,9 +95,12 @@ internal static class Bridge
     }
 
     /// <summary>観測フレームを送る（base64）。</summary>
+    static int _lastSentSeq = -1;
+
     public static void SendState(byte[] frame, int seq, string metaJson, string labels = "")
     {
         if (_stream == null || _stopped) return;
+        _lastSentSeq = seq;
         _sentEpoch = PanelState.MarkSent();
         string b64 = Convert.ToBase64String(frame);
         string labelsField = string.IsNullOrEmpty(labels) ? "" : ",\"labels\":\"" + labels.Replace("\"", "'") + "\"";
@@ -287,6 +290,13 @@ internal static class Bridge
                     LogLine("start requested: " + Field(line, "character") + " seed=" + Field(line, "seed"));
                     break;
                 case "action":
+                    // 返答は「いま送っている状態」に対するものだけ使う（古い判断を別の画面に適用しない）
+                    if (int.TryParse(Field(line, "seq"), out int actionSeq) && actionSeq >= 0 && _lastSentSeq >= 0
+                        && actionSeq != _lastSentSeq)
+                    {
+                        LogLine($"stale action dropped (seq {actionSeq} != {_lastSentSeq})");
+                        break;
+                    }
                     if (int.TryParse(Field(line, "index"), out int idx))
                     {
                         double prob = 0;

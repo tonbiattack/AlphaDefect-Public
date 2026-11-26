@@ -31,8 +31,24 @@ public sealed class RunSession
 
     public IReadOnlyList<int> SelectedIndices => LiveSelector.Selected;
 
-    /// <summary>休息所の回復量（イベントのフレームだけが使う。いまは 0 を返す）。</summary>
-    internal static (int actual, int nominal, int extra) RestHealInfo(Player p) => (0, 0, 0);
+    /// <summary>
+    /// 休息所の回復量（ヘッドレス版と同じ計算）。
+    /// 実機ではここが 0 を返していたため、モデルには「休んでも 0 回復」に見え、SMITH ばかり選ばれていた（#68）。
+    /// </summary>
+    internal static (int actual, int nominal, int extra) RestHealInfo(Player p)
+    {
+        try
+        {
+            var cr = p.Creature;
+            int nominal = (int)MegaCrit.Sts2.Core.Entities.RestSite.HealRestSiteOption.GetHealAmount(p);
+            int actual = Math.Clamp(nominal, 0, Math.Max(0, cr.MaxHp - cr.CurrentHp));
+            return (actual, nominal, 0);
+        }
+        catch (Exception)
+        {
+            return (0, 0, 0);
+        }
+    }
 }
 
 /// <summary>勝利した戦闘の数（ヘッダ 12）。</summary>

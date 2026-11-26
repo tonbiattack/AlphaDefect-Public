@@ -382,6 +382,19 @@ internal static class MentorClient
             var run = RunManager.Instance.DebugOnlyGetState();
             if (run == null || run.Players.Count == 0) return;
             var me = run.Players[0];
+            if (kind == "rest_site")
+            {
+                // 診断: 休憩所の候補と HP を残す（休憩を選ばない理由の切り分け）
+                try
+                {
+                    var opts = RunManager.Instance.RestSiteSynchronizer?.GetLocalOptions();
+                    string ids = opts == null ? "" : string.Join(",", opts.Select(o => o.OptionId + (o.IsEnabled ? "" : "(off)")));
+                    Bridge.LogEvent($"[mentor] rest_site at hp={me.Creature.CurrentHp}/{me.Creature.MaxHp} options={ids}");
+                }
+                catch (Exception)
+                {
+                }
+            }
             Decision? d = kind switch
             {
                 "combat_action" => me.PlayerCombatState == null ? null : CombatDriver.BuildCombatDecision(me, me.PlayerCombatState),
@@ -445,9 +458,18 @@ internal static class MentorClient
             var sync = RunManager.Instance.RestSiteSynchronizer;
             var opts = sync.GetLocalOptions();
             var d = new Decision(DecisionKind.RestSite);
+            bool canSmith = opts.Any(o => o is MegaCrit.Sts2.Core.Entities.RestSite.SmithRestSiteOption && o.IsEnabled);
+            var run = RunManager.Instance.DebugOnlyGetState();
+            var me = run?.Players[0];
             foreach (var opt in opts)
             {
                 if (!opt.IsEnabled) continue;
+                // ヘッドレス版と同じ: 満血で回復 0・追加効果なし・鍛冶可なら「休む」は出さない
+                if (canSmith && me != null && opt is MegaCrit.Sts2.Core.Entities.RestSite.HealRestSiteOption)
+                {
+                    var (actual, _, extra) = RunSession.RestHealInfo(me);
+                    if (actual == 0 && extra == 0) continue;
+                }
                 d.Add(ActionKind.RestOption, opt.OptionId, () => { }, a: opt);
             }
             return d.Choices.Count == 0 ? null : d;
