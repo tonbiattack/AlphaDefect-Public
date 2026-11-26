@@ -164,6 +164,16 @@ class Autopilot:
         out.append(P.command("step"))
         return out
 
+    def command_ai_return(self) -> list[dict]:
+        """手動から AI に戻す（いまのランのまま autopilot を付け直す）。"""
+        self.log("ai-return", {})
+        out: list[dict] = []
+        if self.state == "paused":
+            self.state = "running"
+            out.append(P.control(P.CONTROL_RUNNING))
+        out.append(P.command("ai-return"))
+        return out
+
     def command_quit_game(self) -> list[dict]:
         """ゲームを正常終了させる（セーブして閉じる）。"""
         self.log("quit-game", {})
