@@ -139,6 +139,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", default=None, help="整数のシード（省略または random で乱数）")
     p.add_argument("--allow-untested", action="store_true", help="未検証のキャラでも開始する")
     p.add_argument("--status", action="store_true", help="いまの開始設定だけを表示する")
+    p.add_argument("--choices", action="store_true",
+                   help="この環境で選べるキャラを JSON で出す（GUI が使う）")
 
     p = sub.add_parser("measure", help="実ゲームで複数ランを回して勝敗・到達階を記録する")
     p.add_argument("--runs", type=int, default=1, help="回すラン数（seed は MEAS1.. または --seeds）")
@@ -719,6 +721,12 @@ def cmd_mentor(a) -> int:
     if a.status:
         print(MC.describe(install))
         print("使えるキャラ: " + ", ".join(f"{c}({st})" for c, st in MC.available_characters(install.version)))
+        return 0
+    if a.choices:
+        # GUI 用: 版・キャラ・状態・既定の並びを JSON で
+        chars = [{"id": c, "status": st} for c, st in MC.available_characters(install.version)]
+        print(json.dumps({"version": install.version, "characters": chars,
+                          "modes": ["auto", "select"]}, ensure_ascii=False))
         return 0
     return _start_mentor(
         character=a.character,

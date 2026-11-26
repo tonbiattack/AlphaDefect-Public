@@ -59,7 +59,26 @@ $gbSet.Size = New-Object System.Drawing.Size(710, 150)
 
 $cbChar = New-Object System.Windows.Forms.ComboBox
 $cbChar.DropDownStyle = "DropDownList"
-[void]$cbChar.Items.AddRange(@("auto", "DEFECT", "REGENT", "SILENT", "select"))
+
+function Get-CharacterChoices {
+    # CLI に「この環境で選べるキャラ」を聞く（版・モデルに合わせる）。失敗時は既定。
+    try {
+        $json = & wsl.exe --cd $linuxRepo -- bash -lc "./play.sh mentor --choices 2>/dev/null"
+        $obj = $json | ConvertFrom-Json
+        $list = @("auto")
+        foreach ($c in $obj.characters) {
+            $label = if ($c.status -eq "validated") { $c.id } else { $c.id + "（未検証）" }
+            $list += $label
+        }
+        $list += "select"
+        return ,$list
+    } catch {
+        return ,@("auto", "DEFECT", "REGENT", "SILENT", "select")
+    }
+}
+
+$charList = Get-CharacterChoices
+[void]$cbChar.Items.AddRange($charList)
 $cbChar.SelectedIndex = 0
 $cbChar.Text = "auto"
 $cbChar.Location = New-Object System.Drawing.Point(80, 28)
@@ -198,6 +217,11 @@ function Get-MentorSeed {
 
 $btnStart.Add_Click({
     $seed = Get-MentorSeed
+    # 未検証キャラは明示的に許可したときだけ開始する
+    $charLabel = "$($cbChar.SelectedItem)"
+    $allowUntested = $charLabel -like '*未検証*'
+    $char = $charLabel -replace '（未検証）', '' -replace '\(未検証\)', ''
+    if ($allowUntested) { Log "未検証のキャラ（$char）を明示的に開始します" }
     $pacing = ($cbPacing.SelectedItem -replace '\D.*$', '')
 
     if ($rbNormal.Checked) {
@@ -206,14 +230,15 @@ $btnStart.Add_Click({
         return
     }
     if ($rbAI.Checked) {
-        $cmd = "./play.sh launch ai --character '$($cbChar.SelectedItem)' --speed $($numSpeed.Value) --pacing $pacing"
+        $cmd = "./play.sh launch ai --character '$char' --speed $($numSpeed.Value) --pacing $pacing"
         if ($seed) { $cmd += " --seed $seed" }
         Log ("AI 観戦で起動: " + $cmd)
         $script:proc = Start-Wsl $cmd "AI 観戦"
         return
     }
     # Mentor
-    $cmd = "./play.sh mentor --character '$($cbChar.SelectedItem)' --ascension $($numAsc.Value) --runs $($numRuns.Value)"
+    $cmd = "./play.sh mentor --character '$char' --ascension $($numAsc.Value) --runs $($numRuns.Value)"
+    if ($allowUntested) { $cmd += " --allow-untested" }
     if ($seed) { $cmd += " --seed $seed" }
     Log ("Mentor 観戦で起動: " + $cmd)
     $script:proc = Start-Wsl $cmd "Mentor 観戦"

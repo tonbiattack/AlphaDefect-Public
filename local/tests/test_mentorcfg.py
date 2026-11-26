@@ -70,6 +70,19 @@ class ResolveTest(unittest.TestCase):
             M.resolve(VERSION, "DEFECT", 0, "-5")
 
 
+class ChoicesTest(unittest.TestCase):
+    def test_choices_payload_shape(self):
+        # GUI が読む形（版・キャラ・状態・モード）を固定する
+        chars = [{"id": c, "status": st} for c, st in M.available_characters(VERSION)]
+        self.assertEqual(chars[0]["id"], "DEFECT")
+        self.assertEqual(chars[0]["status"], "validated")
+        self.assertTrue(all(set(c) == {"id", "status"} for c in chars))
+
+    def test_choices_include_untested_for_v0114(self):
+        chars = dict(M.available_characters("v0.114.0"))
+        self.assertEqual(chars["FOOL"], "untested")
+
+
 class FileTest(unittest.TestCase):
     def _install(self, root: Path):
         class Install:
