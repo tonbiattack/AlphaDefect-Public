@@ -571,7 +571,34 @@ internal static class MentorClient
 
     /// <summary>直前に受け取った card_reward の cards[] から、同じカードの位置を返す。</summary>
     static int _cardAmbiguous;
+    static int _targetRetargeted;
     static int _cardNotFound;
+
+    /// <summary>
+    /// 対象を、spire-mentor と同じ「combat.Enemies の並び」の index にする（#68）。
+    /// 見つからない・狙えない敵なら、狙える敵の先頭に切り替える（拒否されるより進める）。
+    /// </summary>
+    static int TargetIndexOf(Creature target)
+    {
+        var cs = target.CombatState;
+        if (cs == null) return -1;
+        var enemies = cs.Enemies;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (!ReferenceEquals(enemies[i], target)) continue;
+            if (enemies[i].IsHittable) return i;
+            break;
+        }
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (!enemies[i].IsHittable) continue;
+            if (_targetRetargeted++ < 5)
+                Bridge.LogEvent($"[mentor] target not hittable; retargeting to enemies[{i}]");
+            return i;
+        }
+        return -1;
+    }
+
 
     /// <summary>
     /// カードをメッセージの並びの index に写す。id だけでなく強化・コストも見て、
@@ -1092,21 +1119,7 @@ internal static class MentorClient
                 for (int i = 0; i < hand.Count; i++)
                     if (ReferenceEquals(hand[i], card)) { handIndex = i; break; }
                 if (handIndex < 0) return "{\"action\":\"end_turn\"}";
-                int targetIndex = -1;
-                if (choice.B is Creature target)
-                {
-                    var cs = me.Creature.CombatState;
-                    if (cs != null)
-                    {
-                        int k = 0;
-                        foreach (var c in cs.Creatures)
-                        {
-                            if (c.IsPlayer || !c.IsAlive) continue;
-                            if (ReferenceEquals(c, target)) { targetIndex = k; break; }
-                            k++;
-                        }
-                    }
-                }
+                int targetIndex = choice.B is Creature target ? TargetIndexOf(target) : -1;
                 return targetIndex >= 0
                     ? $"{{\"action\":\"play\",\"card_index\":{handIndex},\"target_index\":{targetIndex}}}"
                     : $"{{\"action\":\"play\",\"card_index\":{handIndex}}}";
@@ -1205,18 +1218,7 @@ internal static class MentorClient
                         // 敵を対象にするポーションは target_index も送る（#67）
                         if (choice.B is Creature target)
                         {
-                            var cs = me.Creature.CombatState;
-                            int targetIndex = -1;
-                            if (cs != null)
-                            {
-                                int k = 0;
-                                foreach (var c in cs.Creatures)
-                                {
-                                    if (c.IsPlayer || !c.IsAlive) continue;
-                                    if (ReferenceEquals(c, target)) { targetIndex = k; break; }
-                                    k++;
-                                }
-                            }
+                            int targetIndex = TargetIndexOf(target);
                             if (targetIndex >= 0)
                                 return $"{{\"action\":\"potion\",\"slot\":{slot},\"target_index\":{targetIndex}}}";
                         }
