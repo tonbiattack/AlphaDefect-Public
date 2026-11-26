@@ -33,6 +33,12 @@ static class Cli
         {
             Bootstrap.Init();
             Vocab.Load();
+            if (Vocab.Count <= 2)
+            {
+                // 只剩 <pad>、<unk>：词表没载入，帧里的内容全是 <unk>，训练、评测都会悄悄出错，不如直接退出（见 Vocab.Load）
+                Console.Error.WriteLine($"[serve] 词表没有载入（{Vocab.DefaultPath}），退出");
+                Environment.Exit(3);
+            }
             Console.Error.WriteLine($"[serve] 就绪，启动 {sw.ElapsedMilliseconds} ms，词表 {Vocab.Count} 项");
             Server.Run();
             return;

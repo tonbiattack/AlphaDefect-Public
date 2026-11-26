@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <!-- 游戏程序集所在目录：从安装目录复制到本地，按版本分目录，不入库。版本写在 engine/game_version.txt（engine/Directory.Build.props 读它） -->
+    <Sts2GameDir Condition="'$(Sts2GameDir)' == ''">$(HOME)/.local/share/sls2/game/$(Sts2GameVersion)</Sts2GameDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 只在编译时引用，运行时由 GameAssemblies 从 Sts2GameDir 加载，不复制到输出目录 -->
+    <Reference Include="sts2"><HintPath>$(Sts2GameDir)/sts2.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GodotSharp"><HintPath>$(Sts2GameDir)/GodotSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(Sts2GameDir)/0Harmony.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Sts2GameDir" Value="$(Sts2GameDir)" />
+    <RuntimeHostConfigurationOption Include="Sts2GameVersion" Value="$(Sts2GameVersion)" />
+    <RuntimeHostConfigurationOption Include="Sts2Vocab" Value="$(MSBuildProjectDirectory)/../catalog/vocab.txt" />
+    <RuntimeHostConfigurationOption Include="Sts2NoDownsideRelics" Value="$(MSBuildProjectDirectory)/../catalog/no_downside_relics.txt" />
+  </ItemGroup>
+
+</Project>

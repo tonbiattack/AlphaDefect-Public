@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    实机桥接模组（Sts2Bridge）与无头引擎共用观测编码：Observation 是分部类，拆在 Sts2Headless/Engine/Obs/ 下（见 引擎模块与游戏更新适配.md）。
+    Sts2Headless 自己按默认通配已经包含这些文件；桥接模组只在 csproj 里列了 Observation.cs 等少数文件，这里替它补上，免得每拆、每加一个文件都去改桥接的 csproj。
+    ObservationOracle.cs 也是 Observation 的分部：先 Remove 再 Include，csproj 里列没列都只编译一次。
+  -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'Sts2Bridge'">
+    <Compile Include="$(MSBuildThisFileDirectory)Sts2Headless/Engine/Obs/**/*.cs" LinkBase="Shared/Obs" />
+    <!-- 游戏版本兼容层（GameCompat）：观测编码里的反射都经它登记 -->
+    <Compile Include="$(MSBuildThisFileDirectory)Sts2Headless/Engine/Compat/**/*.cs" LinkBase="Shared/Compat" />
+    <Compile Remove="$(MSBuildThisFileDirectory)Sts2Headless/Engine/ObservationOracle.cs" />
+    <Compile Remove="../Sts2Headless/Engine/ObservationOracle.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Sts2Headless/Engine/ObservationOracle.cs" Link="Shared/ObservationOracle.cs" />
+  </ItemGroup>
+</Project>

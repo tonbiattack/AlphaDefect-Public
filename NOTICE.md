@@ -7,12 +7,12 @@ The [MIT license](LICENSE) covers the project's own work in this repository: cod
 ## Third-party material
 
 - **Slay the Spire 2** is a game by Mega Crit. This project is not affiliated with or endorsed by Mega Crit. The repository contains no game binaries, game assets, art, audio or decompiled game source. Running the engine requires your own copy of the game at the matching version.
-  - The content catalogs (`engine/catalog/`, `game-v0.111.0/engine/catalog/`) and the vocabularies list entity IDs and numerical attributes derived from the game's data, which the networks need as input. They are not covered by the MIT license.
+  - The content catalogs (`engine/catalog/`, `game-v0.111.0/engine/catalog/`, `game-v0.114.0/engine/catalog/`) and the vocabularies list entity IDs and numerical attributes derived from the game's data, which the networks need as input. They are not covered by the MIT license.
   - In the working version of the v0.113.1 engine, `engine/Sts2Headless/PerfPatches.cs` restated two methods of the game's code (`CombatState.IterateHookListeners`, `RunState.IterateHookListeners`) so that their lists could be pooled for speed. That restated code is **not** in this release; the class is a stub, the game's own methods run, and observation encoding is slower. The full-run determinism hashes of all six characters are the same with and without it (checked 2026-11-21).
 - **spire-mentor** (MIT, © Thomas Friedel): the Rust rules core under `rust-engine/vendor/`, with its license in `rust-engine/vendor/LICENSE` and provenance in `rust-engine/vendor/UPSTREAM.md`.
 - **sts2-sim** (MIT, https://github.com/iRyougi/sts2-sim): not included. `engine/Sts2SimServe/patches/` and `game-v0.111.0/engine/Sts2SimServe/patches/` hold our patches against its commit `f65056f`.
 - **CombatSolver** (a game mod, https://github.com/Torch1230/CombatSolver): used for practice-state labels and the ceiling test; not included.
-- **Spire Codex** (https://spire-codex.com): community statistics of uploaded runs, retrieved through its public API, in `engine/card_stats/` and `paper/data/codex/` (retrieval dates in the files and in `paper/data/codex/fetched_utc.txt`). They belong to their source and are not covered by the MIT license.
+- **Spire Codex** (https://spire-codex.com): community statistics of uploaded runs, retrieved through its public API, in `engine/card_stats/` (with copies under `game-v0.111.0/` and `game-v0.114.0/`) and `paper/data/codex/` (retrieval dates in the files and in `paper/data/codex/fetched_utc.txt`). They belong to their source and are not covered by the MIT license.
 
 ## Not included
 

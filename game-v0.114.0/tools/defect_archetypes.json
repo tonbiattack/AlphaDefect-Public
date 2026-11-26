@@ -1,0 +1,10 @@
+{
+  "_说明": "故障机器人的构筑流派（决策记录 265，成套偏离测试用）。依据：攻略站 PCGamesN、slay-the-spire-2.pages.dev、dood.gg 的流派划分（2026-11-04 检索），对照 v0.111.0 内容目录里各牌引用的充能球与能力（效果签名的 ref）归类；同一张牌可以属于几个流派（如碎片整理、电容器、循环是各类充能球流共用的集中与球位）。",
+  "frost": {"名字": "冰球集中", "cards": ["COLD_SNAP", "COOLHEADED", "CHILL", "GLACIER", "HAILSTORM", "HIBERNATE", "ICE_LANCE", "DEFRAGMENT", "BIASED_COGNITION", "HOTFIX", "FOCUSED_STRIKE", "SYNCHRONIZE", "CAPACITOR", "LOOP", "COOLANT", "RAINBOW"]},
+  "lightning": {"名字": "闪电", "cards": ["BALL_LIGHTNING", "LIGHTNING_ROD", "STORM", "TEMPEST", "TESLA_COIL", "THUNDER", "VOLTAIC", "DEFRAGMENT", "FOCUSED_STRIKE", "CAPACITOR", "LOOP"]},
+  "dark": {"名字": "黑暗球", "cards": ["DARKNESS", "CONSUMING_SHADOW", "SHADOW_SHIELD", "NULL", "MULTI_CAST", "QUADCAST", "RAINBOW", "DEFRAGMENT", "CAPACITOR", "LOOP"]},
+  "claw": {"名字": "零费爪击", "cards": ["CLAW", "ALL_FOR_ONE", "HOLOGRAM", "SCRAPE", "SKIM", "FTL", "BEAM_CELL", "GO_FOR_THE_EYES", "HELIX_DRILL", "TURBO", "MODDED", "REBOOT", "TESLA_COIL"]},
+  "plasma": {"名字": "等离子与高费连锁", "cards": ["FUSION", "IGNITION", "METEOR_STRIKE", "UPROAR", "SUNDER", "OVERCLOCK", "MODDED", "DOUBLE_ENERGY", "ENERGY_SURGE", "SUPERCRITICAL", "SCAVENGE", "HYPERBEAM"]},
+  "power": {"名字": "能力牌", "cards": ["CREATIVE_AI", "ECHO_FORM", "BUFFER", "MACHINE_LEARNING", "ITERATION", "SUBROUTINE", "ONE_FOR_ALL", "SYNTHESIS", "SIGNAL_BOOST", "BULK_UP", "FERAL", "SPINNER", "DEFRAGMENT", "CAPACITOR", "LOOP"]},
+  "status": {"名字": "状态牌", "cards": ["FLAK_CANNON", "SMOKESTACK", "COMPACT", "FIGHT_THROUGH", "GUNK_UP", "OVERCLOCK", "BOOST_AWAY", "TURBO", "TRASH_TO_TREASURE"]}
+}

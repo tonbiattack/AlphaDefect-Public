@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>对局回放</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root {
+  --bg: #15171e; --panel: #1d2029; --panel2: #262a36; --line: #343a4b; --text: #ebedf2; --muted: #a2a8b8; --faint: #6f768a;
+  --accent: #e6b450; --good: #62c98f; --bad: #e5625b; --hp: #c9413a; --block: #5aa2ec; --flag: #ef8a47;
+  --atk: #8e3c33; --skl: #2f5f8f; --pow: #7b5a2e; --cur: #3a2f3f; --sta: #4a4f5c;
+  --shadow: 0 6px 18px #0006; --node: #d9ccae;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #efece4; --panel: #fbfaf6; --panel2: #f1eee6; --line: #d9d3c4; --text: #23252c; --muted: #5f6372; --faint: #8b8f9b;
+    --accent: #a8761a; --good: #2f8a57; --bad: #c0392b; --hp: #c0392b; --block: #2d6fb8; --flag: #c25e1d; --shadow: 0 4px 14px #0002;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #efece4; --panel: #fbfaf6; --panel2: #f1eee6; --line: #d9d3c4; --text: #23252c; --muted: #5f6372; --faint: #8b8f9b;
+  --accent: #a8761a; --good: #2f8a57; --bad: #c0392b; --hp: #c0392b; --block: #2d6fb8; --flag: #c25e1d; --shadow: 0 4px 14px #0002;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif; display: flex; flex-direction: column; }
+button, select, input { font: inherit; color: inherit; }
+header { display: flex; gap: 12px; align-items: center; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+header h1 { font-size: 16px; margin: 0 6px 0 0; font-weight: 700; letter-spacing: .05em; }
+select, .btn { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.btn:hover, select:hover { border-color: var(--accent); }
+.meta { color: var(--muted); font-size: 13px; }
+.badge { padding: 1px 9px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.badge.win { background: color-mix(in srgb, var(--good) 22%, transparent); color: var(--good); }
+.badge.lose { background: color-mix(in srgb, var(--bad) 22%, transparent); color: var(--bad); }
+.controls { display: flex; gap: 6px; align-items: center; padding: 6px 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.controls input[type=range] { flex: 1; min-width: 200px; accent-color: var(--accent); }
+.controls .count { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 120px; text-align: right; }
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px minmax(0, 1fr) 380px; }
+aside, section { overflow: auto; min-height: 0; }
+
+aside.floors { border-right: 1px solid var(--line); background: var(--panel); padding: 6px 0 20px; }
+.actsep { color: var(--accent); font-size: 12px; font-weight: 700; padding: 10px 12px 4px; letter-spacing: .15em; }
+.floor { display: grid; grid-template-columns: 24px 24px 1fr auto; gap: 6px; align-items: center; padding: 3px 10px; cursor: pointer; border-left: 3px solid transparent; }
+.floor:hover { background: var(--panel2); }
+.floor.cur { border-left-color: var(--accent); background: var(--panel2); }
+.floor .no { color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; }
+.floor img { width: 22px; height: 22px; object-fit: contain; }
+/* 古神节点的图标是白色剪影（游戏里另行上色） */
+img.tint, image.tint { filter: brightness(0) saturate(100%) invert(62%) sepia(62%) saturate(520%) hue-rotate(5deg); }
+.floor .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.floor .side { display: flex; gap: 5px; align-items: center; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.fl { color: var(--flag); font-weight: 700; }
+.fl.weak { color: var(--faint); font-weight: 400; }
+
+section.stage { padding: 12px 18px 30px; }
+.topbar { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; }
+.stat { display: inline-flex; gap: 5px; align-items: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat img { width: 26px; height: 26px; object-fit: contain; }
+.icons { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+.ico { position: relative; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; }
+.ico img { width: 100%; height: 100%; object-fit: contain; }
+.ico .n, .pw .n { position: absolute; right: -3px; bottom: -4px; font-size: 11px; font-weight: 700; background: var(--bg); border-radius: 6px; padding: 0 3px; line-height: 14px; }
+.relics { margin-top: 6px; }
+.banner { margin: 10px 0 12px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.banner .what { font-size: 15px; font-weight: 700; }
+.banner .p { color: var(--muted); font-variant-numeric: tabular-nums; }
+.banner .flag { color: var(--flag); font-size: 13px; }
+.banner .flag.weak { color: var(--muted); }
+h4 { margin: 14px 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+.vital { display: flex; align-items: center; gap: 6px; }
+.hpbar { position: relative; height: 18px; border-radius: 9px; background: color-mix(in srgb, var(--hp) 18%, var(--panel2)); border: 1px solid var(--line); overflow: hidden; flex: 1; min-width: 100px; }
+.hpbar i { position: absolute; inset: 0 auto 0 0; background: var(--hp); }
+.hpbar.blocked { border: 2px solid var(--block); }
+.hpbar span { position: relative; display: block; text-align: center; font-size: 12px; line-height: 16px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000a; }
+.hpbar.big { height: 22px; } .hpbar.big span { line-height: 19px; font-size: 13px; }
+.shield { position: relative; width: 52px; height: 54px; flex: none; display: inline-flex; align-items: center; justify-content: center; margin: -8px 0; }
+.shield img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.shield b { position: relative; font-size: 21px; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 6px #1a4f8a; }
+.blk { color: var(--block); font-weight: 700; font-size: 13px; white-space: nowrap; }
+
+.enemies { display: flex; gap: 12px; flex-wrap: wrap; }
+.enemy { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; width: 280px; box-shadow: var(--shadow); }
+.enemy.dead { opacity: .35; }
+.enemy.target { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.enemy .nm, .player .nm { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.intent { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; font-weight: 700; }
+.intent img { width: 36px; height: 36px; object-fit: contain; }
+.intent .dmg { color: var(--bad); font-size: 19px; }
+.moves { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.moves b { color: var(--bad); }
+.powers { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.pw { position: relative; width: 30px; height: 30px; }
+.pw img { width: 100%; height: 100%; object-fit: contain; }
+.pw.debuff .n { color: var(--bad); }
+
+.player { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 18px; align-items: center; }
+.energy { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+.energy img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.energy b { position: relative; font-size: 19px; color: #fff; text-shadow: 0 1px 3px #000, 0 0 2px #000; }
+.orbs { display: flex; gap: 8px; grid-column: 1 / -1; flex-wrap: wrap; }
+.orb { width: 96px; border-radius: 10px; padding: 5px 6px; text-align: center; font-size: 12px; border: 1px solid var(--line); background: var(--panel2); }
+.orb .on { width: 22px; height: 22px; border-radius: 50%; margin: 0 auto 3px; box-shadow: 0 0 10px currentColor; background: currentColor; }
+.orb.empty { color: var(--faint); border-style: dashed; display: flex; align-items: center; justify-content: center; min-height: 64px; white-space: nowrap; }
+.player .vital { max-width: 460px; }
+
+.hand, .offers { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.card { position: relative; width: 134px; border-radius: 10px; padding: 4px; background: var(--sta); color: #f3f1ea; box-shadow: var(--shadow); border: 2px solid #0000; transition: transform .12s; }
+.card.Attack { background: var(--atk); } .card.Skill { background: var(--skl); } .card.Power { background: var(--pow); } .card.Curse { background: var(--cur); }
+.card .head { display: flex; align-items: center; gap: 4px; min-height: 26px; padding: 0 2px 0 26px; }
+.card .cost { position: absolute; left: -7px; top: -7px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.card .cost img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.card .cost b { position: relative; color: #fff; font-size: 15px; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.card .name { font-weight: 700; font-size: 13px; line-height: 1.2; }
+.card .name .up { color: #7ee08f; }
+.card .name .cnt { color: #ffd98a; margin-left: 3px; }
+.card .art { height: 80px; border-radius: 6px; overflow: hidden; background: #0004; }
+.card .art img { width: 100%; height: 100%; object-fit: cover; }
+.card .desc { font-size: 11px; line-height: 1.4; padding: 4px 3px 2px; color: #ece8dc; min-height: 30px; white-space: pre-line; }
+.card .stats { font-size: 11.5px; color: #ffd98a; padding: 2px 3px 0; font-weight: 700; }
+.card.no { filter: grayscale(.75) brightness(.7); }
+.card.played, .card.chosen, .tile.chosen { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), var(--shadow); transform: translateY(-5px); }
+.card .rar { position: absolute; right: 6px; top: 7px; width: 9px; height: 9px; border-radius: 50%; }
+.rar.Uncommon { background: #6ec1ff; } .rar.Rare { background: #ffd34d; } .rar.Ancient, .rar.Event { background: #e28cff; }
+.prob { position: absolute; right: -6px; bottom: -9px; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px; font-size: 11px; font-weight: 700; padding: 0 6px; }
+.chosen .prob { border-color: var(--accent); color: var(--accent); }
+.tile { position: relative; display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--panel); border: 2px solid var(--line); min-width: 160px; max-width: 340px; box-shadow: var(--shadow); }
+.tile img { width: 42px; height: 42px; object-fit: contain; flex: none; }
+.tile .t { font-weight: 700; }
+.tile .d { color: var(--muted); font-size: 12px; }
+.shelf-group { margin: 6px 0 10px; } .shelf-group > .meta { margin-bottom: 4px; }
+.shelf-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.shelf-item.off > .card, .shelf-item.off > .tile { filter: grayscale(.85); opacity: .55; }
+.shelf-item .price { font-size: 12px; font-weight: 700; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; }
+.shelf-item .price.off { color: var(--muted); }
+.mini .card, .deckwrap .card { width: 106px; } .mini .card .art, .deckwrap .card .art { height: 48px; } .mini .card .desc, .deckwrap .card .desc { display: none; }
+.deckwrap { gap: 8px; }
+.piles { display: flex; gap: 14px; margin-top: 12px; color: var(--muted); font-size: 13px; }
+.piles span[title] { cursor: help; border-bottom: 1px dotted var(--faint); }
+
+.mapbox { height: calc(100vh - 330px); min-height: 360px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.mapbox svg { display: block; margin: 0 auto; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 4px 0 8px; align-items: center; }
+.legend span { display: inline-flex; gap: 4px; align-items: center; }
+.legend img { width: 20px; height: 20px; }
+
+section.decision { border-left: 1px solid var(--line); padding: 12px 14px 30px; background: var(--panel); }
+.dk { font-size: 16px; font-weight: 700; }
+.cand { display: grid; grid-template-columns: 18px 1fr 46px; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 8px; margin: 3px 0; position: relative; font-size: 13.5px; }
+.cand .bar { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 8px; }
+.cand > * { position: relative; }
+.cand.ch { outline: 2px solid var(--accent); }
+.cand .p { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.cand .mk { color: var(--accent); font-weight: 700; }
+.hint { color: var(--faint); font-size: 12px; margin-top: 18px; line-height: 1.9; }
+kbd { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: 11px; background: var(--panel2); }
+.empty { color: var(--faint); padding: 40px; text-align: center; }
+a.btn { text-decoration: none; color: inherit; }
+
+/* 平板与手机：三栏改成上下排，层列表变成可横向滑动的一行 */
+@media (max-width: 1100px) {
+  main { grid-template-columns: minmax(0, 1fr) 320px; }
+  aside.floors { grid-column: 1 / -1; display: flex; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); padding: 4px 6px 6px; max-height: 92px; }
+  .actsep { writing-mode: vertical-rl; padding: 4px 2px; letter-spacing: 0; flex: none; }
+  .floor { flex: none; grid-template-columns: auto; justify-items: center; gap: 0; padding: 2px 8px; border-left: 0; border-bottom: 3px solid transparent; min-width: 54px; }
+  .floor.cur { border-bottom-color: var(--accent); }
+  .floor .nm { display: none; }
+  .floor .side { font-size: 10px; }
+  main { grid-template-rows: auto minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  body { height: auto; }
+  main { display: block; }
+  aside, section { overflow: visible; }
+  aside.floors { overflow-x: auto; }
+  section.stage { padding: 10px 10px 16px; }
+  section.decision { border-left: 0; border-top: 1px solid var(--line); }
+  header { padding: 6px 10px; gap: 8px; }
+  header h1 { font-size: 15px; }
+  #info { width: 100%; order: 9; }
+  .controls { padding: 6px 10px; position: sticky; top: 0; z-index: 5; }
+  .controls .count { min-width: 0; }
+  .controls input[type=range] { order: 9; flex-basis: 100%; }
+  .controls label, #speed, #b-first { display: none; }
+  .btn { padding: 6px 10px; }
+  .enemy { width: 100%; }
+  .card { width: calc(50% - 8px); max-width: 160px; }
+  .mini .card, .deckwrap .card { width: calc(33% - 8px); }
+  .mapbox { height: 65vh; }
+  .player { grid-template-columns: minmax(0, 1fr) auto; }
+  .tile { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="btn home" id="home" href="#" title="回到训练看板">← 看板</a>
+  <h1>对局回放</h1>
+  <select id="pick" title="选择一局"></select>
+  <span id="info" class="meta"></span>
+  <span style="flex:1"></span>
+  <button class="btn" id="theme" title="切换深浅色">◐</button>
+</header>
+<div class="controls">
+  <button class="btn" id="b-first" title="开头（Home）">⏮</button>
+  <button class="btn" id="b-prevf" title="上一层（Shift+←）">⇤ 层</button>
+  <button class="btn" id="b-prev" title="上一步（←）">◀</button>
+  <button class="btn" id="b-play" title="播放 / 暂停（空格）">▶ 播放</button>
+  <button class="btn" id="b-next" title="下一步（→）">▶</button>
+  <button class="btn" id="b-nextf" title="下一层（Shift+→）">层 ⇥</button>
+  <button class="btn" id="b-flag" title="下一个值得复查的决策（F）">⚑ 下一个可疑</button>
+  <label class="meta" title="“下一个可疑”也停在模型拿不准（概率低于 25%）的步"><input type="checkbox" id="weak"> 含拿不准</label>
+  <select id="speed" title="播放速度"><option value="1200">慢</option><option value="600" selected>中</option><option value="250">快</option></select>
+  <input type="range" id="slider" min="0" max="0" value="0" aria-label="进度">
+  <span class="count" id="count"></span>
+</div>
+<main>
+  <aside class="floors" id="floors"></aside>
+  <section class="stage" id="stage"><div class="empty">加载中…</div></section>
+  <section class="decision" id="decision"></section>
+</main>
+<script src="names.js"></script>
+<script>
+"use strict";
+// 回放列表会更新：带时间戳加载，避免手机浏览器用缓存里的旧列表
+document.write('<script src="replays.js?' + Date.now() + '"><\/script>');
+</script>
+<script>
+"use strict";
+const N = window.NAMES || [], R = window.REPLAYS || [], ENC = window.ENC || {};
+document.getElementById("home").href = window.HOME_URL || "../index.html";
+const DK = ["卡住", "战斗", "选牌", "卡牌奖励", "选卡包", "领取奖励", "事件", "休息处", "商店", "宝箱", "占卜", "选路线", "结束"];
+const SEL = ["变换", "消耗", "删除", "附魔", "弃牌", "升级"];
+const T = { CREATURE: 2, POWER: 3, CARD: 4, RELIC: 5, POTION: 6, MAP: 8, OPTION: 9 };
+const ORB_COLOR = { "闪电": "#f5d442", "冰霜": "#7fd3ff", "黑暗": "#b07cff", "等离子": "#ff9ad5", "玻璃": "#e8f4ff" };
+const NODE_ICON = { "普通战斗": "map_monster", "精英": "map_elite", "休息处": "map_rest", "商店": "map_shop", "宝箱": "map_chest", "问号": "map_unknown", "Boss": "map_chest_boss", "古神": "ancient_node_neow" };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nm = id => (N[id] ? N[id][0] : "#" + id);
+const desc = id => (N[id] ? N[id][1] : "");
+const tag = id => (N[id] ? N[id][2] : "");
+const entry = id => (N[id] ? N[id][4] : "").split(".").slice(1).join(".");
+const up = n => (n > 0 ? "+".repeat(n) : "");
+const baseCost = id => (N[id] && N[id][5] != null ? N[id][5] : null);
+const asset = (dir, name) => `assets/${dir}/${name}.webp`;
+const img = (src, alt = "") => `<img src="${src}" alt="${esc(alt)}" loading="lazy" onerror="this.style.visibility='hidden'">`;
+const pct = p => (p >= 0.01 ? Math.round(p * 100) + "%" : "<1%");
+let rep = null, i = 0, timer = null, flagsAt = [];
+
+// 描述文字：游戏用 SmartFormat 的格式语法——{名字}、{名字:diff()} 代入数值，{名字:energyIcons(n)} 是能量图标，
+// {名字:plural:单数|复数}，{名字:真时文本|假时文本} 按真假选（如 {InCombat:…}，战斗中才显示的计算结果）。
+// ctx：vars 基础数值，dmg / blk 这张牌当前的伤害、格挡，amount 能力层数；按图鉴的样子显示，不算战斗中才有的部分。
+function splitTop(t) {
+  let d = 0;
+  for (let k = 0; k < t.length; k++) {
+    if (t[k] === "{") d++; else if (t[k] === "}") d--;
+    else if (t[k] === "|" && d === 0) return [t.slice(0, k), t.slice(k + 1)];
+  }
+  return [t, null];
+}
+function fmtVal(name, ctx) {
+  const v = ctx.vars || {};
+  if (/^(Calculated)?Damage$/.test(name) && ctx.dmg) return ctx.dmg;
+  if (/^(Calculated)?Block$/.test(name) && ctx.blk) return ctx.blk;
+  if (name === "InCombat") return false;
+  if (name === "singleStarIcon") return "★";
+  if (name === "Amount" && ctx.amount != null) return ctx.amount;
+  if (/upgraded/i.test(name)) return (ctx.upg || 0) > 0;
+  if (v[name] != null) return v[name];
+  if (v[name.replace(/^Calculated/, "")] != null) return v[name.replace(/^Calculated/, "")];
+  if (/Name(\.|$)/.test(name)) return ctx.owner || "该单位";                // 能力的持有者（{OwnerName} 等）
+  if (ctx.amount != null && /Power$|Loss$|Amount$/.test(name)) return ctx.amount;   // 卡牌附带的临时能力：数值就是层数
+  return undefined;
+}
+const fmtShow = v => (v == null ? "?" : typeof v === "number" ? (Number.isInteger(v) ? v : +v.toFixed(2)) : v);
+function fmtField(body, ctx) {
+  const k = body.indexOf(":");
+  const name = k < 0 ? body : body.slice(0, k), rest = k < 0 ? null : body.slice(k + 1);
+  const v = fmtVal(name, ctx);
+  if (rest == null) return fmtShow(v);
+  const fn = rest.match(/^(\w+)\(([^()]*)\)$/);
+  if (fn) {
+    const arg = fn[2] !== "" ? fn[2] : fmtShow(v);
+    // energyPrefix:energyIcons(1) 是一个单独的能量图标，不是“1 点能量”：前面紧跟数字时读作“费”（“所有 0 费牌”“耗能增加 1 费”），否则读作“能量”
+    if (fn[1] === "energyIcons") return v == null && name === "energyPrefix" ? "\u0001" : `${arg}点能量`;
+    if (fn[1] === "starIcons") return `${arg}颗星`;
+    if (fn[1] === "percentMore" || fn[1] === "percentLess") return v == null ? "?" : Math.round(Math.abs(v) * 100) + "%";
+    if (fn[1] === "abs") return v == null ? "?" : fmtShow(Math.abs(v));
+    return fmtShow(v);
+  }
+  if (rest.startsWith("plural:")) { const [a, b] = splitTop(rest.slice(7)); return fmt(Number(v) === 1 ? a : (b ?? a), ctx); }
+  if (rest.startsWith("cond:")) {           // {X:cond:<0?甲|==1?乙|丙}：按条件挑第一段成立的，没有就用最后一段
+    const segs = splitAll(rest.slice(5));
+    for (const g of segs) {
+      const m = g.match(/^([<>=!]=?)(-?[\d.]+)\?([\s\S]*)$/);
+      if (!m) return fmt(g, ctx);
+      const x = Number(v), y = Number(m[2]);
+      if ({ "<": x < y, ">": x > y, "<=": x <= y, ">=": x >= y, "==": x === y, "=": x === y, "!=": x !== y }[m[1]]) return fmt(m[3], ctx);
+    }
+    return "";
+  }
+  const ch = rest.match(/^choose\(([^)]*)\):([\s\S]*)$/);
+  if (ch) {                                  // {X:choose(1|2):甲|乙|其余}：值等于第几个选项就用第几段
+    const opts = ch[1].split("|"), segs = splitAll(ch[2]);
+    const k = opts.indexOf(String(v));
+    return fmt(k >= 0 ? segs[k] ?? "" : segs.length > opts.length ? segs[segs.length - 1] : "", ctx);
+  }
+  const [a, b] = splitTop(rest.replace(/^show:/, ""));   // {X:真时|假时}、{IfUpgraded:show:升级后|升级前}
+  return fmt(v ? a : (b ?? ""), ctx);
+}
+function splitAll(t) { const out = []; let r = [t, null]; do { r = splitTop(r[0]); out.push(r[0]); r = [r[1], null]; } while (r[0] != null); return out; }
+function fmt(t, ctx = {}) {
+  t = String(t || ""); let out = "";
+  for (let i = 0; i < t.length;) {
+    if (t[i] !== "{") { out += t[i++]; continue; }
+    let d = 0, j = i;
+    for (; j < t.length; j++) { if (t[j] === "{") d++; else if (t[j] === "}" && --d === 0) break; }
+    out += fmtField(t.slice(i + 1, j), ctx);
+    i = j + 1;
+  }
+  return out.replace(/(\d)((?:\[\/?\w+\])*)\u0001/g, "$1$2费").replace(/\u0001/g, "能量").replace(/%%/g, "%").replace(/\n{2,}/g, "\n").trim();
+}
+const descOf = (id, ctx = {}) => fmt(desc(id), { vars: N[id] ? N[id][3] : {}, ...ctx });
+
+// ---------- 小部件
+function vital(hp, m, b, big) {
+  const p = m ? Math.max(0, Math.min(1, hp / m)) : 0;
+  return `<div class="vital">${b ? `<span class="shield" title="格挡 ${b}">${img(asset("intents", "intent_defend"), "格挡")}<b>${b}</b></span>` : ""}
+    <div class="hpbar ${b ? "blocked" : ""} ${big ? "big" : ""}"><i style="width:${(p * 100).toFixed(1)}%"></i><span>${hp} / ${m}</span></div>${b ? `<span class="blk">格挡 ${b}</span>` : ""}</div>`;
+}
+function powerIcons(ps, owner) {
+  return `<div class="powers">${(ps || []).map(([id, n]) =>
+    `<span class="pw ${tag(id) === "Debuff" ? "debuff" : ""}" title="${esc(nm(id) + (n ? " " + n : "") + "\n" + descOf(id, { amount: n, owner }))}">${img(asset("power", entry(id)), nm(id))}${n ? `<span class="n">${n}</span>` : ""}</span>`).join("")}</div>`;
+}
+const relicIcon = (id, n) => `<span class="ico" title="${esc(nm(id) + "\n" + descOf(id))}">${img(asset("relic", entry(id)), nm(id))}${n >= 0 ? `<span class="n">${n}</span>` : ""}</span>`;
+const potionIcon = id => `<span class="ico" title="${esc(nm(id) + "\n" + descOf(id))}">${img(asset("potion", entry(id)), nm(id))}</span>`;
+function cardTile(id, upg, o = {}) {
+  const [type, rar] = (tag(id) || "|").split("|");
+  const text = descOf(id, { dmg: o.dmg, blk: o.blk, upg });
+  const stats = [o.dmg ? `伤害 ${o.dmg}` : "", o.blk ? `格挡 ${o.blk}` : ""].filter(Boolean).join(" · ");
+  return `<div class="card ${type} ${o.cls || ""}" title="${esc(nm(id) + up(upg) + "\n" + text)}">
+    ${(o.cost ?? baseCost(id)) != null && (o.cost ?? baseCost(id)) >= -1 ? `<span class="cost">${img(asset("ui", "energy_defect"))}<b>${(o.cost ?? baseCost(id)) < 0 ? "X" : (o.cost ?? baseCost(id))}</b></span>` : ""}
+    ${rar && rar !== "Common" && rar !== "Basic" ? `<span class="rar ${rar}" title="${rar}"></span>` : ""}
+    <div class="head"><span class="name">${esc(nm(id))}${upg ? `<span class="up">${up(upg)}</span>` : ""}${o.count > 1 ? `<span class="cnt">×${o.count}</span>` : ""}</span></div>
+    <div class="art">${img(asset("cards", entry(id)), nm(id))}</div>
+    ${stats ? `<div class="stats">${stats}</div>` : ""}<div class="desc">${esc(text)}</div>
+    ${o.prob != null ? `<span class="prob">${pct(o.prob)}</span>` : ""}</div>`;
+}
+
+// ---------- 名字与候选
+function objName(o, st) {
+  if (!o) return "";
+  const [k, id, z, ex] = o;
+  if (k === T.CARD) return nm(id) + up(ex);
+  if (k === T.CREATURE) {
+    if (z === 1) return "自己";
+    const same = st && st.en ? st.en.filter(x => x.n === id).length : 1;
+    return nm(id) + (same > 1 ? " #" + ex : "");
+  }
+  if (k === T.OPTION) {
+    const [v, aux] = ex;
+    let s = id <= 1 && aux ? nm(aux) : nm(id);
+    if (s === "金币" && v) s += " " + v;
+    return s;
+  }
+  if (k === T.MAP) return nm(id) + `（第 ${ex[0] + 1} 行第 ${ex[1] + 1} 列）`;
+  return nm(id);
+}
+function candText(c, st) {
+  const [k, A, B, kk, f0, f1, f2] = c;
+  const a = esc(objName(A, st)), b = esc(objName(B, st));
+  switch (k) {
+    case 1: return "结束回合";
+    case 2: return `打出 <b>${a}</b>` + (B ? ` → ${b}` : "");
+    case 3: return `使用药水 <b>${a}</b>` + (B ? ` → ${b}` : "");
+    case 4: return `丢弃药水 ${a}`;
+    case 5: return `选 <b>${a}</b>`;
+    case 6: return "确认选择";
+    case 7: return `拿 <b>${a}</b>`;
+    case 8: return esc(nm(kk));
+    case 9: return `选第 ${f0 + 1} 包`;
+    case 10: return `领取 ${a}`;
+    case 11: return "离开 / 跳过";
+    case 12: return a + (B ? ` <span class="meta">（${b}）</span>` : "");
+    case 13: return a;
+    case 14: return `购买 <b>${a}</b>` + (f0 ? `（${f0} 金）` : "");
+    case 15: return `前往 ${a}`;
+    case 16: return `拿遗物 <b>${a}</b>`;
+    case 17: return "不拿遗物";
+    case 18: return `占卜格子 (${f0}, ${f1}) · ${f2 ? "大" : "小"}`;
+  }
+  return "动作 " + k;
+}
+
+// ---------- 值得复查的决策（只是提示，不一定是错）
+function flagsOf(st, k, steps) {
+  const out = [], c = st.c[st.a];
+  const pChosen = (st.pr.find(x => x[0] === st.a) || [0, 0])[1];
+  if (pChosen < 0.25) out.push({ weak: true, t: `模型拿不准：选中的这项概率只有 ${Math.round(pChosen * 100)}%` });
+  if (st.d === 1 && c && c[0] === 1) {
+    const e = st.g[5], playable = (st.hand || []).filter(h => h[3] && h[2] >= 0 && h[2] <= e);
+    if (e > 0 && playable.length) out.push({ t: `还有 ${e} 点能量、${playable.length} 张能打的牌就结束了回合` });
+  }
+  if (st.d === 7 && c && c[1] && nm(c[1][1]).includes("休息") && st.g[2] >= 0.9 * st.g[3]) out.push({ t: `血量 ${st.g[2]}/${st.g[3]} 时选了休息` });
+  if (k === steps.length - 1 && !rep.head.win && (st.pot || []).length) out.push({ t: `输掉时身上还有 ${st.pot.length} 瓶药水没用` });
+  return out;
+}
+
+// ---------- 层
+const bossIcon = enc => enc.toLowerCase().replace(/_boss$/, "") + "_boss";      // 战绩页的 Boss 图标（replay_assets.py），12 个 Boss 齐全
+function buildFloors() {
+  const cmb = {}, fl = [];
+  (rep.head.combats || []).forEach(c => { cmb[c.floor] = c; });
+  rep.steps.forEach((s, k) => {
+    let e = fl[fl.length - 1];
+    if (!e || e.floor !== s.g[1]) { e = { floor: s.g[1], act: s.g[0], start: k, kinds: new Set(), flags: 0, weak: 0, name: "", hp: s.g[2], m: s.g[3] }; fl.push(e); }
+    e.kinds.add(s.d);
+    if (flagsAt[k].some(x => !x.weak)) e.flags++; else if (flagsAt[k].length) e.weak++;
+    if (!e.name && s.d === 6) {
+      // 事件名取自选项的键（“事件 · 选项”）；古神（Neow 等）的遗物选项键里带遗物名、不在词表
+      const o = s.c.map(c => c[1]).find(o => o && o[0] === T.OPTION && o[1] > 1 && nm(o[1]).includes(" · "));
+      e.name = o ? nm(o[1]).split(" · ")[0] : "古神"; e.ancient = !o;
+    }
+  });
+  fl.forEach(e => {
+    const c = cmb[e.floor];
+    if (c) { e.name = ENC[c.encounter] || c.encounter; e.icon = c.room === "Boss" ? bossIcon(c.encounter) : c.room === "Elite" ? "map_elite" : "map_monster"; }
+    else if (e.kinds.has(8)) { e.icon = "map_shop"; e.name = "商店"; }
+    else if (e.kinds.has(7)) { e.icon = "map_rest"; e.name = "休息处"; }
+    else if (e.kinds.has(9)) { e.icon = "map_chest"; e.name = "宝箱"; }
+    else if (e.kinds.has(6) || e.kinds.has(10)) { e.icon = e.ancient ? "ancient_node_neow" : "map_unknown"; e.name = e.name || "事件"; }
+    else { e.icon = "top_bar_map"; e.name = e.floor === 0 ? "开局" : "地图"; }
+  });
+  return fl;
+}
+
+// ---------- 地图（可滚动）
+function mapView(st) {
+  const nodes = st.map, cw = 96, rh = 66, pad = 50;
+  const rows = Math.max(...nodes.map(n => n[0])) + 1;
+  const W = pad * 2 + 6 * cw, H = pad * 2 + (rows - 1) * rh;
+  const X = c => pad + c * cw, Y = r => pad + (rows - 1 - r) * rh;
+  const chosen = st.c[st.a] && st.c[st.a][0] === 15 ? st.c[st.a][1][3] : null;
+  const at = {}; nodes.forEach(n => { at[n[0] + ":" + n[1]] = n; });
+  const cur = nodes.find(n => n[4]);
+  const edges = [], seen = new Set();
+  const add = (r1, c1, r2, c2) => { const kk = [r1, c1, r2, c2].join(); if (!seen.has(kk)) { seen.add(kk); edges.push([r1, c1, r2, c2]); } };
+  nodes.forEach(n => [n[6], n[7], n[8]].forEach(c => { if (c > 0) add(n[0], n[1], n[0] + 1, c - 1); }));
+  // 观测里每个节点最多记 3 条连线，起点可能连着更多的第一行节点；当前位置到各个可选节点的线按候选补上
+  if (cur) st.c.forEach(c => { if (c[0] === 15 && c[1]) add(cur[0], cur[1], c[1][3][0], c[1][3][1]); });
+  const bossEnc = (rep.head.combats || []).find(c => c.room === "Boss" && c.act === st.g[0]);
+  let svg = "";
+  edges.forEach(([r1, c1, r2, c2]) => {
+    const a = at[r1 + ":" + c1], b = at[r2 + ":" + c2];
+    const walked = a && b && (a[3] || a[4]) && (b[3] || b[4]);
+    const next = cur && a === cur && chosen && chosen[0] === r2 && chosen[1] === c2;
+    svg += `<line x1="${X(c1)}" y1="${Y(r1)}" x2="${X(c2)}" y2="${Y(r2)}" stroke="${next ? "var(--accent)" : walked ? "var(--muted)" : "var(--line)"}" stroke-width="${next || walked ? 3.5 : 1.8}"${walked || next ? "" : ' stroke-dasharray="4 5"'}/>`;
+  });
+  nodes.forEach(n => {
+    const t = nm(n[2]), isC = chosen && chosen[0] === n[0] && chosen[1] === n[1];
+    const icon = t === "Boss" && bossEnc ? bossIcon(bossEnc.encounter) : NODE_ICON[t] || "map_unknown";
+    const s = t === "Boss" ? 72 : 40, x = X(n[1]), y = Y(n[0]);
+    svg += `<g class="${n[4] ? "curnode" : ""}" opacity="${n[3] || n[4] || n[5] ? 1 : 0.4}">
+      ${n[4] ? `<circle cx="${x}" cy="${y}" r="${s / 2 + 6}" fill="color-mix(in srgb, var(--accent) 28%, transparent)" stroke="var(--accent)" stroke-width="3"/>` : ""}
+      ${isC && !n[4] ? `<circle cx="${x}" cy="${y}" r="${s / 2 + 6}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 4"/>` : ""}
+      <circle cx="${x}" cy="${y}" r="${s / 2 + 1}" fill="var(--node)" stroke="${n[3] && !n[4] ? "var(--muted)" : "none"}" stroke-width="2"/>
+      <image class="${icon.startsWith("ancient") ? "tint" : ""}" href="${asset("ui", icon)}" x="${x - s / 2}" y="${y - s / 2}" width="${s}" height="${s}"><title>${esc(t)}（第 ${n[0] + 1} 行）</title></image></g>`;
+  });
+  const leg = [["map_monster", "普通战斗"], ["map_elite", "精英"], ["map_unknown", "问号"], ["map_rest", "休息处"], ["map_shop", "商店"], ["map_chest", "宝箱"]]
+    .map(([f, t]) => `<span>${img(asset("ui", f))}${t}</span>`).join("");
+  return `<div class="legend">${leg}<span>· 实心金圈：当前位置　虚线金圈：这一步要去的节点　实线：走过的路</span></div>
+    <div class="mapbox" id="mapbox"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${svg}</svg></div>`;
+}
+
+// ---------- 战斗外：把选项画出来（卡牌奖励、商店、选牌、宝箱等）
+function offersView(st, pmap) {
+  if (st.shop) return shopView(st, pmap);
+  return candsView(st, pmap, st.c.map((_, k) => k));
+}
+
+// 画一组候选（下标 ks）：卡牌一排，其余（遗物、药水、文字选项）一排
+function candsView(st, pmap, ks, otherTitle = "其他选项") {
+  const cards = [], tiles = [];
+  ks.forEach(k => {
+    const c = st.c[k], [kind, A] = c, p = pmap[k] || 0, ch = k === st.a ? "chosen" : "";
+    if (A && A[0] === T.CARD) cards.push(cardTile(A[1], A[3], { cls: ch, prob: p }));
+    else if (A && (A[0] === T.RELIC || A[0] === T.POTION)) {
+      const dir = A[0] === T.RELIC ? "relic" : "potion";
+      const note = kind === 14 ? `${c[4]} 金` : kind === 4 ? "丢弃" : kind === 16 ? "宝箱遗物" : kind === 10 ? "奖励" : "";
+      tiles.push(`<div class="tile ${ch}" title="${esc(descOf(A[1]))}">${img(asset(dir, entry(A[1])))}<div><div class="t">${esc(nm(A[1]))}</div><div class="d">${note}</div></div><span class="prob">${pct(p)}</span></div>`);
+    } else tiles.push(`<div class="tile ${ch}"><div class="t">${candText(c, st)}</div><span class="prob">${pct(p)}</span></div>`);
+  });
+  return (cards.length ? `<div class="offers ${cards.length > 8 ? "mini" : ""}">${cards.join("")}</div>` : "")
+    + (tiles.length ? `${cards.length ? `<h4>${otherTitle}</h4>` : ""}<div class="offers">${tiles.join("")}</div>` : "");
+}
+
+// 商店：整个货架画一次（引擎附加信息，2026-10-26 起的回放才有）。能买的标模型概率、选中的高亮；
+// 买不了的变灰并写原因（差多少金、药水栏满、已售出、删牌已用）；离开、丢药水等不在货架上的选项放在“其他选项”
+function shopView(st, pmap) {
+  const sh = st.shop, used = new Set();
+  const isGoods = A => A && (A[0] === T.CARD || A[0] === T.RELIC || A[0] === T.POTION);
+  const match = x => st.c.findIndex((c, k) => !used.has(k) && c[0] === 14 && c[4] === x[2] && (x[0] === 3 ? !isGoods(c[1]) : isGoods(c[1]) && c[1][1] === x[1]));
+  const why = ([k, id, cost, stock, gold, upg, usedRm]) =>
+    !stock ? "已售出" : (k === 3 && usedRm) ? "本店已用" : (k === 2 && sh.full) ? "药水栏满" : !gold ? `差 ${cost - sh.g} 金` : "";
+  const groups = [[0, "卡牌"], [1, "遗物"], [2, "药水"], [3, "服务"]].map(([kind, title]) => {
+    const its = sh.it.filter(x => x[0] === kind);
+    if (!its.length) return "";
+    const body = its.map(x => {
+      const [k, id, cost, , , upg] = x, w = why(x), ci = w ? -1 : match(x);
+      if (ci >= 0) used.add(ci);
+      const off = w ? "off" : "", ch = ci >= 0 && ci === st.a ? "chosen" : "", p = ci >= 0 ? (pmap[ci] || 0) : null;
+      const prob = p != null ? `<span class="prob">${pct(p)}</span>` : "";
+      const tag = `<span class="price ${off}">${cost} 金${w ? " · " + w : ""}</span>`;
+      if (k === 0) return `<div class="shelf-item ${off}">${cardTile(id, upg, { cls: ch, prob: p })}${tag}</div>`;
+      if (k === 3) return `<div class="shelf-item ${off}"><div class="tile ${ch}"><div class="t">删牌服务</div>${prob}</div>${tag}</div>`;
+      const dir = k === 1 ? "relic" : "potion";
+      return `<div class="shelf-item ${off}"><div class="tile ${ch}" title="${esc(descOf(id))}">${img(asset(dir, entry(id)))}<div class="t">${esc(nm(id))}</div>${prob}</div>${tag}</div>`;
+    }).join("");
+    return `<div class="shelf-group"><div class="meta">${title}</div><div class="offers">${body}</div></div>`;
+  }).join("");
+  const rest = st.c.map((_, k) => k).filter(k => !used.has(k));
+  return `<div class="meta">金币 ${sh.g}${sh.full ? " · 药水栏已满" : ""}；灰色的买不了</div>${groups}`
+    + (rest.length ? `<h4>其他选项</h4>${candsView(st, pmap, rest)}` : "");
+}
+
+// ---------- 渲染
+function render() {
+  if (!rep) return;
+  const st = rep.steps[i], g = st.g, c = st.c[st.a];
+  $("slider").value = i;
+  $("count").textContent = `第 ${i + 1} / ${rep.steps.length} 步`;
+  const cf = curFloor();
+  document.querySelectorAll(".floor").forEach((el, k) => el.classList.toggle("cur", k === cf));
+  const fe = document.querySelectorAll(".floor")[cf]; if (fe) fe.scrollIntoView({ block: "nearest" });
+  const pmap = {}; (st.pr || []).forEach(([k, p]) => { pmap[k] = p; });
+
+  let h = `<div class="topbar">
+    <span class="stat" title="生命">${img(asset("ui", "top_bar_heart"))}${g[2]} / ${g[3]}</span>
+    <span class="stat" title="金币">${img(asset("ui", "top_bar_gold"))}${g[4]}</span>
+    <span class="stat" title="层数">${img(asset("ui", "top_bar_floor"))}第 ${g[0] + 1} 幕 · 第 ${g[1]} 层</span>
+    <span class="icons" title="药水">${(st.pot || []).map(([id]) => potionIcon(id)).join("") || '<span class="meta">无药水</span>'}</span></div>
+    <div class="icons relics">${(st.rel || []).map(([id, n]) => relicIcon(id, n)).join("")}</div>
+    <div class="banner"><span class="meta">${DK[st.d] || "决策"}</span><span class="what">${c ? candText(c, st) : ""}</span><span class="p">模型概率 ${pct(pmap[st.a] || 0)}</span>
+    ${flagsAt[i].map(f => `<span class="flag ${f.weak ? "weak" : ""}">${f.weak ? "?" : "⚑"} ${esc(f.t)}</span>`).join("")}</div>`;
+
+  if (g[8]) {
+    const tgt = c && c[2] && c[2][0] === T.CREATURE && c[2][2] === 2 ? c[2] : null;
+    h += `<div class="enemies">${st.en.map(e => {
+      const [dmg, hits, f] = e.it;
+      const ic = f[0] ? "intent_attack_" + Math.min(5, 1 + Math.floor(dmg * Math.max(1, hits) / 10)) : f[3] ? "intent_defend" : f[1] ? "intent_buff" : f[2] ? "intent_debuff" : f[4] ? "intent_heal" : f[5] ? "intent_sleep" : "intent_unknown";
+      const extra = ["", "增益", "减益", "防御", "治疗/召唤", "眩晕/睡眠", "其他"].filter((t, k) => k && f[k] && !(ic === "intent_defend" && k === 3));
+      const by = {};
+      e.mv.forEach(([id, step, p, d, n]) => { (by[step] = by[step] || []).push(esc(nm(id)) + (d ? ` <b>${d}${n > 1 ? "×" + n : ""}</b>` : "") + (p < 1 ? ` ${Math.round(p * 100)}%` : "")); });
+      const moves = Object.keys(by).map(s => (s == 0 ? "本回合：" : `之后第 ${s} 招：`) + by[s].join(" / ")).join("<br>");
+      return `<div class="enemy ${e.al ? "" : "dead"} ${tgt && tgt[1] === e.n && tgt[3] === e.s ? "target" : ""}">
+        <div class="nm">${esc(nm(e.n))}</div>${vital(e.hp, e.m, e.b, true)}
+        <div class="intent">${img(asset("intents", ic), "意图")}${f[0] ? `<span class="dmg">${dmg}${hits > 1 ? " × " + hits : ""}</span>${hits > 1 ? `<span class="meta">共 ${dmg * hits}</span>` : ""}` : ""}<span class="meta">${extra.join("、")}</span></div>
+        <div class="moves">${moves}</div>${powerIcons(e.p, nm(e.n))}</div>`;
+    }).join("")}</div>`;
+    const pl = st.pl || { hp: g[2], m: g[3], b: 0, p: [] };
+    const orbs = [];
+    for (let k = 0; k < st.os; k++) {
+      const o = st.orb[k];
+      orbs.push(o ? `<div class="orb" title="${esc(descOf(o[0]))}"><div class="on" style="color:${ORB_COLOR[nm(o[0])] || "#ccc"}"></div><b>${esc(nm(o[0]))}</b><br>被动 ${o[1]} · 激发 ${o[2]}</div>` : `<div class="orb empty">空球位</div>`);
+    }
+    h += `<div class="player"><div><div class="nm">故障机器人 <span class="meta">第 ${g[7]} 回合</span></div>${vital(pl.hp, pl.m, pl.b, true)}${powerIcons(pl.p, "你")}</div>
+      <div class="energy" title="能量 ${g[5]}/${g[6]}">${img(asset("ui", "energy_defect"), "能量")}<b>${g[5]}/${g[6]}</b></div><div class="orbs">${orbs.join("")}</div></div>`;
+    const played = c && c[0] === 2 ? c[1] : null;
+    let marked = false;
+    h += `<h4>手牌</h4><div class="hand">${(st.hand || []).map(([id, upg, cost, ok, dmg, blk]) => {
+      const is = played && !marked && id === played[1] && upg === played[3]; if (is) marked = true;
+      return cardTile(id, upg, { cost, dmg, blk, cls: (ok ? "" : "no ") + (is ? "played" : "") }); }).join("") || '<span class="meta">（空）</span>'}</div>`;
+    const list = cs => { const m = {}; cs.forEach(([id, u]) => { const s = nm(id) + up(u); m[s] = (m[s] || 0) + 1; }); return Object.entries(m).map(([s, n]) => s + (n > 1 ? " ×" + n : "")).join("\n"); };
+    h += `<div class="piles"><span>抽牌堆 ${st.draw}</span><span title="${esc(list(st.disc || []))}">弃牌堆 ${(st.disc || []).length}</span><span title="${esc(list(st.exh || []))}">消耗堆 ${(st.exh || []).length}</span></div>`;
+  } else if (st.map) {
+    h += mapView(st);
+  } else {
+    if (st.sel) h += `<h4>选牌：${SEL[st.sel[0]] || (st.sel[4] ? nm(st.sel[4]) + " 要求选牌" : "选择")} · 最少 ${st.sel[1]} 张，最多 ${st.sel[2]} 张，已选 ${st.sel[3]} 张</h4>`;
+    if (st.sp) h += `<h4>占卜：已揭开 ${st.sp[0]} 格，还剩 ${st.sp[1]} 次</h4>`;
+    h += offersView(st, pmap);
+    if (st.deck) {
+      const cnt = {}; st.deck.forEach(([id, u]) => { const kk = id + ":" + u; cnt[kk] = (cnt[kk] || 0) + 1; });
+      const keys = Object.keys(cnt).sort((a, b) => nm(+a.split(":")[0]).localeCompare(nm(+b.split(":")[0]), "zh"));
+      h += `<h4>牌组 ${st.deck.length} 张</h4><div class="offers deckwrap">${keys.map(kk => { const [id, u] = kk.split(":").map(Number); return cardTile(id, u, { count: cnt[kk] }); }).join("")}</div>`;
+    }
+  }
+  $("stage").innerHTML = h;
+  const mb = $("mapbox"), cn = mb && mb.querySelector(".curnode");
+  if (mb) { const y = cn ? cn.getBBox().y : mb.scrollHeight; mb.scrollTop = y - mb.clientHeight / 2; }
+
+  const order = st.c.map((_, k) => k).sort((a, b) => (pmap[b] || 0) - (pmap[a] || 0));
+  let d = `<div class="dk">${DK[st.d] || "决策"}</div><div class="meta">第 ${g[1]} 层 · ${st.c.length} 个选项，按模型给的概率排序</div>`;
+  d += order.map(k => { const p = pmap[k] || 0;
+    return `<div class="cand ${k === st.a ? "ch" : ""}"><div class="bar" style="width:${(p * 100).toFixed(1)}%"></div><span class="mk">${k === st.a ? "✓" : ""}</span><span>${candText(st.c[k], st)}</span><span class="p">${pct(p)}</span></div>`; }).join("");
+  d += `<div class="hint"><kbd>←</kbd> <kbd>→</kbd> 上一步 / 下一步　<kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> 上一层 / 下一层<br><kbd>空格</kbd> 播放 / 暂停　<kbd>F</kbd> 下一个值得复查的决策<br>⚑ 明显值得复查；? 模型拿不准。都只是提示，不一定是错。<br>鼠标停在卡牌、遗物、能力、药水上可看说明；卡牌奖励、商店里的描述按未升级的基础数值。</div>`;
+  $("decision").innerHTML = d;
+}
+
+// ---------- 载入与控制
+window.REPLAY_LOADED = (id, head, steps) => {
+  rep = { id, head, steps };
+  flagsAt = steps.map((s, k) => flagsOf(s, k, steps));
+  rep.floors = buildFloors();
+  let lastAct = -1;
+  $("floors").innerHTML = rep.floors.map((f, k) => {
+    const sep = f.act !== lastAct ? `<div class="actsep">第 ${f.act + 1} 幕</div>` : ""; lastAct = f.act;
+    return sep + `<div class="floor" data-k="${k}" title="进入这一层时生命 ${f.hp}/${f.m}"><span class="no">${f.floor}</span>${img(asset("ui", f.icon)).replace("<img ", f.icon.startsWith("ancient") ? '<img class="tint" ' : "<img ")}<span class="nm">${esc(f.name)}</span>
+      <span class="side">${f.flags ? `<span class="fl">⚑${f.flags}</span>` : ""}${f.weak ? `<span class="fl weak">?${f.weak}</span>` : ""}<span>♥${f.hp}</span></span></div>`; }).join("");
+  document.querySelectorAll(".floor").forEach(el => el.onclick = () => go(rep.floors[+el.dataset.k].start));
+  $("slider").max = steps.length - 1;
+  $("info").innerHTML = `<span class="badge ${head.win ? "win" : "lose"}">${head.win ? "通关" : "第 " + head.floor + " 层结束"}</span> 版本 ${head.version} · 种子 ${esc(head.seed)} · ${steps.length} 步 · ${new Date(head.time * 1000).toLocaleString("zh-CN")}`;
+  go(pendingStep != null ? pendingStep : 0); pendingStep = null;
+};
+// 网址末尾 #局名@步数（步数从 1 起，与界面上“第 N 步”一致）直接打开那一局的那一步；翻步时网址跟着变，便于把某一步发给别人看
+let pendingStep = null;
+function fromHash() {
+  const m = decodeURIComponent(location.hash.slice(1)).match(/^([^@]+)(?:@(\d+))?$/);
+  if (!m || !R.some(r => r.id === m[1])) return false;
+  pendingStep = m[2] ? +m[2] - 1 : 0;
+  if (rep && rep.id === m[1]) { go(pendingStep); pendingStep = null; return true; }
+  $("pick").value = m[1]; load(m[1]); return true;
+}
+window.addEventListener("hashchange", fromHash);
+function load(id) {
+  stop(); rep = null;
+  $("stage").innerHTML = '<div class="empty">加载中…</div>';
+  const sc = document.createElement("script"); sc.src = "data/" + id + ".js";
+  sc.onerror = () => { $("stage").innerHTML = '<div class="empty">回放文件读不到</div>'; };
+  document.body.appendChild(sc);
+}
+function go(k) {
+  if (!rep) return; i = Math.max(0, Math.min(rep.steps.length - 1, k)); render();
+  const h = "#" + rep.id + "@" + (i + 1); if (location.hash !== h) history.replaceState(null, "", h);
+}
+function curFloor() { return rep.floors.findIndex((f, k) => i >= f.start && (k === rep.floors.length - 1 || i < rep.floors[k + 1].start)); }
+function floorJump(dir) {
+  const cf = curFloor();
+  if (dir < 0 && i > rep.floors[cf].start) return go(rep.floors[cf].start);
+  go(rep.floors[Math.max(0, Math.min(rep.floors.length - 1, cf + dir))].start);
+}
+function nextFlag() { const weak = $("weak").checked; for (let k = i + 1; k < flagsAt.length; k++) if (flagsAt[k].some(f => weak || !f.weak)) return go(k); }
+function stop() { clearInterval(timer); timer = null; $("b-play").textContent = "▶ 播放"; }
+function play() {
+  if (timer) return stop();
+  $("b-play").textContent = "⏸ 暂停";
+  timer = setInterval(() => { if (!rep || i >= rep.steps.length - 1) return stop(); go(i + 1); }, +$("speed").value);
+}
+$("b-first").onclick = () => go(0); $("b-prev").onclick = () => go(i - 1); $("b-next").onclick = () => go(i + 1);
+$("b-prevf").onclick = () => floorJump(-1); $("b-nextf").onclick = () => floorJump(1); $("b-play").onclick = play; $("b-flag").onclick = nextFlag;
+$("speed").onchange = () => { if (timer) { stop(); play(); } };
+$("slider").oninput = e => go(+e.target.value);
+$("theme").onclick = () => { const r = document.documentElement, dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = (r.dataset.theme || (dark ? "dark" : "light")) === "dark" ? "light" : "dark";
+  try { localStorage.setItem("replay-theme", r.dataset.theme); } catch (e) {} };
+try { const t = localStorage.getItem("replay-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || (e.target.tagName === "INPUT" && e.target.type !== "range")) return;
+  if (e.key === "ArrowRight") { e.shiftKey ? floorJump(1) : go(i + 1); e.preventDefault(); }
+  else if (e.key === "ArrowLeft") { e.shiftKey ? floorJump(-1) : go(i - 1); e.preventDefault(); }
+  else if (e.key === " ") { play(); e.preventDefault(); }
+  else if (e.key === "Home") go(0);
+  else if (e.key === "End" && rep) go(rep.steps.length - 1);
+  else if (e.key === "f" || e.key === "F") nextFlag();
+});
+$("pick").innerHTML = R.map(r => `<option value="${esc(r.id)}">${r.win ? "🏆 通关" : "第 " + r.floor + " 层"} · v${r.version} · ${esc(r.seed)}</option>`).join("");
+$("pick").onchange = () => load($("pick").value);
+if (fromHash()) {} else if (R.length) load(R[0].id); else $("stage").innerHTML = '<div class="empty">还没有回放。评测里出现通关的局后，运行 python3 tools/replay_viewer.py 拉取并重新生成。</div>';
+</script>
+</body>
+</html>

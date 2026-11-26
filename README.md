@@ -25,6 +25,7 @@ In 866 runs of the released game, played through a mod on a public livestream (t
 |---|---|
 | `engine/`, `python/`, `tools/` | the system for game **v0.113.1** (the Fool, the Ironclad, the Necrobinder): headless C# host with in-place state cloning, observation encoder (formats up to 29), training system, information-set tree search (`tools/future/`), evaluation and analysis tools |
 | `game-v0.111.0/` | the system for game **v0.111.0** (the Defect, the Regent, the Silent), including the rollout search on sts2-sim (called PIMC in the code) ([README](game-v0.111.0/README.md)) |
+| `game-v0.114.0/` | the top-level system adapted to game **v0.114.0** (public beta of 2026-11-25) for further training; not used for any result of the paper ([README](game-v0.114.0/README.md)) |
 | `rust-engine/` | our Rust reimplementation of the combat rules, used briefly and then withdrawn (paper, Section 4) |
 | `weights/` | model card, manifests and checksums; the network files are release assets ([README](weights/README.md)) |
 | `game-mod/` | the game-side bridge mod for watching the network play in the real game (loads through the game's own mod system, streams the public run state; observation/action layer still to come) ([README](game-mod/README.md)) |
@@ -84,7 +85,7 @@ gh release download weights-v6 -R hmty-CHEN/AlphaDefect-Public -D weights/files_
     --req-extra '{"obs_format": 28, "loop_cut": true, "stall_turns": 20}'
 ```
 
-For v0.111.0, do the same inside `game-v0.111.0/` with `V=v0.111.0`. [docs/17](docs/17_code_map.md) maps the code; [docs/25](docs/25_live_fool_search_and_engine.md) and [docs/26](docs/26_ironclad_and_necrobinder.md) describe the v0.113.1 engine, the tree search and the newest networks.
+For v0.111.0, do the same inside `game-v0.111.0/` with `V=v0.111.0`; for the newer public beta v0.114.0, inside `game-v0.114.0/` with `V=v0.114.0` (no released network was trained on it). [docs/17](docs/17_code_map.md) maps the code; [docs/25](docs/25_live_fool_search_and_engine.md) and [docs/26](docs/26_ironclad_and_necrobinder.md) describe the v0.113.1 engine, the tree search and the newest networks.
 
 ## Reproducing the tables
 

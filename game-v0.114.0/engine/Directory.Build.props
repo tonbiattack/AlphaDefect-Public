@@ -1,0 +1,14 @@
+<Project>
+  <!--
+    游戏版本只在一个地方写：engine/game_version.txt（引擎模块与游戏更新适配.md 第五节）。这里读出来，给各个项目当默认的游戏程序集目录
+    （~/.local/share/sls2/game/<版本>，从安装目录复制来、按版本分目录、不入库）。命令行照旧可以覆盖：
+      dotnet build -p:Sts2GameVersion=v0.112.0        换版本（目录按版本推出来）
+      dotnet build -p:Sts2GameDir=/某个/目录           直接指定目录（远程部署脚本就是这样）
+    没有 HOME（Windows 上直接编译）时不设，沿用各 csproj 自己的默认。
+  -->
+  <PropertyGroup>
+    <Sts2GameVersion Condition="'$(Sts2GameVersion)' == '' and Exists('$(MSBuildThisFileDirectory)game_version.txt')">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)game_version.txt').Trim())</Sts2GameVersion>
+    <Sts2GameVersion Condition="'$(Sts2GameVersion)' == ''">v0.111.0</Sts2GameVersion>
+    <Sts2GameDir Condition="'$(Sts2GameDir)' == '' and '$(HOME)' != ''">$(HOME)/.local/share/sls2/game/$(Sts2GameVersion)</Sts2GameDir>
+  </PropertyGroup>
+</Project>

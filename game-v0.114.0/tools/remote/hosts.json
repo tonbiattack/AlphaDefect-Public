@@ -1,0 +1,24 @@
+{
+  "hosts": {
+    "a": {
+      "label": "3090 机", "pending": true, "note": "2026-11-09 约 14:50 CET 到期，工作与数据已迁到 B 的 /root/from_a（储君决策记录第 26 条）",
+      "ssh_host": "rented-host.example",
+      "port": 22,
+      "user": "root",
+      "key": "~/.ssh/KEY_RENTED",
+      "run_dir": ".local/share/sls2/runs/defect",
+      "deploy": "/root/sls2-deploy/sls2",
+      "local": "defect"
+    },
+    "b": {
+      "label": "4090 机（1046 号）",
+      "ssh_host": "rented-host.example",
+      "port": 22,
+      "user": "root",
+      "key": "~/.ssh/KEY_RENTED",
+      "run_dir": ".local/share/sls2/runs/defect",
+      "deploy": "/root/sls2-deploy/sls2",
+      "local": "defect-b"
+    }
+  }
+}

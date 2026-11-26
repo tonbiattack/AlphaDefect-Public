@@ -1,0 +1,7877 @@
+{
+"source": "https://spire-codex.com/api/runs/metrics/cards?bracket=solo:a10:v0.111.0&character=DEFECT",
+"fetched": "2026-10-26 22:42",
+"data_through": "2026-10-26 12:28:20.767000",
+"bracket": "solo:a10:v0.111.0",
+"character": "DEFECT",
+"character_runs": 15948,
+"character_wins": 2354,
+"rows": [
+{
+"id": "ABRASIVE",
+"offered": 35,
+"picked": 4,
+"pick_rate": 11.4,
+"pick_rate_by_act": [
+50.0,
+6.2,
+100.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+39.0
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "ACCELERANT",
+"offered": 54,
+"picked": 2,
+"pick_rate": 3.7,
+"pick_rate_by_act": [
+0.0,
+6.5,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+49.0
+],
+"lift": null,
+"lift_n": 4,
+"tier": "D"
+},
+{
+"id": "ACCURACY",
+"offered": 36,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "ACROBATICS",
+"offered": 48,
+"picked": 25,
+"pick_rate": 52.1,
+"pick_rate_by_act": [
+52.4,
+51.9,
+null
+],
+"win_rate": 15.6,
+"win_rate_ci": [
+6.9,
+31.8
+],
+"lift": -10.0,
+"lift_n": 32,
+"tier": "D"
+},
+{
+"id": "ADAPTIVE_STRIKE",
+"offered": 2869,
+"picked": 510,
+"pick_rate": 17.8,
+"pick_rate_by_act": [
+22.9,
+10.6,
+8.6
+],
+"win_rate": 20.9,
+"win_rate_ci": [
+18.2,
+24.0
+],
+"lift": -5.1,
+"lift_n": 740,
+"tier": "C"
+},
+{
+"id": "ADRENALINE",
+"offered": 52,
+"picked": 46,
+"pick_rate": 88.5,
+"pick_rate_by_act": [
+null,
+88.5,
+null
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+18.4,
+41.5
+],
+"lift": -1.5,
+"lift_n": 56,
+"tier": "C"
+},
+{
+"id": "AFTERIMAGE",
+"offered": 49,
+"picked": 30,
+"pick_rate": 61.2,
+"pick_rate_by_act": [
+50.0,
+62.2,
+50.0
+],
+"win_rate": 26.3,
+"win_rate_ci": [
+15.0,
+42.0
+],
+"lift": -5.9,
+"lift_n": 38,
+"tier": "C"
+},
+{
+"id": "AFTERLIFE",
+"offered": 94,
+"picked": 11,
+"pick_rate": 11.7,
+"pick_rate_by_act": [
+10.9,
+14.3,
+0.0
+],
+"win_rate": 10.0,
+"win_rate_ci": [
+1.8,
+40.4
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "AGGRESSION",
+"offered": 42,
+"picked": 16,
+"pick_rate": 38.1,
+"pick_rate_by_act": [
+66.7,
+34.2,
+100.0
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+13.8,
+50.0
+],
+"lift": -4.0,
+"lift_n": 21,
+"tier": "C"
+},
+{
+"id": "ALCHEMIZE",
+"offered": 1379,
+"picked": 3,
+"pick_rate": 0.2,
+"pick_rate_by_act": [
+0.3,
+0.2,
+0.0
+],
+"win_rate": 33.8,
+"win_rate_ci": [
+26.7,
+41.6
+],
+"lift": -0.5,
+"lift_n": 151,
+"tier": "A"
+},
+{
+"id": "ALIGNMENT",
+"offered": 27,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "ALL_FOR_ONE",
+"offered": 2924,
+"picked": 1010,
+"pick_rate": 34.5,
+"pick_rate_by_act": [
+35.0,
+33.5,
+35.5
+],
+"win_rate": 33.4,
+"win_rate_ci": [
+30.9,
+36.1
+],
+"lift": 2.1,
+"lift_n": 1223,
+"tier": "S"
+},
+{
+"id": "ANGER",
+"offered": 119,
+"picked": 21,
+"pick_rate": 17.6,
+"pick_rate_by_act": [
+46.7,
+8.2,
+6.2
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+4.3,
+31.0
+],
+"lift": -11.7,
+"lift_n": 24,
+"tier": "D"
+},
+{
+"id": "ANOINTED",
+"offered": 1402,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 47.8,
+"win_rate_ci": [
+29.2,
+67.0
+],
+"lift": -2.7,
+"lift_n": 23,
+"tier": "A"
+},
+{
+"id": "ANTICIPATE",
+"offered": 106,
+"picked": 16,
+"pick_rate": 15.1,
+"pick_rate_by_act": [
+21.1,
+12.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+18.4
+],
+"lift": null,
+"lift_n": 17,
+"tier": "F"
+},
+{
+"id": "ARMAMENTS",
+"offered": 121,
+"picked": 55,
+"pick_rate": 45.5,
+"pick_rate_by_act": [
+62.5,
+34.8,
+25.0
+],
+"win_rate": 20.7,
+"win_rate_ci": [
+12.3,
+32.8
+],
+"lift": -4.4,
+"lift_n": 58,
+"tier": "C"
+},
+{
+"id": "ARSENAL",
+"offered": 37,
+"picked": 25,
+"pick_rate": 67.6,
+"pick_rate_by_act": [
+75.0,
+65.4,
+66.7
+],
+"win_rate": 34.4,
+"win_rate_ci": [
+20.4,
+51.7
+],
+"lift": 2.4,
+"lift_n": 32,
+"tier": "B"
+},
+{
+"id": "ASHEN_STRIKE",
+"offered": 43,
+"picked": 8,
+"pick_rate": 18.6,
+"pick_rate_by_act": [
+25.0,
+14.3,
+33.3
+],
+"win_rate": 18.2,
+"win_rate_ci": [
+5.1,
+47.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "ASSASSINATE",
+"offered": 38,
+"picked": 9,
+"pick_rate": 23.7,
+"pick_rate_by_act": [
+null,
+23.7,
+null
+],
+"win_rate": 21.4,
+"win_rate_ci": [
+7.6,
+47.6
+],
+"lift": null,
+"lift_n": 14,
+"tier": "C"
+},
+{
+"id": "AUTOMATION",
+"offered": 1034,
+"picked": 47,
+"pick_rate": 4.5,
+"pick_rate_by_act": [
+4.6,
+6.2,
+0.7
+],
+"win_rate": 32.3,
+"win_rate_ci": [
+26.6,
+38.6
+],
+"lift": -2.7,
+"lift_n": 229,
+"tier": "A"
+},
+{
+"id": "BACKFLIP",
+"offered": 111,
+"picked": 73,
+"pick_rate": 65.8,
+"pick_rate_by_act": [
+68.6,
+64.7,
+62.5
+],
+"win_rate": 29.3,
+"win_rate_ci": [
+20.5,
+39.9
+],
+"lift": -1.5,
+"lift_n": 82,
+"tier": "B"
+},
+{
+"id": "BACKSTAB",
+"offered": 54,
+"picked": 18,
+"pick_rate": 33.3,
+"pick_rate_by_act": [
+68.8,
+17.6,
+25.0
+],
+"win_rate": 22.7,
+"win_rate_ci": [
+10.1,
+43.4
+],
+"lift": 1.0,
+"lift_n": 22,
+"tier": "C"
+},
+{
+"id": "BALL_LIGHTNING",
+"offered": 20878,
+"picked": 3277,
+"pick_rate": 15.7,
+"pick_rate_by_act": [
+25.0,
+5.1,
+2.0
+],
+"win_rate": 15.5,
+"win_rate_ci": [
+14.3,
+16.7
+],
+"lift": -5.5,
+"lift_n": 3551,
+"tier": "F"
+},
+{
+"id": "BANSHEES_CRY",
+"offered": 34,
+"picked": 2,
+"pick_rate": 5.9,
+"pick_rate_by_act": [
+0.0,
+6.7,
+null
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "BARRAGE",
+"offered": 20992,
+"picked": 2444,
+"pick_rate": 11.6,
+"pick_rate_by_act": [
+14.8,
+8.6,
+6.2
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+18.5,
+21.5
+],
+"lift": -4.9,
+"lift_n": 2681,
+"tier": "D"
+},
+{
+"id": "BARRICADE",
+"offered": 40,
+"picked": 23,
+"pick_rate": 57.5,
+"pick_rate_by_act": [
+25.0,
+61.8,
+50.0
+],
+"win_rate": 24.1,
+"win_rate_ci": [
+12.2,
+42.1
+],
+"lift": -7.0,
+"lift_n": 29,
+"tier": "C"
+},
+{
+"id": "BATTLE_TRANCE",
+"offered": 43,
+"picked": 31,
+"pick_rate": 72.1,
+"pick_rate_by_act": [
+66.7,
+77.8,
+50.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+20.6,
+49.0
+],
+"lift": 3.1,
+"lift_n": 39,
+"tier": "B"
+},
+{
+"id": "BEAM_CELL",
+"offered": 20942,
+"picked": 2916,
+"pick_rate": 13.9,
+"pick_rate_by_act": [
+18.2,
+9.1,
+7.7
+],
+"win_rate": 19.9,
+"win_rate_ci": [
+18.6,
+21.3
+],
+"lift": -4.4,
+"lift_n": 3336,
+"tier": "D"
+},
+{
+"id": "BEAT_DOWN",
+"offered": 1414,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 41.5,
+"win_rate_ci": [
+27.8,
+56.6
+],
+"lift": 3.6,
+"lift_n": 41,
+"tier": "A"
+},
+{
+"id": "BEAT_INTO_SHAPE",
+"offered": 17,
+"picked": 2,
+"pick_rate": 11.8,
+"pick_rate_by_act": [
+16.7,
+11.1,
+0.0
+],
+"win_rate": 66.7,
+"win_rate_ci": [
+20.8,
+93.9
+],
+"lift": null,
+"lift_n": 3,
+"tier": "C"
+},
+{
+"id": "BEGONE",
+"offered": 95,
+"picked": 41,
+"pick_rate": 43.2,
+"pick_rate_by_act": [
+55.6,
+37.8,
+15.4
+],
+"win_rate": 8.7,
+"win_rate_ci": [
+3.4,
+20.3
+],
+"lift": -20.0,
+"lift_n": 46,
+"tier": "F"
+},
+{
+"id": "BIG_BANG",
+"offered": 32,
+"picked": 26,
+"pick_rate": 81.2,
+"pick_rate_by_act": [
+100.0,
+68.4,
+100.0
+],
+"win_rate": 48.0,
+"win_rate_ci": [
+30.0,
+66.5
+],
+"lift": 17.7,
+"lift_n": 25,
+"tier": "A"
+},
+{
+"id": "BLADE_DANCE",
+"offered": 109,
+"picked": 18,
+"pick_rate": 16.5,
+"pick_rate_by_act": [
+29.7,
+8.6,
+14.3
+],
+"win_rate": 15.0,
+"win_rate_ci": [
+5.2,
+36.0
+],
+"lift": -15.0,
+"lift_n": 20,
+"tier": "D"
+},
+{
+"id": "BLADE_OF_INK",
+"offered": 34,
+"picked": 13,
+"pick_rate": 38.2,
+"pick_rate_by_act": [
+null,
+38.2,
+null
+],
+"win_rate": 23.5,
+"win_rate_ci": [
+9.6,
+47.3
+],
+"lift": null,
+"lift_n": 17,
+"tier": "C"
+},
+{
+"id": "BLIGHT_STRIKE",
+"offered": 90,
+"picked": 2,
+"pick_rate": 2.2,
+"pick_rate_by_act": [
+5.7,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+65.8
+],
+"lift": null,
+"lift_n": 2,
+"tier": "D"
+},
+{
+"id": "BLOODLETTING",
+"offered": 51,
+"picked": 21,
+"pick_rate": 41.2,
+"pick_rate_by_act": [
+60.0,
+36.4,
+0.0
+],
+"win_rate": 12.0,
+"win_rate_ci": [
+4.2,
+30.0
+],
+"lift": -16.5,
+"lift_n": 25,
+"tier": "D"
+},
+{
+"id": "BLOOD_WALL",
+"offered": 111,
+"picked": 14,
+"pick_rate": 12.6,
+"pick_rate_by_act": [
+26.5,
+7.1,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+3.5,
+36.0
+],
+"lift": null,
+"lift_n": 16,
+"tier": "D"
+},
+{
+"id": "BLUDGEON",
+"offered": 46,
+"picked": 11,
+"pick_rate": 23.9,
+"pick_rate_by_act": [
+72.7,
+9.7,
+0.0
+],
+"win_rate": 15.4,
+"win_rate_ci": [
+4.3,
+42.2
+],
+"lift": null,
+"lift_n": 13,
+"tier": "D"
+},
+{
+"id": "BLUR",
+"offered": 53,
+"picked": 26,
+"pick_rate": 49.1,
+"pick_rate_by_act": [
+40.0,
+52.8,
+50.0
+],
+"win_rate": 19.4,
+"win_rate_ci": [
+9.2,
+36.3
+],
+"lift": -11.1,
+"lift_n": 31,
+"tier": "D"
+},
+{
+"id": "BODY_SLAM",
+"offered": 94,
+"picked": 27,
+"pick_rate": 28.7,
+"pick_rate_by_act": [
+39.5,
+22.0,
+16.7
+],
+"win_rate": 13.8,
+"win_rate_ci": [
+5.5,
+30.6
+],
+"lift": -12.5,
+"lift_n": 29,
+"tier": "D"
+},
+{
+"id": "BOLAS",
+"offered": 1425,
+"picked": 1,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.1,
+0.0,
+0.0
+],
+"win_rate": 39.7,
+"win_rate_ci": [
+28.9,
+51.6
+],
+"lift": 7.7,
+"lift_n": 68,
+"tier": "A"
+},
+{
+"id": "BOMBARDMENT",
+"offered": 36,
+"picked": 12,
+"pick_rate": 33.3,
+"pick_rate_by_act": [
+40.0,
+38.5,
+0.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+8.1,
+41.6
+],
+"lift": -14.7,
+"lift_n": 20,
+"tier": "D"
+},
+{
+"id": "BOOST_AWAY",
+"offered": 21615,
+"picked": 5604,
+"pick_rate": 25.9,
+"pick_rate_by_act": [
+28.1,
+25.3,
+19.4
+],
+"win_rate": 22.5,
+"win_rate_ci": [
+21.5,
+23.6
+],
+"lift": -3.6,
+"lift_n": 5713,
+"tier": "C"
+},
+{
+"id": "BOOT_SEQUENCE",
+"offered": 6962,
+"picked": 2971,
+"pick_rate": 42.7,
+"pick_rate_by_act": [
+46.3,
+40.5,
+33.3
+],
+"win_rate": 26.6,
+"win_rate_ci": [
+25.2,
+28.1
+],
+"lift": -1.4,
+"lift_n": 3402,
+"tier": "B"
+},
+{
+"id": "BORROWED_TIME",
+"offered": 37,
+"picked": 24,
+"pick_rate": 64.9,
+"pick_rate_by_act": [
+66.7,
+73.7,
+0.0
+],
+"win_rate": 3.6,
+"win_rate_ci": [
+0.6,
+17.7
+],
+"lift": -23.0,
+"lift_n": 28,
+"tier": "F"
+},
+{
+"id": "BOUNCING_FLASK",
+"offered": 50,
+"picked": 3,
+"pick_rate": 6.0,
+"pick_rate_by_act": [
+10.0,
+5.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "BRAND",
+"offered": 38,
+"picked": 10,
+"pick_rate": 26.3,
+"pick_rate_by_act": [
+50.0,
+26.5,
+0.0
+],
+"win_rate": 8.3,
+"win_rate_ci": [
+1.5,
+35.4
+],
+"lift": null,
+"lift_n": 12,
+"tier": "D"
+},
+{
+"id": "BREAKTHROUGH",
+"offered": 99,
+"picked": 5,
+"pick_rate": 5.1,
+"pick_rate_by_act": [
+11.1,
+3.3,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+43.4
+],
+"lift": null,
+"lift_n": 5,
+"tier": "D"
+},
+{
+"id": "BUFFER",
+"offered": 2802,
+"picked": 1095,
+"pick_rate": 39.1,
+"pick_rate_by_act": [
+37.4,
+38.3,
+57.6
+],
+"win_rate": 37.6,
+"win_rate_ci": [
+34.9,
+40.4
+],
+"lift": 4.8,
+"lift_n": 1201,
+"tier": "S"
+},
+{
+"id": "BULK_UP",
+"offered": 8537,
+"picked": 2190,
+"pick_rate": 25.7,
+"pick_rate_by_act": [
+32.3,
+19.6,
+16.4
+],
+"win_rate": 26.0,
+"win_rate_ci": [
+24.4,
+27.7
+],
+"lift": -2.4,
+"lift_n": 2679,
+"tier": "B"
+},
+{
+"id": "BULLET_TIME",
+"offered": 39,
+"picked": 19,
+"pick_rate": 48.7,
+"pick_rate_by_act": [
+100.0,
+47.4,
+null
+],
+"win_rate": 26.1,
+"win_rate_ci": [
+12.5,
+46.5
+],
+"lift": -7.3,
+"lift_n": 23,
+"tier": "C"
+},
+{
+"id": "BULLY",
+"offered": 38,
+"picked": 2,
+"pick_rate": 5.3,
+"pick_rate_by_act": [
+0.0,
+7.4,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "BULWARK",
+"offered": 28,
+"picked": 15,
+"pick_rate": 53.6,
+"pick_rate_by_act": [
+60.0,
+42.9,
+50.0
+],
+"win_rate": 43.5,
+"win_rate_ci": [
+25.6,
+63.2
+],
+"lift": 10.8,
+"lift_n": 23,
+"tier": "B"
+},
+{
+"id": "BUNDLE_OF_JOY",
+"offered": 23,
+"picked": 8,
+"pick_rate": 34.8,
+"pick_rate_by_act": [
+50.0,
+33.3,
+20.0
+],
+"win_rate": 26.7,
+"win_rate_ci": [
+10.9,
+52.0
+],
+"lift": null,
+"lift_n": 15,
+"tier": "C"
+},
+{
+"id": "BURNING_PACT",
+"offered": 48,
+"picked": 24,
+"pick_rate": 50.0,
+"pick_rate_by_act": [
+57.1,
+50.0,
+25.0
+],
+"win_rate": 31.0,
+"win_rate_ci": [
+17.3,
+49.2
+],
+"lift": -0.2,
+"lift_n": 29,
+"tier": "C"
+},
+{
+"id": "BURST",
+"offered": 39,
+"picked": 13,
+"pick_rate": 33.3,
+"pick_rate_by_act": [
+null,
+34.2,
+0.0
+],
+"win_rate": 5.3,
+"win_rate_ci": [
+0.9,
+24.6
+],
+"lift": null,
+"lift_n": 19,
+"tier": "D"
+},
+{
+"id": "BURY",
+"offered": 40,
+"picked": 9,
+"pick_rate": 22.5,
+"pick_rate_by_act": [
+15.4,
+26.1,
+25.0
+],
+"win_rate": 41.7,
+"win_rate_ci": [
+19.3,
+68.0
+],
+"lift": null,
+"lift_n": 12,
+"tier": "C"
+},
+{
+"id": "CALAMITY",
+"offered": 1501,
+"picked": 2,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.1,
+0.0,
+0.3
+],
+"win_rate": 46.8,
+"win_rate_ci": [
+34.9,
+59.0
+],
+"lift": 9.4,
+"lift_n": 62,
+"tier": "S"
+},
+{
+"id": "CALCULATED_GAMBLE",
+"offered": 69,
+"picked": 43,
+"pick_rate": 62.3,
+"pick_rate_by_act": [
+64.7,
+60.9,
+66.7
+],
+"win_rate": 29.8,
+"win_rate_ci": [
+18.7,
+44.0
+],
+"lift": -4.5,
+"lift_n": 47,
+"tier": "B"
+},
+{
+"id": "CALL_OF_THE_VOID",
+"offered": 34,
+"picked": 18,
+"pick_rate": 52.9,
+"pick_rate_by_act": [
+50.0,
+57.1,
+25.0
+],
+"win_rate": 39.1,
+"win_rate_ci": [
+22.2,
+59.2
+],
+"lift": 3.5,
+"lift_n": 23,
+"tier": "B"
+},
+{
+"id": "CAPACITOR",
+"offered": 8302,
+"picked": 2925,
+"pick_rate": 35.2,
+"pick_rate_by_act": [
+34.4,
+37.3,
+34.2
+],
+"win_rate": 24.1,
+"win_rate_ci": [
+22.7,
+25.5
+],
+"lift": -6.0,
+"lift_n": 3668,
+"tier": "C"
+},
+{
+"id": "CAPTURE_SPIRIT",
+"offered": 35,
+"picked": 17,
+"pick_rate": 48.6,
+"pick_rate_by_act": [
+87.5,
+34.8,
+50.0
+],
+"win_rate": 19.0,
+"win_rate_ci": [
+7.7,
+40.0
+],
+"lift": -10.0,
+"lift_n": 21,
+"tier": "D"
+},
+{
+"id": "CASCADE",
+"offered": 47,
+"picked": 17,
+"pick_rate": 36.2,
+"pick_rate_by_act": [
+50.0,
+35.6,
+null
+],
+"win_rate": 37.5,
+"win_rate_ci": [
+21.2,
+57.3
+],
+"lift": 3.2,
+"lift_n": 24,
+"tier": "B"
+},
+{
+"id": "CATASTROPHE",
+"offered": 1015,
+"picked": 20,
+"pick_rate": 2.0,
+"pick_rate_by_act": [
+2.2,
+2.5,
+0.0
+],
+"win_rate": 19.5,
+"win_rate_ci": [
+13.4,
+27.6
+],
+"lift": -7.7,
+"lift_n": 118,
+"tier": "D"
+},
+{
+"id": "CELESTIAL_MIGHT",
+"offered": 78,
+"picked": 16,
+"pick_rate": 20.5,
+"pick_rate_by_act": [
+40.6,
+9.4,
+0.0
+],
+"win_rate": 20.8,
+"win_rate_ci": [
+9.2,
+40.5
+],
+"lift": 0.6,
+"lift_n": 24,
+"tier": "C"
+},
+{
+"id": "CHAOS",
+"offered": 7432,
+"picked": 750,
+"pick_rate": 10.1,
+"pick_rate_by_act": [
+13.7,
+6.5,
+4.5
+],
+"win_rate": 14.9,
+"win_rate_ci": [
+12.7,
+17.4
+],
+"lift": -10.2,
+"lift_n": 881,
+"tier": "F"
+},
+{
+"id": "CHARGE",
+"offered": 54,
+"picked": 31,
+"pick_rate": 57.4,
+"pick_rate_by_act": [
+66.7,
+63.6,
+27.3
+],
+"win_rate": 30.3,
+"win_rate_ci": [
+17.4,
+47.3
+],
+"lift": -1.8,
+"lift_n": 33,
+"tier": "C"
+},
+{
+"id": "CHARGE_BATTERY",
+"offered": 21647,
+"picked": 6358,
+"pick_rate": 29.4,
+"pick_rate_by_act": [
+37.5,
+22.6,
+14.4
+],
+"win_rate": 19.6,
+"win_rate_ci": [
+18.6,
+20.6
+],
+"lift": -4.7,
+"lift_n": 6583,
+"tier": "D"
+},
+{
+"id": "CHILL",
+"offered": 7258,
+"picked": 2911,
+"pick_rate": 40.1,
+"pick_rate_by_act": [
+48.5,
+35.3,
+19.6
+],
+"win_rate": 24.8,
+"win_rate_ci": [
+23.3,
+26.3
+],
+"lift": -2.0,
+"lift_n": 3171,
+"tier": "C"
+},
+{
+"id": "CINDER",
+"offered": 115,
+"picked": 7,
+"pick_rate": 6.1,
+"pick_rate_by_act": [
+16.7,
+1.5,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+39.0
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "CLAW",
+"offered": 20534,
+"picked": 4039,
+"pick_rate": 19.7,
+"pick_rate_by_act": [
+24.7,
+14.3,
+11.1
+],
+"win_rate": 15.1,
+"win_rate_ci": [
+13.9,
+16.3
+],
+"lift": -6.6,
+"lift_n": 3201,
+"tier": "F"
+},
+{
+"id": "CLEANSE",
+"offered": 32,
+"picked": 8,
+"pick_rate": 25.0,
+"pick_rate_by_act": [
+40.0,
+14.3,
+100.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+12.1,
+64.6
+],
+"lift": null,
+"lift_n": 9,
+"tier": "C"
+},
+{
+"id": "CLOAK_AND_DAGGER",
+"offered": 110,
+"picked": 26,
+"pick_rate": 23.6,
+"pick_rate_by_act": [
+38.2,
+15.2,
+30.0
+],
+"win_rate": 26.9,
+"win_rate_ci": [
+13.7,
+46.1
+],
+"lift": -1.9,
+"lift_n": 26,
+"tier": "C"
+},
+{
+"id": "CLOAK_OF_STARS",
+"offered": 66,
+"picked": 1,
+"pick_rate": 1.5,
+"pick_rate_by_act": [
+4.3,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "COLD_SNAP",
+"offered": 20927,
+"picked": 3802,
+"pick_rate": 18.2,
+"pick_rate_by_act": [
+28.3,
+6.6,
+3.3
+],
+"win_rate": 19.1,
+"win_rate_ci": [
+18.0,
+20.4
+],
+"lift": -3.3,
+"lift_n": 4067,
+"tier": "D"
+},
+{
+"id": "COLLISION_COURSE",
+"offered": 81,
+"picked": 32,
+"pick_rate": 39.5,
+"pick_rate_by_act": [
+60.5,
+24.3,
+0.0
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+12.6,
+38.3
+],
+"lift": -5.5,
+"lift_n": 39,
+"tier": "C"
+},
+{
+"id": "COLOSSUS",
+"offered": 42,
+"picked": 3,
+"pick_rate": 7.1,
+"pick_rate_by_act": [
+6.7,
+4.2,
+33.3
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+4.6,
+69.9
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "COMPACT",
+"offered": 7212,
+"picked": 2331,
+"pick_rate": 32.3,
+"pick_rate_by_act": [
+31.0,
+32.5,
+36.8
+],
+"win_rate": 25.5,
+"win_rate_ci": [
+23.9,
+27.2
+],
+"lift": -5.2,
+"lift_n": 2679,
+"tier": "B"
+},
+{
+"id": "COMPILE_DRIVER",
+"offered": 21017,
+"picked": 2155,
+"pick_rate": 10.3,
+"pick_rate_by_act": [
+10.3,
+10.7,
+9.1
+],
+"win_rate": 28.4,
+"win_rate_ci": [
+26.6,
+30.3
+],
+"lift": -0.6,
+"lift_n": 2303,
+"tier": "B"
+},
+{
+"id": "CONFLAGRATION",
+"offered": 51,
+"picked": 5,
+"pick_rate": 9.8,
+"pick_rate_by_act": [
+0.0,
+10.4,
+0.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+10.8,
+60.3
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "CONQUEROR",
+"offered": 22,
+"picked": 3,
+"pick_rate": 13.6,
+"pick_rate_by_act": [
+12.5,
+18.2,
+0.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+6.1,
+79.2
+],
+"lift": null,
+"lift_n": 3,
+"tier": "C"
+},
+{
+"id": "CONSUMING_SHADOW",
+"offered": 2707,
+"picked": 276,
+"pick_rate": 10.2,
+"pick_rate_by_act": [
+11.0,
+9.1,
+8.3
+],
+"win_rate": 18.4,
+"win_rate_ci": [
+15.0,
+22.3
+],
+"lift": -10.6,
+"lift_n": 430,
+"tier": "D"
+},
+{
+"id": "CONVERGENCE",
+"offered": 38,
+"picked": 8,
+"pick_rate": 21.1,
+"pick_rate_by_act": [
+15.0,
+28.6,
+25.0
+],
+"win_rate": 18.2,
+"win_rate_ci": [
+5.1,
+47.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "COOLANT",
+"offered": 2906,
+"picked": 815,
+"pick_rate": 28.0,
+"pick_rate_by_act": [
+27.7,
+28.4,
+29.1
+],
+"win_rate": 33.4,
+"win_rate_ci": [
+30.5,
+36.6
+],
+"lift": 1.8,
+"lift_n": 918,
+"tier": "S"
+},
+{
+"id": "COOLHEADED",
+"offered": 21856,
+"picked": 6093,
+"pick_rate": 27.9,
+"pick_rate_by_act": [
+31.4,
+24.9,
+20.8
+],
+"win_rate": 22.7,
+"win_rate_ci": [
+21.6,
+23.7
+],
+"lift": -3.3,
+"lift_n": 6179,
+"tier": "C"
+},
+{
+"id": "CORROSIVE_WAVE",
+"offered": 46,
+"picked": 3,
+"pick_rate": 6.5,
+"pick_rate_by_act": [
+null,
+6.5,
+null
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+4.6,
+69.9
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "COSMIC_INDIFFERENCE",
+"offered": 79,
+"picked": 30,
+"pick_rate": 38.0,
+"pick_rate_by_act": [
+30.4,
+60.0,
+12.5
+],
+"win_rate": 23.8,
+"win_rate_ci": [
+13.5,
+38.5
+],
+"lift": -1.8,
+"lift_n": 42,
+"tier": "C"
+},
+{
+"id": "COUNTDOWN",
+"offered": 41,
+"picked": 6,
+"pick_rate": 14.6,
+"pick_rate_by_act": [
+22.2,
+10.3,
+33.3
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+18.8,
+81.2
+],
+"lift": null,
+"lift_n": 6,
+"tier": "C"
+},
+{
+"id": "CRASH_LANDING",
+"offered": 40,
+"picked": 22,
+"pick_rate": 55.0,
+"pick_rate_by_act": [
+70.0,
+45.8,
+66.7
+],
+"win_rate": 46.4,
+"win_rate_ci": [
+29.5,
+64.2
+],
+"lift": 13.5,
+"lift_n": 28,
+"tier": "A"
+},
+{
+"id": "CREATIVE_AI",
+"offered": 2819,
+"picked": 1114,
+"pick_rate": 39.5,
+"pick_rate_by_act": [
+38.7,
+40.9,
+40.0
+],
+"win_rate": 28.0,
+"win_rate_ci": [
+25.6,
+30.5
+],
+"lift": -3.1,
+"lift_n": 1297,
+"tier": "B"
+},
+{
+"id": "CRIMSON_MANTLE",
+"offered": 57,
+"picked": 21,
+"pick_rate": 36.8,
+"pick_rate_by_act": [
+75.0,
+33.3,
+50.0
+],
+"win_rate": 42.9,
+"win_rate_ci": [
+24.5,
+63.5
+],
+"lift": 8.2,
+"lift_n": 21,
+"tier": "B"
+},
+{
+"id": "CRUELTY",
+"offered": 40,
+"picked": 2,
+"pick_rate": 5.0,
+"pick_rate_by_act": [
+0.0,
+3.2,
+25.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "CRUSH_UNDER",
+"offered": 77,
+"picked": 24,
+"pick_rate": 31.2,
+"pick_rate_by_act": [
+57.1,
+13.8,
+0.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+6.7,
+35.9
+],
+"lift": -5.5,
+"lift_n": 24,
+"tier": "D"
+},
+{
+"id": "DAGGER_SPRAY",
+"offered": 102,
+"picked": 24,
+"pick_rate": 23.5,
+"pick_rate_by_act": [
+55.3,
+5.2,
+0.0
+],
+"win_rate": 4.2,
+"win_rate_ci": [
+0.7,
+20.2
+],
+"lift": -16.8,
+"lift_n": 24,
+"tier": "F"
+},
+{
+"id": "DAGGER_THROW",
+"offered": 127,
+"picked": 8,
+"pick_rate": 6.3,
+"pick_rate_by_act": [
+12.2,
+4.1,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+29.9
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "DANSE_MACABRE",
+"offered": 36,
+"picked": 16,
+"pick_rate": 44.4,
+"pick_rate_by_act": [
+40.0,
+45.5,
+50.0
+],
+"win_rate": 26.3,
+"win_rate_ci": [
+11.8,
+48.8
+],
+"lift": null,
+"lift_n": 19,
+"tier": "C"
+},
+{
+"id": "DARKNESS",
+"offered": 7151,
+"picked": 1949,
+"pick_rate": 27.3,
+"pick_rate_by_act": [
+34.7,
+19.6,
+15.8
+],
+"win_rate": 22.5,
+"win_rate_ci": [
+20.8,
+24.4
+],
+"lift": -5.2,
+"lift_n": 2041,
+"tier": "C"
+},
+{
+"id": "DARK_EMBRACE",
+"offered": 36,
+"picked": 10,
+"pick_rate": 27.8,
+"pick_rate_by_act": [
+60.0,
+22.6,
+null
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+11.7,
+54.6
+],
+"lift": null,
+"lift_n": 14,
+"tier": "C"
+},
+{
+"id": "DARK_SHACKLES",
+"offered": 954,
+"picked": 77,
+"pick_rate": 8.1,
+"pick_rate_by_act": [
+10.1,
+7.3,
+2.1
+],
+"win_rate": 30.7,
+"win_rate_ci": [
+25.6,
+36.3
+],
+"lift": -2.3,
+"lift_n": 280,
+"tier": "A"
+},
+{
+"id": "DASH",
+"offered": 41,
+"picked": 10,
+"pick_rate": 24.4,
+"pick_rate_by_act": [
+100.0,
+15.6,
+0.0
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+8.2,
+50.3
+],
+"lift": null,
+"lift_n": 13,
+"tier": "C"
+},
+{
+"id": "DEADLY_POISON",
+"offered": 98,
+"picked": 7,
+"pick_rate": 7.1,
+"pick_rate_by_act": [
+12.1,
+5.5,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+2.2,
+47.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "DEATHBRINGER",
+"offered": 29,
+"picked": 7,
+"pick_rate": 24.1,
+"pick_rate_by_act": [
+63.6,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+32.4
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "DEATHS_DOOR",
+"offered": 39,
+"picked": 1,
+"pick_rate": 2.6,
+"pick_rate_by_act": [
+0.0,
+4.8,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "DEATH_MARCH",
+"offered": 32,
+"picked": 3,
+"pick_rate": 9.4,
+"pick_rate_by_act": [
+30.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "DEBILITATE",
+"offered": 34,
+"picked": 14,
+"pick_rate": 41.2,
+"pick_rate_by_act": [
+58.8,
+9.1,
+50.0
+],
+"win_rate": 23.5,
+"win_rate_ci": [
+9.6,
+47.3
+],
+"lift": null,
+"lift_n": 17,
+"tier": "C"
+},
+{
+"id": "DECISIONS_DECISIONS",
+"offered": 21,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "DEFILE",
+"offered": 97,
+"picked": 17,
+"pick_rate": 17.5,
+"pick_rate_by_act": [
+45.7,
+2.2,
+0.0
+],
+"win_rate": 10.5,
+"win_rate_ci": [
+2.9,
+31.4
+],
+"lift": null,
+"lift_n": 19,
+"tier": "D"
+},
+{
+"id": "DEFLECT",
+"offered": 107,
+"picked": 36,
+"pick_rate": 33.6,
+"pick_rate_by_act": [
+39.5,
+32.2,
+20.0
+],
+"win_rate": 19.4,
+"win_rate_ci": [
+9.8,
+35.0
+],
+"lift": -8.0,
+"lift_n": 36,
+"tier": "D"
+},
+{
+"id": "DEFRAGMENT",
+"offered": 2778,
+"picked": 1798,
+"pick_rate": 64.7,
+"pick_rate_by_act": [
+65.5,
+64.1,
+60.7
+],
+"win_rate": 34.7,
+"win_rate_ci": [
+32.5,
+36.8
+],
+"lift": 3.4,
+"lift_n": 1887,
+"tier": "S"
+},
+{
+"id": "DEFY",
+"offered": 89,
+"picked": 59,
+"pick_rate": 66.3,
+"pick_rate_by_act": [
+67.9,
+69.2,
+44.4
+],
+"win_rate": 28.8,
+"win_rate_ci": [
+19.3,
+40.6
+],
+"lift": -1.3,
+"lift_n": 66,
+"tier": "B"
+},
+{
+"id": "DELAY",
+"offered": 34,
+"picked": 17,
+"pick_rate": 50.0,
+"pick_rate_by_act": [
+91.7,
+31.6,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+11.2,
+46.9
+],
+"lift": -1.2,
+"lift_n": 20,
+"tier": "C"
+},
+{
+"id": "DEMESNE",
+"offered": 36,
+"picked": 27,
+"pick_rate": 75.0,
+"pick_rate_by_act": [
+100.0,
+71.9,
+null
+],
+"win_rate": 28.1,
+"win_rate_ci": [
+15.6,
+45.4
+],
+"lift": -5.6,
+"lift_n": 32,
+"tier": "C"
+},
+{
+"id": "DEMON_FORM",
+"offered": 47,
+"picked": 19,
+"pick_rate": 40.4,
+"pick_rate_by_act": [
+33.3,
+41.9,
+0.0
+],
+"win_rate": 12.0,
+"win_rate_ci": [
+4.2,
+30.0
+],
+"lift": -21.6,
+"lift_n": 25,
+"tier": "D"
+},
+{
+"id": "DEVOUR_LIFE",
+"offered": 22,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "DIRGE",
+"offered": 40,
+"picked": 8,
+"pick_rate": 20.0,
+"pick_rate_by_act": [
+50.0,
+11.5,
+0.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+13.8,
+60.9
+],
+"lift": null,
+"lift_n": 12,
+"tier": "C"
+},
+{
+"id": "DISCOVERY",
+"offered": 866,
+"picked": 87,
+"pick_rate": 10.0,
+"pick_rate_by_act": [
+14.1,
+9.0,
+0.0
+],
+"win_rate": 25.9,
+"win_rate_ci": [
+21.7,
+30.5
+],
+"lift": -3.9,
+"lift_n": 379,
+"tier": "B"
+},
+{
+"id": "DODGE_AND_ROLL",
+"offered": 99,
+"picked": 19,
+"pick_rate": 19.2,
+"pick_rate_by_act": [
+34.3,
+8.5,
+40.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+14.5,
+51.9
+],
+"lift": 4.5,
+"lift_n": 20,
+"tier": "C"
+},
+{
+"id": "DOMINATE",
+"offered": 42,
+"picked": 9,
+"pick_rate": 21.4,
+"pick_rate_by_act": [
+66.7,
+17.9,
+null
+],
+"win_rate": 8.3,
+"win_rate_ci": [
+1.5,
+35.4
+],
+"lift": null,
+"lift_n": 12,
+"tier": "D"
+},
+{
+"id": "DOUBLE_ENERGY",
+"offered": 7289,
+"picked": 1119,
+"pick_rate": 15.4,
+"pick_rate_by_act": [
+12.6,
+18.8,
+18.6
+],
+"win_rate": 24.0,
+"win_rate_ci": [
+21.7,
+26.4
+],
+"lift": -7.1,
+"lift_n": 1305,
+"tier": "C"
+},
+{
+"id": "DRAIN_POWER",
+"offered": 83,
+"picked": 19,
+"pick_rate": 22.9,
+"pick_rate_by_act": [
+41.9,
+13.3,
+0.0
+],
+"win_rate": 9.5,
+"win_rate_ci": [
+2.7,
+28.9
+],
+"lift": -15.5,
+"lift_n": 21,
+"tier": "D"
+},
+{
+"id": "DRAMATIC_ENTRANCE",
+"offered": 970,
+"picked": 59,
+"pick_rate": 6.1,
+"pick_rate_by_act": [
+10.8,
+3.2,
+0.0
+],
+"win_rate": 15.2,
+"win_rate_ci": [
+11.4,
+20.0
+],
+"lift": -9.1,
+"lift_n": 270,
+"tier": "F"
+},
+{
+"id": "DREDGE",
+"offered": 36,
+"picked": 25,
+"pick_rate": 69.4,
+"pick_rate_by_act": [
+84.6,
+70.0,
+0.0
+],
+"win_rate": 40.7,
+"win_rate_ci": [
+24.5,
+59.3
+],
+"lift": 16.2,
+"lift_n": 27,
+"tier": "B"
+},
+{
+"id": "DRUM_OF_BATTLE",
+"offered": 55,
+"picked": 9,
+"pick_rate": 16.4,
+"pick_rate_by_act": [
+20.0,
+16.7,
+0.0
+],
+"win_rate": 18.2,
+"win_rate_ci": [
+5.1,
+47.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "ECHOING_SLASH",
+"offered": 43,
+"picked": 14,
+"pick_rate": 32.6,
+"pick_rate_by_act": [
+75.0,
+25.0,
+0.0
+],
+"win_rate": 6.7,
+"win_rate_ci": [
+1.2,
+29.8
+],
+"lift": null,
+"lift_n": 15,
+"tier": "D"
+},
+{
+"id": "ECHO_FORM",
+"offered": 2696,
+"picked": 2026,
+"pick_rate": 75.1,
+"pick_rate_by_act": [
+76.1,
+73.9,
+72.3
+],
+"win_rate": 34.9,
+"win_rate_ci": [
+33.0,
+37.0
+],
+"lift": 3.6,
+"lift_n": 2170,
+"tier": "S"
+},
+{
+"id": "EIDOLON",
+"offered": 31,
+"picked": 3,
+"pick_rate": 9.7,
+"pick_rate_by_act": [
+0.0,
+11.1,
+0.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+3.6,
+62.4
+],
+"lift": null,
+"lift_n": 5,
+"tier": "C"
+},
+{
+"id": "END_OF_DAYS",
+"offered": 29,
+"picked": 2,
+"pick_rate": 6.9,
+"pick_rate_by_act": [
+100.0,
+0.0,
+null
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+35.4
+],
+"lift": null,
+"lift_n": 7,
+"tier": "D"
+},
+{
+"id": "ENFEEBLING_TOUCH",
+"offered": 40,
+"picked": 31,
+"pick_rate": 77.5,
+"pick_rate_by_act": [
+62.5,
+85.7,
+100.0
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+16.3,
+45.1
+],
+"lift": -2.4,
+"lift_n": 35,
+"tier": "C"
+},
+{
+"id": "ENTROPY",
+"offered": 1449,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 36.8,
+"win_rate_ci": [
+27.8,
+46.9
+],
+"lift": -2.9,
+"lift_n": 95,
+"tier": "A"
+},
+{
+"id": "ENVENOM",
+"offered": 42,
+"picked": 6,
+"pick_rate": 14.3,
+"pick_rate_by_act": [
+33.3,
+12.8,
+null
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "EQUILIBRIUM",
+"offered": 895,
+"picked": 59,
+"pick_rate": 6.6,
+"pick_rate_by_act": [
+8.4,
+7.1,
+0.0
+],
+"win_rate": 31.1,
+"win_rate_ci": [
+26.3,
+36.3
+],
+"lift": 0.1,
+"lift_n": 322,
+"tier": "A"
+},
+{
+"id": "ERADICATE",
+"offered": 28,
+"picked": 13,
+"pick_rate": 46.4,
+"pick_rate_by_act": [
+40.0,
+47.6,
+50.0
+],
+"win_rate": 73.3,
+"win_rate_ci": [
+48.0,
+89.1
+],
+"lift": null,
+"lift_n": 15,
+"tier": "S"
+},
+{
+"id": "ESCAPE_PLAN",
+"offered": 57,
+"picked": 39,
+"pick_rate": 68.4,
+"pick_rate_by_act": [
+78.6,
+66.7,
+0.0
+],
+"win_rate": 15.9,
+"win_rate_ci": [
+7.9,
+29.4
+],
+"lift": -12.2,
+"lift_n": 44,
+"tier": "D"
+},
+{
+"id": "ETERNAL_ARMOR",
+"offered": 1297,
+"picked": 3,
+"pick_rate": 0.2,
+"pick_rate_by_act": [
+0.3,
+0.3,
+0.0
+],
+"win_rate": 38.1,
+"win_rate_ci": [
+31.1,
+45.6
+],
+"lift": 1.6,
+"lift_n": 168,
+"tier": "S"
+},
+{
+"id": "EVIL_EYE",
+"offered": 46,
+"picked": 12,
+"pick_rate": 26.1,
+"pick_rate_by_act": [
+57.1,
+14.8,
+0.0
+],
+"win_rate": 30.8,
+"win_rate_ci": [
+12.7,
+57.6
+],
+"lift": null,
+"lift_n": 13,
+"tier": "C"
+},
+{
+"id": "EXPECT_A_FIGHT",
+"offered": 43,
+"picked": 1,
+"pick_rate": 2.3,
+"pick_rate_by_act": [
+10.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "EXPERTISE",
+"offered": 50,
+"picked": 20,
+"pick_rate": 40.0,
+"pick_rate_by_act": [
+41.7,
+42.9,
+0.0
+],
+"win_rate": 10.0,
+"win_rate_ci": [
+2.8,
+30.1
+],
+"lift": -18.3,
+"lift_n": 20,
+"tier": "D"
+},
+{
+"id": "EXPOSE",
+"offered": 55,
+"picked": 18,
+"pick_rate": 32.7,
+"pick_rate_by_act": [
+30.0,
+35.3,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+12.0,
+44.9
+],
+"lift": -6.2,
+"lift_n": 24,
+"tier": "C"
+},
+{
+"id": "FAN_OF_KNIVES",
+"offered": 42,
+"picked": 1,
+"pick_rate": 2.4,
+"pick_rate_by_act": [
+0.0,
+2.4,
+null
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "FASTEN",
+"offered": 804,
+"picked": 107,
+"pick_rate": 13.3,
+"pick_rate_by_act": [
+20.3,
+10.0,
+0.6
+],
+"win_rate": 22.2,
+"win_rate_ci": [
+18.7,
+26.0
+],
+"lift": -5.6,
+"lift_n": 496,
+"tier": "C"
+},
+{
+"id": "FEAR",
+"offered": 88,
+"picked": 11,
+"pick_rate": 12.5,
+"pick_rate_by_act": [
+20.6,
+8.7,
+0.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+4.7,
+44.8
+],
+"lift": null,
+"lift_n": 12,
+"tier": "D"
+},
+{
+"id": "FEED",
+"offered": 47,
+"picked": 12,
+"pick_rate": 25.5,
+"pick_rate_by_act": [
+100.0,
+23.3,
+0.0
+],
+"win_rate": 29.4,
+"win_rate_ci": [
+13.3,
+53.1
+],
+"lift": null,
+"lift_n": 17,
+"tier": "C"
+},
+{
+"id": "FEEL_NO_PAIN",
+"offered": 51,
+"picked": 8,
+"pick_rate": 15.7,
+"pick_rate_by_act": [
+20.0,
+14.3,
+16.7
+],
+"win_rate": 55.6,
+"win_rate_ci": [
+26.7,
+81.1
+],
+"lift": null,
+"lift_n": 9,
+"tier": "B"
+},
+{
+"id": "FERAL",
+"offered": 8956,
+"picked": 1781,
+"pick_rate": 19.9,
+"pick_rate_by_act": [
+21.1,
+19.4,
+16.9
+],
+"win_rate": 23.2,
+"win_rate_ci": [
+21.5,
+25.0
+],
+"lift": -5.5,
+"lift_n": 2227,
+"tier": "C"
+},
+{
+"id": "FIEND_FIRE",
+"offered": 47,
+"picked": 6,
+"pick_rate": 12.8,
+"pick_rate_by_act": [
+25.0,
+10.5,
+20.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+25.9
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "FIGHT_ME",
+"offered": 37,
+"picked": 14,
+"pick_rate": 37.8,
+"pick_rate_by_act": [
+61.5,
+26.1,
+0.0
+],
+"win_rate": 18.8,
+"win_rate_ci": [
+6.6,
+43.0
+],
+"lift": null,
+"lift_n": 16,
+"tier": "D"
+},
+{
+"id": "FIGHT_THROUGH",
+"offered": 7216,
+"picked": 2136,
+"pick_rate": 29.6,
+"pick_rate_by_act": [
+31.2,
+29.3,
+24.2
+],
+"win_rate": 24.8,
+"win_rate_ci": [
+23.1,
+26.6
+],
+"lift": -4.0,
+"lift_n": 2373,
+"tier": "C"
+},
+{
+"id": "FINESSE",
+"offered": 807,
+"picked": 82,
+"pick_rate": 10.2,
+"pick_rate_by_act": [
+13.3,
+8.5,
+3.5
+],
+"win_rate": 28.3,
+"win_rate_ci": [
+24.2,
+32.8
+],
+"lift": -0.9,
+"lift_n": 420,
+"tier": "B"
+},
+{
+"id": "FINISHER",
+"offered": 47,
+"picked": 3,
+"pick_rate": 6.4,
+"pick_rate_by_act": [
+0.0,
+8.1,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+49.0
+],
+"lift": null,
+"lift_n": 4,
+"tier": "D"
+},
+{
+"id": "FISTICUFFS",
+"offered": 944,
+"picked": 55,
+"pick_rate": 5.8,
+"pick_rate_by_act": [
+9.1,
+4.0,
+0.6
+],
+"win_rate": 26.4,
+"win_rate_ci": [
+21.5,
+32.0
+],
+"lift": -1.9,
+"lift_n": 269,
+"tier": "B"
+},
+{
+"id": "FLAK_CANNON",
+"offered": 2889,
+"picked": 1148,
+"pick_rate": 39.7,
+"pick_rate_by_act": [
+39.8,
+40.3,
+36.4
+],
+"win_rate": 37.2,
+"win_rate_ci": [
+34.7,
+39.7
+],
+"lift": 4.6,
+"lift_n": 1413,
+"tier": "S"
+},
+{
+"id": "FLAME_BARRIER",
+"offered": 56,
+"picked": 25,
+"pick_rate": 44.6,
+"pick_rate_by_act": [
+46.2,
+47.2,
+28.6
+],
+"win_rate": 43.3,
+"win_rate_ci": [
+27.4,
+60.8
+],
+"lift": 10.0,
+"lift_n": 30,
+"tier": "A"
+},
+{
+"id": "FLASH_OF_STEEL",
+"offered": 901,
+"picked": 76,
+"pick_rate": 8.4,
+"pick_rate_by_act": [
+12.5,
+6.2,
+0.6
+],
+"win_rate": 26.0,
+"win_rate_ci": [
+21.5,
+31.1
+],
+"lift": -2.9,
+"lift_n": 319,
+"tier": "B"
+},
+{
+"id": "FLATTEN",
+"offered": 73,
+"picked": 1,
+"pick_rate": 1.4,
+"pick_rate_by_act": [
+3.3,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "FLECHETTES",
+"offered": 55,
+"picked": 9,
+"pick_rate": 16.4,
+"pick_rate_by_act": [
+38.5,
+10.0,
+0.0
+],
+"win_rate": 27.3,
+"win_rate_ci": [
+9.7,
+56.6
+],
+"lift": null,
+"lift_n": 11,
+"tier": "C"
+},
+{
+"id": "FLICK_FLACK",
+"offered": 112,
+"picked": 2,
+"pick_rate": 1.8,
+"pick_rate_by_act": [
+2.4,
+1.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+49.0
+],
+"lift": null,
+"lift_n": 4,
+"tier": "D"
+},
+{
+"id": "FOCUSED_STRIKE",
+"offered": 21243,
+"picked": 1472,
+"pick_rate": 6.9,
+"pick_rate_by_act": [
+9.2,
+4.5,
+3.2
+],
+"win_rate": 13.2,
+"win_rate_ci": [
+11.6,
+14.9
+],
+"lift": -9.9,
+"lift_n": 1669,
+"tier": "F"
+},
+{
+"id": "FOOTWORK",
+"offered": 59,
+"picked": 47,
+"pick_rate": 79.7,
+"pick_rate_by_act": [
+76.2,
+83.3,
+50.0
+],
+"win_rate": 29.6,
+"win_rate_ci": [
+19.1,
+42.8
+],
+"lift": -1.0,
+"lift_n": 54,
+"tier": "B"
+},
+{
+"id": "FOREGONE_CONCLUSION",
+"offered": 26,
+"picked": 3,
+"pick_rate": 11.5,
+"pick_rate_by_act": [
+0.0,
+16.7,
+0.0
+],
+"win_rate": 40.0,
+"win_rate_ci": [
+11.8,
+76.9
+],
+"lift": null,
+"lift_n": 5,
+"tier": "C"
+},
+{
+"id": "FORGOTTEN_RITUAL",
+"offered": 48,
+"picked": 26,
+"pick_rate": 54.2,
+"pick_rate_by_act": [
+61.5,
+53.3,
+40.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+7.3,
+33.6
+],
+"lift": -16.6,
+"lift_n": 30,
+"tier": "D"
+},
+{
+"id": "FRIENDSHIP",
+"offered": 42,
+"picked": 19,
+"pick_rate": 45.2,
+"pick_rate_by_act": [
+56.2,
+43.5,
+0.0
+],
+"win_rate": 22.7,
+"win_rate_ci": [
+10.1,
+43.4
+],
+"lift": -5.6,
+"lift_n": 22,
+"tier": "C"
+},
+{
+"id": "FTL",
+"offered": 8545,
+"picked": 2186,
+"pick_rate": 25.6,
+"pick_rate_by_act": [
+32.9,
+20.5,
+12.0
+],
+"win_rate": 23.3,
+"win_rate_ci": [
+21.7,
+25.0
+],
+"lift": -3.1,
+"lift_n": 2532,
+"tier": "C"
+},
+{
+"id": "FURNACE",
+"offered": 28,
+"picked": 6,
+"pick_rate": 21.4,
+"pick_rate_by_act": [
+13.3,
+44.4,
+0.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+10.8,
+60.3
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "FUSION",
+"offered": 7434,
+"picked": 1189,
+"pick_rate": 16.0,
+"pick_rate_by_act": [
+18.2,
+14.0,
+12.0
+],
+"win_rate": 20.6,
+"win_rate_ci": [
+18.5,
+22.7
+],
+"lift": -7.4,
+"lift_n": 1445,
+"tier": "D"
+},
+{
+"id": "GAMMA_BLAST",
+"offered": 32,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "GATHER_LIGHT",
+"offered": 99,
+"picked": 7,
+"pick_rate": 7.1,
+"pick_rate_by_act": [
+13.9,
+4.8,
+0.0
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+8.2,
+64.1
+],
+"lift": null,
+"lift_n": 7,
+"tier": "C"
+},
+{
+"id": "GENESIS",
+"offered": 30,
+"picked": 3,
+"pick_rate": 10.0,
+"pick_rate_by_act": [
+14.3,
+5.6,
+20.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "GENETIC_ALGORITHM",
+"offered": 2904,
+"picked": 773,
+"pick_rate": 26.6,
+"pick_rate_by_act": [
+36.0,
+16.2,
+1.4
+],
+"win_rate": 24.9,
+"win_rate_ci": [
+22.3,
+27.8
+],
+"lift": -2.5,
+"lift_n": 970,
+"tier": "C"
+},
+{
+"id": "GLACIER",
+"offered": 6800,
+"picked": 4077,
+"pick_rate": 60.0,
+"pick_rate_by_act": [
+67.2,
+55.0,
+44.5
+],
+"win_rate": 26.8,
+"win_rate_ci": [
+25.5,
+28.2
+],
+"lift": -0.8,
+"lift_n": 4262,
+"tier": "B"
+},
+{
+"id": "GLASSWORK",
+"offered": 7259,
+"picked": 2039,
+"pick_rate": 28.1,
+"pick_rate_by_act": [
+40.8,
+16.7,
+5.5
+],
+"win_rate": 17.3,
+"win_rate_ci": [
+15.7,
+18.9
+],
+"lift": -6.4,
+"lift_n": 2183,
+"tier": "D"
+},
+{
+"id": "GLIMMER",
+"offered": 39,
+"picked": 4,
+"pick_rate": 10.3,
+"pick_rate_by_act": [
+6.7,
+15.0,
+0.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "GLITTERSTREAM",
+"offered": 88,
+"picked": 28,
+"pick_rate": 31.8,
+"pick_rate_by_act": [
+44.4,
+23.7,
+21.4
+],
+"win_rate": 29.0,
+"win_rate_ci": [
+16.1,
+46.6
+],
+"lift": 0.8,
+"lift_n": 31,
+"tier": "C"
+},
+{
+"id": "GLOW",
+"offered": 79,
+"picked": 3,
+"pick_rate": 3.8,
+"pick_rate_by_act": [
+2.9,
+6.1,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+18.8,
+81.2
+],
+"lift": null,
+"lift_n": 6,
+"tier": "C"
+},
+{
+"id": "GOLD_AXE",
+"offered": 1374,
+"picked": 2,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.1,
+0.2,
+0.0
+],
+"win_rate": 28.8,
+"win_rate_ci": [
+18.8,
+41.4
+],
+"lift": -12.0,
+"lift_n": 59,
+"tier": "C"
+},
+{
+"id": "GO_FOR_THE_EYES",
+"offered": 20628,
+"picked": 5197,
+"pick_rate": 25.2,
+"pick_rate_by_act": [
+31.0,
+20.1,
+14.0
+],
+"win_rate": 23.0,
+"win_rate_ci": [
+21.9,
+24.1
+],
+"lift": -2.7,
+"lift_n": 5643,
+"tier": "C"
+},
+{
+"id": "GRAND_FINALE",
+"offered": 31,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+null,
+0.0,
+null
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "GRAVEBLAST",
+"offered": 101,
+"picked": 26,
+"pick_rate": 25.7,
+"pick_rate_by_act": [
+37.5,
+17.0,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+13.3,
+42.1
+],
+"lift": 3.1,
+"lift_n": 32,
+"tier": "C"
+},
+{
+"id": "GRAVE_WARDEN",
+"offered": 101,
+"picked": 51,
+"pick_rate": 50.5,
+"pick_rate_by_act": [
+54.3,
+52.1,
+14.3
+],
+"win_rate": 15.8,
+"win_rate_ci": [
+8.5,
+27.4
+],
+"lift": -8.0,
+"lift_n": 57,
+"tier": "D"
+},
+{
+"id": "GUARDS",
+"offered": 18,
+"picked": 8,
+"pick_rate": 44.4,
+"pick_rate_by_act": [
+40.0,
+41.7,
+100.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+8.9,
+53.2
+],
+"lift": null,
+"lift_n": 12,
+"tier": "C"
+},
+{
+"id": "GUNK_UP",
+"offered": 21128,
+"picked": 2305,
+"pick_rate": 10.9,
+"pick_rate_by_act": [
+15.2,
+6.6,
+3.4
+],
+"win_rate": 17.3,
+"win_rate_ci": [
+15.9,
+18.8
+],
+"lift": -5.2,
+"lift_n": 2485,
+"tier": "D"
+},
+{
+"id": "HAILSTORM",
+"offered": 9016,
+"picked": 1866,
+"pick_rate": 20.7,
+"pick_rate_by_act": [
+23.9,
+18.8,
+14.0
+],
+"win_rate": 23.7,
+"win_rate_ci": [
+22.0,
+25.6
+],
+"lift": -3.4,
+"lift_n": 2190,
+"tier": "C"
+},
+{
+"id": "HAND_OF_GREED",
+"offered": 1421,
+"picked": 3,
+"pick_rate": 0.2,
+"pick_rate_by_act": [
+0.3,
+0.2,
+0.0
+],
+"win_rate": 22.2,
+"win_rate_ci": [
+12.5,
+36.3
+],
+"lift": -6.7,
+"lift_n": 45,
+"tier": "C"
+},
+{
+"id": "HANG",
+"offered": 36,
+"picked": 12,
+"pick_rate": 33.3,
+"pick_rate_by_act": [
+33.3,
+35.5,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+26.8,
+73.2
+],
+"lift": null,
+"lift_n": 14,
+"tier": "B"
+},
+{
+"id": "HAVOC",
+"offered": 122,
+"picked": 17,
+"pick_rate": 13.9,
+"pick_rate_by_act": [
+24.2,
+12.7,
+0.0
+],
+"win_rate": 31.6,
+"win_rate_ci": [
+15.4,
+54.0
+],
+"lift": null,
+"lift_n": 19,
+"tier": "C"
+},
+{
+"id": "HAZE",
+"offered": 49,
+"picked": 2,
+"pick_rate": 4.1,
+"pick_rate_by_act": [
+12.5,
+0.0,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+4.6,
+69.9
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "HEADBUTT",
+"offered": 107,
+"picked": 33,
+"pick_rate": 30.8,
+"pick_rate_by_act": [
+41.0,
+26.8,
+16.7
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+6.3,
+29.4
+],
+"lift": -12.3,
+"lift_n": 35,
+"tier": "D"
+},
+{
+"id": "HEAVENLY_DRILL",
+"offered": 30,
+"picked": 15,
+"pick_rate": 50.0,
+"pick_rate_by_act": [
+62.5,
+52.6,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+29.9,
+70.1
+],
+"lift": 17.2,
+"lift_n": 20,
+"tier": "A"
+},
+{
+"id": "HEGEMONY",
+"offered": 37,
+"picked": 10,
+"pick_rate": 27.0,
+"pick_rate_by_act": [
+47.1,
+15.4,
+0.0
+],
+"win_rate": 26.7,
+"win_rate_ci": [
+10.9,
+52.0
+],
+"lift": null,
+"lift_n": 15,
+"tier": "C"
+},
+{
+"id": "HEIRLOOM_HAMMER",
+"offered": 33,
+"picked": 6,
+"pick_rate": 18.2,
+"pick_rate_by_act": [
+50.0,
+10.5,
+12.5
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+8.2,
+64.1
+],
+"lift": null,
+"lift_n": 7,
+"tier": "C"
+},
+{
+"id": "HELIX_DRILL",
+"offered": 2921,
+"picked": 561,
+"pick_rate": 19.2,
+"pick_rate_by_act": [
+21.1,
+16.7,
+14.6
+],
+"win_rate": 28.0,
+"win_rate_ci": [
+24.8,
+31.4
+],
+"lift": -1.6,
+"lift_n": 722,
+"tier": "B"
+},
+{
+"id": "HELLRAISER",
+"offered": 35,
+"picked": 1,
+"pick_rate": 2.9,
+"pick_rate_by_act": [
+0.0,
+3.4,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "HEMOKINESIS",
+"offered": 41,
+"picked": 2,
+"pick_rate": 4.9,
+"pick_rate_by_act": [
+14.3,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "HIDDEN_DAGGERS",
+"offered": 42,
+"picked": 15,
+"pick_rate": 35.7,
+"pick_rate_by_act": [
+60.0,
+31.0,
+0.0
+],
+"win_rate": 26.7,
+"win_rate_ci": [
+10.9,
+52.0
+],
+"lift": null,
+"lift_n": 15,
+"tier": "C"
+},
+{
+"id": "HIDDEN_GEM",
+"offered": 1143,
+"picked": 5,
+"pick_rate": 0.4,
+"pick_rate_by_act": [
+0.3,
+0.6,
+0.5
+],
+"win_rate": 27.4,
+"win_rate_ci": [
+23.2,
+32.1
+],
+"lift": -7.5,
+"lift_n": 379,
+"tier": "B"
+},
+{
+"id": "HOLOGRAM",
+"offered": 21436,
+"picked": 6693,
+"pick_rate": 31.2,
+"pick_rate_by_act": [
+29.6,
+33.4,
+33.2
+],
+"win_rate": 24.5,
+"win_rate_ci": [
+23.5,
+25.6
+],
+"lift": -3.1,
+"lift_n": 6543,
+"tier": "C"
+},
+{
+"id": "HOTFIX",
+"offered": 22656,
+"picked": 2073,
+"pick_rate": 9.1,
+"pick_rate_by_act": [
+8.8,
+10.2,
+8.5
+],
+"win_rate": 18.6,
+"win_rate_ci": [
+17.1,
+20.2
+],
+"lift": -8.7,
+"lift_n": 2362,
+"tier": "D"
+},
+{
+"id": "HOWL_FROM_BEYOND",
+"offered": 54,
+"picked": 7,
+"pick_rate": 13.0,
+"pick_rate_by_act": [
+33.3,
+8.6,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+2.2,
+47.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "HYPERBEAM",
+"offered": 2924,
+"picked": 535,
+"pick_rate": 18.3,
+"pick_rate_by_act": [
+24.9,
+10.3,
+2.9
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+17.4,
+22.9
+],
+"lift": -6.1,
+"lift_n": 799,
+"tier": "D"
+},
+{
+"id": "ICE_LANCE",
+"offered": 2992,
+"picked": 942,
+"pick_rate": 31.5,
+"pick_rate_by_act": [
+37.3,
+24.1,
+18.0
+],
+"win_rate": 29.6,
+"win_rate_ci": [
+27.0,
+32.2
+],
+"lift": 0.8,
+"lift_n": 1174,
+"tier": "A"
+},
+{
+"id": "IMPATIENCE",
+"offered": 1127,
+"picked": 27,
+"pick_rate": 2.4,
+"pick_rate_by_act": [
+2.7,
+3.0,
+0.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+25.9,
+41.7
+],
+"lift": -0.9,
+"lift_n": 132,
+"tier": "A"
+},
+{
+"id": "IMPERVIOUS",
+"offered": 43,
+"picked": 18,
+"pick_rate": 41.9,
+"pick_rate_by_act": [
+75.0,
+38.5,
+null
+],
+"win_rate": 53.6,
+"win_rate_ci": [
+35.8,
+70.5
+],
+"lift": 20.5,
+"lift_n": 28,
+"tier": "A"
+},
+{
+"id": "INFERNAL_BLADE",
+"offered": 48,
+"picked": 17,
+"pick_rate": 35.4,
+"pick_rate_by_act": [
+63.6,
+28.6,
+0.0
+],
+"win_rate": 5.6,
+"win_rate_ci": [
+1.0,
+25.8
+],
+"lift": null,
+"lift_n": 18,
+"tier": "D"
+},
+{
+"id": "INFERNO",
+"offered": 42,
+"picked": 1,
+"pick_rate": 2.4,
+"pick_rate_by_act": [
+8.3,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "INFINITE_BLADES",
+"offered": 49,
+"picked": 9,
+"pick_rate": 18.4,
+"pick_rate_by_act": [
+42.9,
+9.4,
+0.0
+],
+"win_rate": 10.0,
+"win_rate_ci": [
+1.8,
+40.4
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "INFLAME",
+"offered": 51,
+"picked": 18,
+"pick_rate": 35.3,
+"pick_rate_by_act": [
+52.6,
+28.6,
+0.0
+],
+"win_rate": 4.8,
+"win_rate_ci": [
+0.8,
+22.7
+],
+"lift": -15.2,
+"lift_n": 21,
+"tier": "F"
+},
+{
+"id": "INVOKE",
+"offered": 96,
+"picked": 25,
+"pick_rate": 26.0,
+"pick_rate_by_act": [
+26.5,
+23.5,
+36.4
+],
+"win_rate": 26.9,
+"win_rate_ci": [
+13.7,
+46.1
+],
+"lift": -6.5,
+"lift_n": 26,
+"tier": "C"
+},
+{
+"id": "IRON_WAVE",
+"offered": 97,
+"picked": 17,
+"pick_rate": 17.5,
+"pick_rate_by_act": [
+28.2,
+11.5,
+0.0
+],
+"win_rate": 28.0,
+"win_rate_ci": [
+14.3,
+47.6
+],
+"lift": 5.6,
+"lift_n": 25,
+"tier": "C"
+},
+{
+"id": "ITERATION",
+"offered": 8841,
+"picked": 1625,
+"pick_rate": 18.4,
+"pick_rate_by_act": [
+15.2,
+22.7,
+21.0
+],
+"win_rate": 31.8,
+"win_rate_ci": [
+29.9,
+33.8
+],
+"lift": -1.9,
+"lift_n": 2270,
+"tier": "A"
+},
+{
+"id": "I_AM_INVINCIBLE",
+"offered": 32,
+"picked": 3,
+"pick_rate": 9.4,
+"pick_rate_by_act": [
+0.0,
+16.7,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+7.1,
+59.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "C"
+},
+{
+"id": "JACKPOT",
+"offered": 1226,
+"picked": 9,
+"pick_rate": 0.7,
+"pick_rate_by_act": [
+0.9,
+1.0,
+0.0
+],
+"win_rate": 41.9,
+"win_rate_ci": [
+36.3,
+47.6
+],
+"lift": 6.5,
+"lift_n": 289,
+"tier": "S"
+},
+{
+"id": "JACK_OF_ALL_TRADES",
+"offered": 1127,
+"picked": 16,
+"pick_rate": 1.4,
+"pick_rate_by_act": [
+2.0,
+1.1,
+0.0
+],
+"win_rate": 21.2,
+"win_rate_ci": [
+13.7,
+31.4
+],
+"lift": -10.2,
+"lift_n": 80,
+"tier": "C"
+},
+{
+"id": "JUGGERNAUT",
+"offered": 50,
+"picked": 25,
+"pick_rate": 50.0,
+"pick_rate_by_act": [
+66.7,
+48.9,
+50.0
+],
+"win_rate": 41.2,
+"win_rate_ci": [
+26.4,
+57.8
+],
+"lift": 11.4,
+"lift_n": 34,
+"tier": "A"
+},
+{
+"id": "JUGGLING",
+"offered": 43,
+"picked": 14,
+"pick_rate": 32.6,
+"pick_rate_by_act": [
+63.6,
+20.7,
+33.3
+],
+"win_rate": 21.4,
+"win_rate_ci": [
+7.6,
+47.6
+],
+"lift": null,
+"lift_n": 14,
+"tier": "C"
+},
+{
+"id": "KINGLY_KICK",
+"offered": 33,
+"picked": 9,
+"pick_rate": 27.3,
+"pick_rate_by_act": [
+43.8,
+13.3,
+0.0
+],
+"win_rate": 11.1,
+"win_rate_ci": [
+2.0,
+43.5
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "KINGLY_PUNCH",
+"offered": 24,
+"picked": 3,
+"pick_rate": 12.5,
+"pick_rate_by_act": [
+37.5,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "KNOCKOUT_BLOW",
+"offered": 26,
+"picked": 2,
+"pick_rate": 7.7,
+"pick_rate_by_act": [
+28.6,
+0.0,
+0.0
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+6.1,
+79.2
+],
+"lift": null,
+"lift_n": 3,
+"tier": "C"
+},
+{
+"id": "KNOW_THY_PLACE",
+"offered": 87,
+"picked": 35,
+"pick_rate": 40.2,
+"pick_rate_by_act": [
+50.0,
+30.0,
+30.8
+],
+"win_rate": 32.6,
+"win_rate_ci": [
+20.9,
+47.0
+],
+"lift": 9.5,
+"lift_n": 46,
+"tier": "B"
+},
+{
+"id": "LEADING_STRIKE",
+"offered": 105,
+"picked": 20,
+"pick_rate": 19.0,
+"pick_rate_by_act": [
+40.5,
+5.4,
+16.7
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+17.2,
+54.6
+],
+"lift": 7.4,
+"lift_n": 21,
+"tier": "C"
+},
+{
+"id": "LEAP",
+"offered": 22243,
+"picked": 2884,
+"pick_rate": 13.0,
+"pick_rate_by_act": [
+16.5,
+10.2,
+6.1
+],
+"win_rate": 15.6,
+"win_rate_ci": [
+14.4,
+16.9
+],
+"lift": -8.3,
+"lift_n": 3334,
+"tier": "F"
+},
+{
+"id": "LEG_SWEEP",
+"offered": 48,
+"picked": 34,
+"pick_rate": 70.8,
+"pick_rate_by_act": [
+70.0,
+69.7,
+80.0
+],
+"win_rate": 28.2,
+"win_rate_ci": [
+16.5,
+43.8
+],
+"lift": -5.0,
+"lift_n": 39,
+"tier": "C"
+},
+{
+"id": "LETHALITY",
+"offered": 40,
+"picked": 27,
+"pick_rate": 67.5,
+"pick_rate_by_act": [
+87.5,
+54.5,
+50.0
+],
+"win_rate": 16.1,
+"win_rate_ci": [
+7.1,
+32.6
+],
+"lift": -9.5,
+"lift_n": 31,
+"tier": "D"
+},
+{
+"id": "LIGHTNING_ROD",
+"offered": 22030,
+"picked": 4426,
+"pick_rate": 20.1,
+"pick_rate_by_act": [
+28.5,
+11.7,
+6.1
+],
+"win_rate": 17.6,
+"win_rate_ci": [
+16.5,
+18.7
+],
+"lift": -5.3,
+"lift_n": 4866,
+"tier": "D"
+},
+{
+"id": "LOOP",
+"offered": 8960,
+"picked": 1663,
+"pick_rate": 18.6,
+"pick_rate_by_act": [
+19.9,
+16.6,
+17.9
+],
+"win_rate": 24.5,
+"win_rate_ci": [
+22.6,
+26.4
+],
+"lift": -5.3,
+"lift_n": 2020,
+"tier": "C"
+},
+{
+"id": "LUNAR_BLAST",
+"offered": 22,
+"picked": 5,
+"pick_rate": 22.7,
+"pick_rate_by_act": [
+37.5,
+20.0,
+0.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+5.7,
+51.0
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "MACHINE_LEARNING",
+"offered": 2826,
+"picked": 1513,
+"pick_rate": 53.5,
+"pick_rate_by_act": [
+51.7,
+57.7,
+49.7
+],
+"win_rate": 33.0,
+"win_rate_ci": [
+30.8,
+35.3
+],
+"lift": 0.6,
+"lift_n": 1655,
+"tier": "A"
+},
+{
+"id": "MAKE_IT_SO",
+"offered": 30,
+"picked": 9,
+"pick_rate": 30.0,
+"pick_rate_by_act": [
+25.0,
+37.5,
+20.0
+],
+"win_rate": 41.7,
+"win_rate_ci": [
+19.3,
+68.0
+],
+"lift": null,
+"lift_n": 12,
+"tier": "C"
+},
+{
+"id": "MALAISE",
+"offered": 38,
+"picked": 20,
+"pick_rate": 52.6,
+"pick_rate_by_act": [
+0.0,
+54.1,
+null
+],
+"win_rate": 53.8,
+"win_rate_ci": [
+35.5,
+71.2
+],
+"lift": 22.5,
+"lift_n": 26,
+"tier": "A"
+},
+{
+"id": "MANGLE",
+"offered": 39,
+"picked": 10,
+"pick_rate": 25.6,
+"pick_rate_by_act": [
+66.7,
+23.5,
+0.0
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+8.2,
+50.3
+],
+"lift": null,
+"lift_n": 13,
+"tier": "C"
+},
+{
+"id": "MANIFEST_AUTHORITY",
+"offered": 29,
+"picked": 15,
+"pick_rate": 51.7,
+"pick_rate_by_act": [
+66.7,
+50.0,
+20.0
+],
+"win_rate": 21.1,
+"win_rate_ci": [
+8.5,
+43.3
+],
+"lift": null,
+"lift_n": 19,
+"tier": "C"
+},
+{
+"id": "MASTER_OF_STRATEGY",
+"offered": 1269,
+"picked": 2,
+"pick_rate": 0.2,
+"pick_rate_by_act": [
+0.2,
+0.3,
+0.0
+],
+"win_rate": 43.1,
+"win_rate_ci": [
+36.5,
+49.8
+],
+"lift": -0.8,
+"lift_n": 209,
+"tier": "S"
+},
+{
+"id": "MAYHEM",
+"offered": 1309,
+"picked": 1,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.2,
+0.0,
+0.0
+],
+"win_rate": 23.5,
+"win_rate_ci": [
+16.8,
+31.9
+],
+"lift": -12.1,
+"lift_n": 119,
+"tier": "C"
+},
+{
+"id": "METEOR_STRIKE",
+"offered": 2944,
+"picked": 312,
+"pick_rate": 10.6,
+"pick_rate_by_act": [
+10.1,
+11.4,
+11.7
+],
+"win_rate": 26.8,
+"win_rate_ci": [
+22.8,
+31.2
+],
+"lift": -4.0,
+"lift_n": 426,
+"tier": "B"
+},
+{
+"id": "MIND_BLAST",
+"offered": 1057,
+"picked": 8,
+"pick_rate": 0.8,
+"pick_rate_by_act": [
+1.1,
+0.6,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+15.8,
+37.2
+],
+"lift": -8.8,
+"lift_n": 60,
+"tier": "C"
+},
+{
+"id": "MISERY",
+"offered": 25,
+"picked": 8,
+"pick_rate": 32.0,
+"pick_rate_by_act": [
+100.0,
+25.0,
+0.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+5.7,
+51.0
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "MODDED",
+"offered": 2902,
+"picked": 1515,
+"pick_rate": 52.2,
+"pick_rate_by_act": [
+52.5,
+51.4,
+53.3
+],
+"win_rate": 31.0,
+"win_rate_ci": [
+28.8,
+33.2
+],
+"lift": -0.5,
+"lift_n": 1688,
+"tier": "A"
+},
+{
+"id": "MOLTEN_FIST",
+"offered": 121,
+"picked": 6,
+"pick_rate": 5.0,
+"pick_rate_by_act": [
+12.2,
+1.4,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+7.1,
+59.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "C"
+},
+{
+"id": "MOMENTUM_STRIKE",
+"offered": 21343,
+"picked": 1789,
+"pick_rate": 8.4,
+"pick_rate_by_act": [
+13.4,
+2.6,
+1.1
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+12.8,
+15.9
+],
+"lift": -6.6,
+"lift_n": 2025,
+"tier": "F"
+},
+{
+"id": "MONARCHS_GAZE",
+"offered": 34,
+"picked": 5,
+"pick_rate": 14.7,
+"pick_rate_by_act": [
+10.0,
+16.7,
+16.7
+],
+"win_rate": 57.1,
+"win_rate_ci": [
+25.0,
+84.2
+],
+"lift": null,
+"lift_n": 7,
+"tier": "B"
+},
+{
+"id": "MONOLOGUE",
+"offered": 30,
+"picked": 4,
+"pick_rate": 13.3,
+"pick_rate_by_act": [
+12.5,
+20.0,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+15.0,
+85.0
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "MULTI_CAST",
+"offered": 2851,
+"picked": 298,
+"pick_rate": 10.5,
+"pick_rate_by_act": [
+12.0,
+8.2,
+8.4
+],
+"win_rate": 24.9,
+"win_rate_ci": [
+21.2,
+29.1
+],
+"lift": -4.0,
+"lift_n": 453,
+"tier": "C"
+},
+{
+"id": "MURDER",
+"offered": 39,
+"picked": 5,
+"pick_rate": 12.8,
+"pick_rate_by_act": [
+0.0,
+11.1,
+100.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+3.6,
+62.4
+],
+"lift": null,
+"lift_n": 5,
+"tier": "C"
+},
+{
+"id": "NECRO_MASTERY",
+"offered": 30,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "NEGATIVE_PULSE",
+"offered": 84,
+"picked": 10,
+"pick_rate": 11.9,
+"pick_rate_by_act": [
+20.6,
+8.6,
+0.0
+],
+"win_rate": 9.1,
+"win_rate_ci": [
+1.6,
+37.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "NEUROSURGE",
+"offered": 29,
+"picked": 19,
+"pick_rate": 65.5,
+"pick_rate_by_act": [
+100.0,
+65.4,
+0.0
+],
+"win_rate": 26.9,
+"win_rate_ci": [
+13.7,
+46.1
+],
+"lift": -7.1,
+"lift_n": 26,
+"tier": "C"
+},
+{
+"id": "NEUTRON_AEGIS",
+"offered": 34,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "NIGHTMARE",
+"offered": 57,
+"picked": 9,
+"pick_rate": 15.8,
+"pick_rate_by_act": [
+null,
+15.8,
+null
+],
+"win_rate": 10.0,
+"win_rate_ci": [
+1.8,
+40.4
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "NOSTALGIA",
+"offered": 1391,
+"picked": 1,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.2,
+0.0,
+0.0
+],
+"win_rate": 37.8,
+"win_rate_ci": [
+27.6,
+49.2
+],
+"lift": -3.6,
+"lift_n": 74,
+"tier": "A"
+},
+{
+"id": "NOT_YET",
+"offered": 41,
+"picked": 16,
+"pick_rate": 39.0,
+"pick_rate_by_act": [
+100.0,
+38.5,
+0.0
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+11.0,
+42.1
+],
+"lift": -8.2,
+"lift_n": 26,
+"tier": "C"
+},
+{
+"id": "NOXIOUS_FUMES",
+"offered": 39,
+"picked": 21,
+"pick_rate": 53.8,
+"pick_rate_by_act": [
+100.0,
+48.3,
+40.0
+],
+"win_rate": 19.0,
+"win_rate_ci": [
+7.7,
+40.0
+],
+"lift": -13.7,
+"lift_n": 21,
+"tier": "D"
+},
+{
+"id": "NO_ESCAPE",
+"offered": 35,
+"picked": 2,
+"pick_rate": 5.7,
+"pick_rate_by_act": [
+0.0,
+12.5,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "NULL",
+"offered": 8726,
+"picked": 1857,
+"pick_rate": 21.3,
+"pick_rate_by_act": [
+30.3,
+12.1,
+8.2
+],
+"win_rate": 22.5,
+"win_rate_ci": [
+20.8,
+24.2
+],
+"lift": -4.0,
+"lift_n": 2234,
+"tier": "C"
+},
+{
+"id": "OBLIVION",
+"offered": 37,
+"picked": 5,
+"pick_rate": 13.5,
+"pick_rate_by_act": [
+0.0,
+15.6,
+0.0
+],
+"win_rate": 28.6,
+"win_rate_ci": [
+8.2,
+64.1
+],
+"lift": null,
+"lift_n": 7,
+"tier": "C"
+},
+{
+"id": "OFFERING",
+"offered": 40,
+"picked": 22,
+"pick_rate": 55.0,
+"pick_rate_by_act": [
+100.0,
+48.6,
+100.0
+],
+"win_rate": 34.6,
+"win_rate_ci": [
+19.4,
+53.8
+],
+"lift": 1.3,
+"lift_n": 26,
+"tier": "B"
+},
+{
+"id": "OMNISLICE",
+"offered": 948,
+"picked": 53,
+"pick_rate": 5.6,
+"pick_rate_by_act": [
+10.0,
+1.9,
+0.0
+],
+"win_rate": 19.6,
+"win_rate_ci": [
+15.1,
+25.1
+],
+"lift": -3.0,
+"lift_n": 240,
+"tier": "D"
+},
+{
+"id": "ONE_TWO_PUNCH",
+"offered": 34,
+"picked": 10,
+"pick_rate": 29.4,
+"pick_rate_by_act": [
+50.0,
+25.8,
+100.0
+],
+"win_rate": 21.4,
+"win_rate_ci": [
+7.6,
+47.6
+],
+"lift": null,
+"lift_n": 14,
+"tier": "C"
+},
+{
+"id": "ORBIT",
+"offered": 40,
+"picked": 24,
+"pick_rate": 60.0,
+"pick_rate_by_act": [
+62.5,
+72.7,
+20.0
+],
+"win_rate": 19.4,
+"win_rate_ci": [
+9.8,
+35.0
+],
+"lift": -10.6,
+"lift_n": 36,
+"tier": "D"
+},
+{
+"id": "OUTBREAK",
+"offered": 48,
+"picked": 5,
+"pick_rate": 10.4,
+"pick_rate_by_act": [
+40.0,
+7.1,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+35.4
+],
+"lift": null,
+"lift_n": 7,
+"tier": "D"
+},
+{
+"id": "OVERCLOCK",
+"offered": 7267,
+"picked": 3539,
+"pick_rate": 48.7,
+"pick_rate_by_act": [
+43.1,
+56.2,
+54.3
+],
+"win_rate": 28.3,
+"win_rate_ci": [
+26.8,
+29.7
+],
+"lift": -2.3,
+"lift_n": 3653,
+"tier": "B"
+},
+{
+"id": "PACTS_END",
+"offered": 45,
+"picked": 8,
+"pick_rate": 17.8,
+"pick_rate_by_act": [
+50.0,
+15.0,
+0.0
+],
+"win_rate": 35.3,
+"win_rate_ci": [
+17.3,
+58.7
+],
+"lift": null,
+"lift_n": 17,
+"tier": "C"
+},
+{
+"id": "PAGESTORM",
+"offered": 43,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 100.0,
+"win_rate_ci": [
+20.7,
+100.0
+],
+"lift": null,
+"lift_n": 1,
+"tier": "C"
+},
+{
+"id": "PALE_BLUE_DOT",
+"offered": 33,
+"picked": 15,
+"pick_rate": 45.5,
+"pick_rate_by_act": [
+60.0,
+42.1,
+25.0
+],
+"win_rate": 17.6,
+"win_rate_ci": [
+6.2,
+41.0
+],
+"lift": null,
+"lift_n": 17,
+"tier": "D"
+},
+{
+"id": "PANACHE",
+"offered": 972,
+"picked": 47,
+"pick_rate": 4.8,
+"pick_rate_by_act": [
+7.2,
+3.0,
+0.6
+],
+"win_rate": 24.9,
+"win_rate_ci": [
+19.5,
+31.2
+],
+"lift": -5.8,
+"lift_n": 205,
+"tier": "C"
+},
+{
+"id": "PANIC_BUTTON",
+"offered": 1093,
+"picked": 18,
+"pick_rate": 1.6,
+"pick_rate_by_act": [
+2.4,
+1.2,
+0.0
+],
+"win_rate": 34.8,
+"win_rate_ci": [
+25.7,
+45.2
+],
+"lift": -0.5,
+"lift_n": 89,
+"tier": "A"
+},
+{
+"id": "PARRY",
+"offered": 34,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+15.0,
+85.0
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "PARSE",
+"offered": 34,
+"picked": 9,
+"pick_rate": 26.5,
+"pick_rate_by_act": [
+0.0,
+52.9,
+0.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+10.8,
+60.3
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "PARTICLE_WALL",
+"offered": 23,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "PATTER",
+"offered": 79,
+"picked": 31,
+"pick_rate": 39.2,
+"pick_rate_by_act": [
+47.5,
+31.0,
+30.0
+],
+"win_rate": 21.9,
+"win_rate_ci": [
+11.0,
+38.8
+],
+"lift": -5.7,
+"lift_n": 32,
+"tier": "C"
+},
+{
+"id": "PERFECTED_STRIKE",
+"offered": 93,
+"picked": 8,
+"pick_rate": 8.6,
+"pick_rate_by_act": [
+16.2,
+4.4,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+32.4
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "PHOTON_CUT",
+"offered": 78,
+"picked": 12,
+"pick_rate": 15.4,
+"pick_rate_by_act": [
+25.6,
+7.4,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+25.9
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "PIERCING_WAIL",
+"offered": 107,
+"picked": 65,
+"pick_rate": 60.7,
+"pick_rate_by_act": [
+48.6,
+69.8,
+42.9
+],
+"win_rate": 26.0,
+"win_rate_ci": [
+17.3,
+37.1
+],
+"lift": -7.0,
+"lift_n": 73,
+"tier": "C"
+},
+{
+"id": "PILLAGE",
+"offered": 48,
+"picked": 8,
+"pick_rate": 16.7,
+"pick_rate_by_act": [
+18.2,
+18.8,
+0.0
+],
+"win_rate": 22.2,
+"win_rate_ci": [
+6.3,
+54.7
+],
+"lift": null,
+"lift_n": 9,
+"tier": "C"
+},
+{
+"id": "PILLAR_OF_CREATION",
+"offered": 34,
+"picked": 12,
+"pick_rate": 35.3,
+"pick_rate_by_act": [
+25.0,
+52.9,
+0.0
+],
+"win_rate": 34.8,
+"win_rate_ci": [
+18.8,
+55.1
+],
+"lift": 3.5,
+"lift_n": 23,
+"tier": "B"
+},
+{
+"id": "PINPOINT",
+"offered": 46,
+"picked": 9,
+"pick_rate": 19.6,
+"pick_rate_by_act": [
+38.9,
+8.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+29.9
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "POISONED_STAB",
+"offered": 89,
+"picked": 2,
+"pick_rate": 2.2,
+"pick_rate_by_act": [
+7.1,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+65.8
+],
+"lift": null,
+"lift_n": 2,
+"tier": "D"
+},
+{
+"id": "POMMEL_STRIKE",
+"offered": 115,
+"picked": 34,
+"pick_rate": 29.6,
+"pick_rate_by_act": [
+41.0,
+25.8,
+10.0
+],
+"win_rate": 30.3,
+"win_rate_ci": [
+17.4,
+47.3
+],
+"lift": 2.0,
+"lift_n": 33,
+"tier": "C"
+},
+{
+"id": "POUNCE",
+"offered": 48,
+"picked": 12,
+"pick_rate": 25.0,
+"pick_rate_by_act": [
+50.0,
+15.6,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+22.8
+],
+"lift": null,
+"lift_n": 13,
+"tier": "D"
+},
+{
+"id": "PRECISE_CUT",
+"offered": 29,
+"picked": 3,
+"pick_rate": 10.3,
+"pick_rate_by_act": [
+40.0,
+4.5,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+4.6,
+69.9
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "PREDATOR",
+"offered": 126,
+"picked": 23,
+"pick_rate": 18.3,
+"pick_rate_by_act": [
+35.9,
+11.5,
+0.0
+],
+"win_rate": 21.7,
+"win_rate_ci": [
+9.7,
+41.9
+],
+"lift": -3.5,
+"lift_n": 23,
+"tier": "C"
+},
+{
+"id": "PREPARED",
+"offered": 106,
+"picked": 57,
+"pick_rate": 53.8,
+"pick_rate_by_act": [
+46.5,
+61.8,
+37.5
+],
+"win_rate": 31.8,
+"win_rate_ci": [
+21.8,
+43.8
+],
+"lift": 1.6,
+"lift_n": 66,
+"tier": "B"
+},
+{
+"id": "PREP_TIME",
+"offered": 1053,
+"picked": 21,
+"pick_rate": 2.0,
+"pick_rate_by_act": [
+3.7,
+0.6,
+0.0
+],
+"win_rate": 15.8,
+"win_rate_ci": [
+9.8,
+24.4
+],
+"lift": -9.4,
+"lift_n": 95,
+"tier": "D"
+},
+{
+"id": "PRIMAL_FORCE",
+"offered": 40,
+"picked": 7,
+"pick_rate": 17.5,
+"pick_rate_by_act": [
+66.7,
+14.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+35.4
+],
+"lift": null,
+"lift_n": 7,
+"tier": "D"
+},
+{
+"id": "PRODUCTION",
+"offered": 980,
+"picked": 54,
+"pick_rate": 5.5,
+"pick_rate_by_act": [
+6.2,
+6.0,
+2.0
+],
+"win_rate": 25.8,
+"win_rate_ci": [
+21.0,
+31.3
+],
+"lift": -6.7,
+"lift_n": 275,
+"tier": "C"
+},
+{
+"id": "PROLONG",
+"offered": 930,
+"picked": 50,
+"pick_rate": 5.4,
+"pick_rate_by_act": [
+6.1,
+6.3,
+0.7
+],
+"win_rate": 31.3,
+"win_rate_ci": [
+25.6,
+37.6
+],
+"lift": -2.2,
+"lift_n": 227,
+"tier": "A"
+},
+{
+"id": "PROPHESIZE",
+"offered": 31,
+"picked": 7,
+"pick_rate": 22.6,
+"pick_rate_by_act": [
+25.0,
+18.8,
+33.3
+],
+"win_rate": 33.3,
+"win_rate_ci": [
+12.1,
+64.6
+],
+"lift": null,
+"lift_n": 9,
+"tier": "C"
+},
+{
+"id": "PROWESS",
+"offered": 855,
+"picked": 73,
+"pick_rate": 8.5,
+"pick_rate_by_act": [
+12.1,
+7.3,
+1.8
+],
+"win_rate": 25.7,
+"win_rate_ci": [
+21.5,
+30.3
+],
+"lift": -4.4,
+"lift_n": 374,
+"tier": "C"
+},
+{
+"id": "PULL_AGGRO",
+"offered": 91,
+"picked": 8,
+"pick_rate": 8.8,
+"pick_rate_by_act": [
+17.1,
+2.1,
+11.1
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+2.2,
+47.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "PURITY",
+"offered": 1079,
+"picked": 37,
+"pick_rate": 3.4,
+"pick_rate_by_act": [
+3.1,
+5.8,
+0.5
+],
+"win_rate": 26.6,
+"win_rate_ci": [
+19.7,
+34.8
+],
+"lift": -7.9,
+"lift_n": 128,
+"tier": "C"
+},
+{
+"id": "PUTREFY",
+"offered": 27,
+"picked": 14,
+"pick_rate": 51.9,
+"pick_rate_by_act": [
+37.5,
+52.9,
+100.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+7.0,
+45.2
+],
+"lift": null,
+"lift_n": 15,
+"tier": "D"
+},
+{
+"id": "PYRE",
+"offered": 43,
+"picked": 25,
+"pick_rate": 58.1,
+"pick_rate_by_act": [
+33.3,
+60.5,
+50.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+13.8,
+41.1
+],
+"lift": -9.4,
+"lift_n": 36,
+"tier": "C"
+},
+{
+"id": "QUASAR",
+"offered": 40,
+"picked": 1,
+"pick_rate": 2.5,
+"pick_rate_by_act": [
+0.0,
+0.0,
+14.3
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "RAGE",
+"offered": 42,
+"picked": 12,
+"pick_rate": 28.6,
+"pick_rate_by_act": [
+63.6,
+17.2,
+0.0
+],
+"win_rate": 57.1,
+"win_rate_ci": [
+32.6,
+78.6
+],
+"lift": null,
+"lift_n": 14,
+"tier": "B"
+},
+{
+"id": "RAINBOW",
+"offered": 3002,
+"picked": 366,
+"pick_rate": 12.2,
+"pick_rate_by_act": [
+14.9,
+8.3,
+9.2
+],
+"win_rate": 21.9,
+"win_rate_ci": [
+18.6,
+25.6
+],
+"lift": -6.6,
+"lift_n": 529,
+"tier": "C"
+},
+{
+"id": "RAMPAGE",
+"offered": 53,
+"picked": 13,
+"pick_rate": 24.5,
+"pick_rate_by_act": [
+55.0,
+6.5,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+21.5
+],
+"lift": null,
+"lift_n": 14,
+"tier": "D"
+},
+{
+"id": "REANIMATE",
+"offered": 23,
+"picked": 12,
+"pick_rate": 52.2,
+"pick_rate_by_act": [
+100.0,
+47.6,
+null
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+4.0,
+39.9
+],
+"lift": null,
+"lift_n": 14,
+"tier": "D"
+},
+{
+"id": "REAP",
+"offered": 82,
+"picked": 24,
+"pick_rate": 29.3,
+"pick_rate_by_act": [
+67.9,
+11.9,
+0.0
+],
+"win_rate": 4.2,
+"win_rate_ci": [
+0.7,
+20.2
+],
+"lift": -17.3,
+"lift_n": 24,
+"tier": "F"
+},
+{
+"id": "REAPER_FORM",
+"offered": 34,
+"picked": 8,
+"pick_rate": 23.5,
+"pick_rate_by_act": [
+50.0,
+22.6,
+0.0
+],
+"win_rate": 30.8,
+"win_rate_ci": [
+12.7,
+57.6
+],
+"lift": null,
+"lift_n": 13,
+"tier": "C"
+},
+{
+"id": "REAVE",
+"offered": 89,
+"picked": 17,
+"pick_rate": 19.1,
+"pick_rate_by_act": [
+33.3,
+12.1,
+0.0
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+5.0,
+34.6
+],
+"lift": -11.3,
+"lift_n": 21,
+"tier": "D"
+},
+{
+"id": "REBOOT",
+"offered": 3009,
+"picked": 857,
+"pick_rate": 28.5,
+"pick_rate_by_act": [
+27.7,
+29.8,
+29.1
+],
+"win_rate": 29.6,
+"win_rate_ci": [
+26.8,
+32.5
+],
+"lift": -1.6,
+"lift_n": 990,
+"tier": "A"
+},
+{
+"id": "REFINE_BLADE",
+"offered": 90,
+"picked": 19,
+"pick_rate": 21.1,
+"pick_rate_by_act": [
+33.3,
+15.0,
+0.0
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+11.0,
+42.1
+],
+"lift": 1.7,
+"lift_n": 26,
+"tier": "C"
+},
+{
+"id": "REFLECT",
+"offered": 31,
+"picked": 1,
+"pick_rate": 3.2,
+"pick_rate_by_act": [
+0.0,
+9.1,
+null
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "REFLEX",
+"offered": 52,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "REFRACT",
+"offered": 8577,
+"picked": 2112,
+"pick_rate": 24.6,
+"pick_rate_by_act": [
+37.8,
+14.2,
+4.6
+],
+"win_rate": 19.0,
+"win_rate_ci": [
+17.5,
+20.6
+],
+"lift": -4.9,
+"lift_n": 2528,
+"tier": "D"
+},
+{
+"id": "REND",
+"offered": 1499,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 58.3,
+"win_rate_ci": [
+32.0,
+80.7
+],
+"lift": null,
+"lift_n": 12,
+"tier": "B"
+},
+{
+"id": "RESTLESSNESS",
+"offered": 1060,
+"picked": 14,
+"pick_rate": 1.3,
+"pick_rate_by_act": [
+2.0,
+0.6,
+0.5
+],
+"win_rate": 18.8,
+"win_rate_ci": [
+11.1,
+30.0
+],
+"lift": -11.8,
+"lift_n": 64,
+"tier": "D"
+},
+{
+"id": "RICOCHET",
+"offered": 103,
+"picked": 1,
+"pick_rate": 1.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+12.5
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "RIGHT_HAND_HAND",
+"offered": 35,
+"picked": 2,
+"pick_rate": 5.7,
+"pick_rate_by_act": [
+0.0,
+11.8,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+65.8
+],
+"lift": null,
+"lift_n": 2,
+"tier": "D"
+},
+{
+"id": "ROCKET_PUNCH",
+"offered": 8438,
+"picked": 1827,
+"pick_rate": 21.7,
+"pick_rate_by_act": [
+22.3,
+21.3,
+20.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+28.1,
+32.0
+],
+"lift": 0.8,
+"lift_n": 2070,
+"tier": "A"
+},
+{
+"id": "ROLLING_BOULDER",
+"offered": 1405,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 32.5,
+"win_rate_ci": [
+23.4,
+43.2
+],
+"lift": -3.0,
+"lift_n": 83,
+"tier": "B"
+},
+{
+"id": "ROYALTIES",
+"offered": 37,
+"picked": 7,
+"pick_rate": 18.9,
+"pick_rate_by_act": [
+20.0,
+21.4,
+0.0
+],
+"win_rate": 36.4,
+"win_rate_ci": [
+15.2,
+64.6
+],
+"lift": null,
+"lift_n": 11,
+"tier": "C"
+},
+{
+"id": "SALVO",
+"offered": 1017,
+"picked": 37,
+"pick_rate": 3.6,
+"pick_rate_by_act": [
+5.5,
+2.2,
+0.6
+],
+"win_rate": 28.1,
+"win_rate_ci": [
+21.6,
+35.7
+],
+"lift": -1.8,
+"lift_n": 153,
+"tier": "B"
+},
+{
+"id": "SCAVENGE",
+"offered": 7236,
+"picked": 1551,
+"pick_rate": 21.4,
+"pick_rate_by_act": [
+20.5,
+22.4,
+23.2
+],
+"win_rate": 23.4,
+"win_rate_ci": [
+21.5,
+25.4
+],
+"lift": -7.7,
+"lift_n": 1794,
+"tier": "C"
+},
+{
+"id": "SCOURGE",
+"offered": 109,
+"picked": 6,
+"pick_rate": 5.5,
+"pick_rate_by_act": [
+6.8,
+5.9,
+0.0
+],
+"win_rate": 42.9,
+"win_rate_ci": [
+15.8,
+75.0
+],
+"lift": null,
+"lift_n": 7,
+"tier": "C"
+},
+{
+"id": "SCRAPE",
+"offered": 8640,
+"picked": 780,
+"pick_rate": 9.0,
+"pick_rate_by_act": [
+9.6,
+8.9,
+7.5
+],
+"win_rate": 22.5,
+"win_rate_ci": [
+20.1,
+25.2
+],
+"lift": -6.2,
+"lift_n": 1016,
+"tier": "C"
+},
+{
+"id": "SCRAWL",
+"offered": 1454,
+"picked": 2,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.1,
+0.0,
+0.3
+],
+"win_rate": 48.9,
+"win_rate_ci": [
+38.7,
+59.1
+],
+"lift": 8.6,
+"lift_n": 88,
+"tier": "S"
+},
+{
+"id": "SCULPTING_STRIKE",
+"offered": 81,
+"picked": 8,
+"pick_rate": 9.9,
+"pick_rate_by_act": [
+22.6,
+2.4,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+29.9
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "SEANCE",
+"offered": 30,
+"picked": 11,
+"pick_rate": 36.7,
+"pick_rate_by_act": [
+50.0,
+36.0,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+3.5,
+36.0
+],
+"lift": null,
+"lift_n": 16,
+"tier": "D"
+},
+{
+"id": "SECOND_WIND",
+"offered": 53,
+"picked": 17,
+"pick_rate": 32.1,
+"pick_rate_by_act": [
+29.4,
+32.4,
+50.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+14.5,
+51.9
+],
+"lift": -0.4,
+"lift_n": 20,
+"tier": "C"
+},
+{
+"id": "SECRET_TECHNIQUE",
+"offered": 1379,
+"picked": 1,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.0,
+0.2,
+0.0
+],
+"win_rate": 51.8,
+"win_rate_ci": [
+41.3,
+62.1
+],
+"lift": 6.5,
+"lift_n": 85,
+"tier": "S"
+},
+{
+"id": "SECRET_WEAPON",
+"offered": 1448,
+"picked": 2,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.0,
+0.4,
+0.0
+],
+"win_rate": 32.4,
+"win_rate_ci": [
+19.6,
+48.5
+],
+"lift": -8.9,
+"lift_n": 37,
+"tier": "B"
+},
+{
+"id": "SEEKER_STRIKE",
+"offered": 1135,
+"picked": 20,
+"pick_rate": 1.8,
+"pick_rate_by_act": [
+2.0,
+1.6,
+1.3
+],
+"win_rate": 22.8,
+"win_rate_ci": [
+14.9,
+33.2
+],
+"lift": -6.8,
+"lift_n": 79,
+"tier": "C"
+},
+{
+"id": "SEEKING_EDGE",
+"offered": 33,
+"picked": 3,
+"pick_rate": 9.1,
+"pick_rate_by_act": [
+0.0,
+7.7,
+33.3
+],
+"win_rate": 40.0,
+"win_rate_ci": [
+11.8,
+76.9
+],
+"lift": null,
+"lift_n": 5,
+"tier": "C"
+},
+{
+"id": "SENTRY_MODE",
+"offered": 31,
+"picked": 1,
+"pick_rate": 3.2,
+"pick_rate_by_act": [
+0.0,
+3.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "SERPENT_FORM",
+"offered": 43,
+"picked": 23,
+"pick_rate": 53.5,
+"pick_rate_by_act": [
+100.0,
+51.2,
+100.0
+],
+"win_rate": 32.3,
+"win_rate_ci": [
+18.6,
+49.9
+],
+"lift": -0.4,
+"lift_n": 31,
+"tier": "B"
+},
+{
+"id": "SETUP_STRIKE",
+"offered": 96,
+"picked": 9,
+"pick_rate": 9.4,
+"pick_rate_by_act": [
+25.8,
+1.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+29.9
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "SEVERANCE",
+"offered": 48,
+"picked": 14,
+"pick_rate": 29.2,
+"pick_rate_by_act": [
+40.0,
+26.9,
+14.3
+],
+"win_rate": 18.8,
+"win_rate_ci": [
+6.6,
+43.0
+],
+"lift": null,
+"lift_n": 16,
+"tier": "D"
+},
+{
+"id": "SHADOWMELD",
+"offered": 43,
+"picked": 15,
+"pick_rate": 34.9,
+"pick_rate_by_act": [
+100.0,
+31.7,
+null
+],
+"win_rate": 31.6,
+"win_rate_ci": [
+15.4,
+54.0
+],
+"lift": null,
+"lift_n": 19,
+"tier": "C"
+},
+{
+"id": "SHADOW_SHIELD",
+"offered": 7180,
+"picked": 2376,
+"pick_rate": 33.1,
+"pick_rate_by_act": [
+43.8,
+22.4,
+17.4
+],
+"win_rate": 24.3,
+"win_rate_ci": [
+22.6,
+26.0
+],
+"lift": -2.5,
+"lift_n": 2544,
+"tier": "C"
+},
+{
+"id": "SHADOW_STEP",
+"offered": 38,
+"picked": 4,
+"pick_rate": 10.5,
+"pick_rate_by_act": [
+0.0,
+11.1,
+null
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "SHARED_FATE",
+"offered": 22,
+"picked": 5,
+"pick_rate": 22.7,
+"pick_rate_by_act": [
+0.0,
+17.6,
+100.0
+],
+"win_rate": 18.2,
+"win_rate_ci": [
+5.1,
+47.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "SHATTER",
+"offered": 2820,
+"picked": 1016,
+"pick_rate": 36.0,
+"pick_rate_by_act": [
+40.4,
+32.1,
+17.9
+],
+"win_rate": 26.7,
+"win_rate_ci": [
+24.3,
+29.3
+],
+"lift": -2.9,
+"lift_n": 1209,
+"tier": "B"
+},
+{
+"id": "SHOCKWAVE",
+"offered": 956,
+"picked": 65,
+"pick_rate": 6.8,
+"pick_rate_by_act": [
+9.4,
+5.2,
+1.3
+],
+"win_rate": 32.9,
+"win_rate_ci": [
+27.7,
+38.5
+],
+"lift": 2.4,
+"lift_n": 283,
+"tier": "A"
+},
+{
+"id": "SHROUD",
+"offered": 40,
+"picked": 1,
+"pick_rate": 2.5,
+"pick_rate_by_act": [
+8.3,
+0.0,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "SHRUG_IT_OFF",
+"offered": 89,
+"picked": 53,
+"pick_rate": 59.6,
+"pick_rate_by_act": [
+51.4,
+68.1,
+42.9
+],
+"win_rate": 26.2,
+"win_rate_ci": [
+16.8,
+38.4
+],
+"lift": -6.1,
+"lift_n": 61,
+"tier": "C"
+},
+{
+"id": "SIDESTEP",
+"offered": 39,
+"picked": 14,
+"pick_rate": 35.9,
+"pick_rate_by_act": [
+27.3,
+40.0,
+33.3
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+11.2,
+46.9
+],
+"lift": -5.4,
+"lift_n": 20,
+"tier": "C"
+},
+{
+"id": "SIGNAL_BOOST",
+"offered": 2940,
+"picked": 911,
+"pick_rate": 31.0,
+"pick_rate_by_act": [
+27.6,
+35.8,
+37.6
+],
+"win_rate": 29.0,
+"win_rate_ci": [
+26.4,
+31.7
+],
+"lift": -3.7,
+"lift_n": 1097,
+"tier": "B"
+},
+{
+"id": "SKEWER",
+"offered": 35,
+"picked": 6,
+"pick_rate": 17.1,
+"pick_rate_by_act": [
+37.5,
+11.5,
+0.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+3.0,
+56.4
+],
+"lift": null,
+"lift_n": 6,
+"tier": "D"
+},
+{
+"id": "SKIM",
+"offered": 7179,
+"picked": 1752,
+"pick_rate": 24.4,
+"pick_rate_by_act": [
+17.4,
+31.4,
+36.3
+],
+"win_rate": 31.2,
+"win_rate_ci": [
+29.2,
+33.3
+],
+"lift": -2.7,
+"lift_n": 1985,
+"tier": "A"
+},
+{
+"id": "SLEIGHT_OF_FLESH",
+"offered": 28,
+"picked": 4,
+"pick_rate": 14.3,
+"pick_rate_by_act": [
+25.0,
+7.1,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+23.7,
+76.3
+],
+"lift": null,
+"lift_n": 10,
+"tier": "B"
+},
+{
+"id": "SLICE",
+"offered": 122,
+"picked": 12,
+"pick_rate": 9.8,
+"pick_rate_by_act": [
+32.4,
+1.3,
+0.0
+],
+"win_rate": 10.0,
+"win_rate_ci": [
+1.8,
+40.4
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "SMOKESTACK",
+"offered": 8841,
+"picked": 1338,
+"pick_rate": 15.1,
+"pick_rate_by_act": [
+16.3,
+14.7,
+12.3
+],
+"win_rate": 23.1,
+"win_rate_ci": [
+21.2,
+25.2
+],
+"lift": -5.4,
+"lift_n": 1730,
+"tier": "C"
+},
+{
+"id": "SNAKEBITE",
+"offered": 103,
+"picked": 7,
+"pick_rate": 6.8,
+"pick_rate_by_act": [
+12.9,
+4.5,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+7.1,
+59.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "C"
+},
+{
+"id": "SNAP",
+"offered": 90,
+"picked": 4,
+"pick_rate": 4.4,
+"pick_rate_by_act": [
+5.6,
+4.3,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+4.6,
+69.9
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "SOLAR_STRIKE",
+"offered": 86,
+"picked": 1,
+"pick_rate": 1.2,
+"pick_rate_by_act": [
+2.4,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "SOUL_STORM",
+"offered": 27,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "SOW",
+"offered": 92,
+"picked": 23,
+"pick_rate": 25.0,
+"pick_rate_by_act": [
+45.7,
+5.4,
+0.0
+],
+"win_rate": 13.0,
+"win_rate_ci": [
+4.5,
+32.1
+],
+"lift": -9.9,
+"lift_n": 23,
+"tier": "D"
+},
+{
+"id": "SPECTRUM_SHIFT",
+"offered": 23,
+"picked": 14,
+"pick_rate": 60.9,
+"pick_rate_by_act": [
+71.4,
+42.9,
+50.0
+],
+"win_rate": 23.8,
+"win_rate_ci": [
+10.6,
+45.1
+],
+"lift": -0.4,
+"lift_n": 21,
+"tier": "C"
+},
+{
+"id": "SPEEDSTER",
+"offered": 49,
+"picked": 10,
+"pick_rate": 20.4,
+"pick_rate_by_act": [
+57.1,
+3.2,
+25.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+27.8
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "SPINNER",
+"offered": 2906,
+"picked": 948,
+"pick_rate": 32.6,
+"pick_rate_by_act": [
+38.5,
+24.7,
+18.4
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+22.6,
+27.6
+],
+"lift": -2.8,
+"lift_n": 1151,
+"tier": "C"
+},
+{
+"id": "SPITE",
+"offered": 37,
+"picked": 1,
+"pick_rate": 2.7,
+"pick_rate_by_act": [
+14.3,
+0.0,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "SPLASH",
+"offered": 1282,
+"picked": 3,
+"pick_rate": 0.2,
+"pick_rate_by_act": [
+0.0,
+0.7,
+0.0
+],
+"win_rate": 24.7,
+"win_rate_ci": [
+19.5,
+30.7
+],
+"lift": -6.5,
+"lift_n": 227,
+"tier": "C"
+},
+{
+"id": "SPOILS_OF_BATTLE",
+"offered": 82,
+"picked": 9,
+"pick_rate": 11.0,
+"pick_rate_by_act": [
+16.7,
+6.1,
+7.7
+],
+"win_rate": 44.4,
+"win_rate_ci": [
+24.6,
+66.3
+],
+"lift": null,
+"lift_n": 18,
+"tier": "B"
+},
+{
+"id": "STAMPEDE",
+"offered": 54,
+"picked": 19,
+"pick_rate": 35.2,
+"pick_rate_by_act": [
+62.5,
+17.1,
+100.0
+],
+"win_rate": 20.0,
+"win_rate_ci": [
+8.9,
+39.1
+],
+"lift": -4.6,
+"lift_n": 25,
+"tier": "D"
+},
+{
+"id": "STOKE",
+"offered": 38,
+"picked": 13,
+"pick_rate": 34.2,
+"pick_rate_by_act": [
+100.0,
+31.4,
+0.0
+],
+"win_rate": 45.0,
+"win_rate_ci": [
+25.8,
+65.8
+],
+"lift": 10.0,
+"lift_n": 20,
+"tier": "B"
+},
+{
+"id": "STOMP",
+"offered": 46,
+"picked": 9,
+"pick_rate": 19.6,
+"pick_rate_by_act": [
+54.5,
+9.1,
+0.0
+],
+"win_rate": 22.2,
+"win_rate_ci": [
+6.3,
+54.7
+],
+"lift": null,
+"lift_n": 9,
+"tier": "C"
+},
+{
+"id": "STONE_ARMOR",
+"offered": 41,
+"picked": 15,
+"pick_rate": 36.6,
+"pick_rate_by_act": [
+45.5,
+33.3,
+null
+],
+"win_rate": 23.5,
+"win_rate_ci": [
+9.6,
+47.3
+],
+"lift": null,
+"lift_n": 17,
+"tier": "C"
+},
+{
+"id": "STORM",
+"offered": 9011,
+"picked": 1722,
+"pick_rate": 19.1,
+"pick_rate_by_act": [
+17.7,
+20.1,
+22.1
+],
+"win_rate": 24.9,
+"win_rate_ci": [
+23.0,
+26.8
+],
+"lift": -5.6,
+"lift_n": 2003,
+"tier": "C"
+},
+{
+"id": "STORM_OF_STEEL",
+"offered": 27,
+"picked": 1,
+"pick_rate": 3.7,
+"pick_rate_by_act": [
+0.0,
+3.8,
+null
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+56.1
+],
+"lift": null,
+"lift_n": 3,
+"tier": "D"
+},
+{
+"id": "STRANGLE",
+"offered": 49,
+"picked": 8,
+"pick_rate": 16.3,
+"pick_rate_by_act": [
+43.8,
+3.3,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+2.2,
+47.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "STRATAGEM",
+"offered": 1064,
+"picked": 45,
+"pick_rate": 4.2,
+"pick_rate_by_act": [
+3.4,
+6.8,
+1.4
+],
+"win_rate": 31.1,
+"win_rate_ci": [
+23.8,
+39.4
+],
+"lift": -2.8,
+"lift_n": 132,
+"tier": "B"
+},
+{
+"id": "SUBROUTINE",
+"offered": 8844,
+"picked": 2457,
+"pick_rate": 27.8,
+"pick_rate_by_act": [
+22.5,
+33.8,
+34.0
+],
+"win_rate": 27.2,
+"win_rate_ci": [
+25.6,
+28.8
+],
+"lift": -4.7,
+"lift_n": 2939,
+"tier": "B"
+},
+{
+"id": "SUCKER_PUNCH",
+"offered": 108,
+"picked": 19,
+"pick_rate": 17.6,
+"pick_rate_by_act": [
+29.0,
+12.9,
+14.3
+],
+"win_rate": 21.1,
+"win_rate_ci": [
+8.5,
+43.3
+],
+"lift": null,
+"lift_n": 19,
+"tier": "C"
+},
+{
+"id": "SUMMON_FORTH",
+"offered": 38,
+"picked": 3,
+"pick_rate": 7.9,
+"pick_rate_by_act": [
+14.3,
+0.0,
+20.0
+],
+"win_rate": 42.9,
+"win_rate_ci": [
+15.8,
+75.0
+],
+"lift": null,
+"lift_n": 7,
+"tier": "C"
+},
+{
+"id": "SUNDER",
+"offered": 8715,
+"picked": 1043,
+"pick_rate": 12.0,
+"pick_rate_by_act": [
+19.7,
+3.8,
+1.7
+],
+"win_rate": 16.5,
+"win_rate_ci": [
+14.6,
+18.6
+],
+"lift": -5.8,
+"lift_n": 1340,
+"tier": "D"
+},
+{
+"id": "SUPERCRITICAL",
+"offered": 2852,
+"picked": 1022,
+"pick_rate": 35.8,
+"pick_rate_by_act": [
+32.9,
+39.8,
+44.1
+],
+"win_rate": 32.3,
+"win_rate_ci": [
+29.7,
+35.0
+],
+"lift": 0.7,
+"lift_n": 1213,
+"tier": "A"
+},
+{
+"id": "SUPERMASSIVE",
+"offered": 35,
+"picked": 11,
+"pick_rate": 31.4,
+"pick_rate_by_act": [
+41.7,
+26.3,
+25.0
+],
+"win_rate": 40.0,
+"win_rate_ci": [
+19.8,
+64.3
+],
+"lift": null,
+"lift_n": 15,
+"tier": "B"
+},
+{
+"id": "SWEEPING_BEAM",
+"offered": 21169,
+"picked": 1707,
+"pick_rate": 8.1,
+"pick_rate_by_act": [
+12.8,
+2.5,
+1.3
+],
+"win_rate": 13.6,
+"win_rate_ci": [
+12.1,
+15.1
+],
+"lift": -7.4,
+"lift_n": 1998,
+"tier": "F"
+},
+{
+"id": "SWORD_BOOMERANG",
+"offered": 113,
+"picked": 10,
+"pick_rate": 8.8,
+"pick_rate_by_act": [
+12.7,
+6.0,
+0.0
+],
+"win_rate": 18.2,
+"win_rate_ci": [
+5.1,
+47.7
+],
+"lift": null,
+"lift_n": 11,
+"tier": "D"
+},
+{
+"id": "SWORD_SAGE",
+"offered": 34,
+"picked": 5,
+"pick_rate": 14.7,
+"pick_rate_by_act": [
+36.4,
+5.6,
+0.0
+],
+"win_rate": 75.0,
+"win_rate_ci": [
+30.1,
+95.4
+],
+"lift": null,
+"lift_n": 4,
+"tier": "C"
+},
+{
+"id": "SYNCHRONIZE",
+"offered": 7328,
+"picked": 1092,
+"pick_rate": 14.9,
+"pick_rate_by_act": [
+13.3,
+16.9,
+16.7
+],
+"win_rate": 24.0,
+"win_rate_ci": [
+21.7,
+26.4
+],
+"lift": -6.9,
+"lift_n": 1262,
+"tier": "C"
+},
+{
+"id": "SYNTHESIS",
+"offered": 8882,
+"picked": 713,
+"pick_rate": 8.0,
+"pick_rate_by_act": [
+9.1,
+7.1,
+6.2
+],
+"win_rate": 19.8,
+"win_rate_ci": [
+17.4,
+22.4
+],
+"lift": -7.3,
+"lift_n": 956,
+"tier": "D"
+},
+{
+"id": "TACTICIAN",
+"offered": 46,
+"picked": 1,
+"pick_rate": 2.2,
+"pick_rate_by_act": [
+7.1,
+0.0,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+65.8
+],
+"lift": null,
+"lift_n": 2,
+"tier": "D"
+},
+{
+"id": "TAUNT",
+"offered": 101,
+"picked": 38,
+"pick_rate": 37.6,
+"pick_rate_by_act": [
+40.6,
+37.7,
+25.0
+],
+"win_rate": 26.7,
+"win_rate_ci": [
+16.0,
+41.0
+],
+"lift": 1.2,
+"lift_n": 45,
+"tier": "C"
+},
+{
+"id": "TEAR_ASUNDER",
+"offered": 34,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+null
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+79.3
+],
+"lift": null,
+"lift_n": 1,
+"tier": "D"
+},
+{
+"id": "TEMPEST",
+"offered": 7499,
+"picked": 1278,
+"pick_rate": 17.0,
+"pick_rate_by_act": [
+21.0,
+13.2,
+10.7
+],
+"win_rate": 18.4,
+"win_rate_ci": [
+16.5,
+20.4
+],
+"lift": -8.4,
+"lift_n": 1482,
+"tier": "D"
+},
+{
+"id": "TERRAFORMING",
+"offered": 30,
+"picked": 11,
+"pick_rate": 36.7,
+"pick_rate_by_act": [
+60.0,
+15.4,
+0.0
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+4.0,
+39.9
+],
+"lift": null,
+"lift_n": 14,
+"tier": "D"
+},
+{
+"id": "TESLA_COIL",
+"offered": 8693,
+"picked": 1335,
+"pick_rate": 15.4,
+"pick_rate_by_act": [
+21.2,
+9.8,
+6.1
+],
+"win_rate": 16.4,
+"win_rate_ci": [
+14.6,
+18.3
+],
+"lift": -8.4,
+"lift_n": 1607,
+"tier": "D"
+},
+{
+"id": "THE_BOMB",
+"offered": 1087,
+"picked": 27,
+"pick_rate": 2.5,
+"pick_rate_by_act": [
+3.8,
+1.5,
+0.0
+],
+"win_rate": 14.5,
+"win_rate_ci": [
+9.2,
+22.3
+],
+"lift": -8.1,
+"lift_n": 110,
+"tier": "D"
+},
+{
+"id": "THE_GAMBIT",
+"offered": 1409,
+"picked": 1,
+"pick_rate": 0.1,
+"pick_rate_by_act": [
+0.0,
+0.2,
+0.0
+],
+"win_rate": 25.0,
+"win_rate_ci": [
+12.0,
+44.9
+],
+"lift": -19.0,
+"lift_n": 24,
+"tier": "C"
+},
+{
+"id": "THE_HUNT",
+"offered": 45,
+"picked": 12,
+"pick_rate": 26.7,
+"pick_rate_by_act": [
+100.0,
+25.0,
+null
+],
+"win_rate": 37.5,
+"win_rate_ci": [
+18.5,
+61.4
+],
+"lift": null,
+"lift_n": 16,
+"tier": "C"
+},
+{
+"id": "THE_SCYTHE",
+"offered": 33,
+"picked": 5,
+"pick_rate": 15.2,
+"pick_rate_by_act": [
+0.0,
+16.7,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+27.8
+],
+"lift": null,
+"lift_n": 10,
+"tier": "D"
+},
+{
+"id": "THINKING_AHEAD",
+"offered": 1057,
+"picked": 29,
+"pick_rate": 2.7,
+"pick_rate_by_act": [
+2.6,
+4.0,
+0.6
+],
+"win_rate": 28.3,
+"win_rate_ci": [
+21.2,
+36.7
+],
+"lift": -5.2,
+"lift_n": 127,
+"tier": "B"
+},
+{
+"id": "THRASH",
+"offered": 33,
+"picked": 6,
+"pick_rate": 18.2,
+"pick_rate_by_act": [
+20.0,
+18.5,
+0.0
+],
+"win_rate": 11.1,
+"win_rate_ci": [
+2.0,
+43.5
+],
+"lift": null,
+"lift_n": 9,
+"tier": "D"
+},
+{
+"id": "THRUMMING_HATCHET",
+"offered": 1091,
+"picked": 20,
+"pick_rate": 1.8,
+"pick_rate_by_act": [
+3.7,
+0.0,
+0.0
+],
+"win_rate": 12.9,
+"win_rate_ci": [
+7.4,
+21.7
+],
+"lift": -10.8,
+"lift_n": 85,
+"tier": "F"
+},
+{
+"id": "THUNDER",
+"offered": 8653,
+"picked": 2331,
+"pick_rate": 26.9,
+"pick_rate_by_act": [
+31.7,
+23.2,
+18.2
+],
+"win_rate": 21.9,
+"win_rate_ci": [
+20.4,
+23.6
+],
+"lift": -5.6,
+"lift_n": 2661,
+"tier": "C"
+},
+{
+"id": "THUNDERCLAP",
+"offered": 86,
+"picked": 6,
+"pick_rate": 7.0,
+"pick_rate_by_act": [
+15.2,
+2.1,
+0.0
+],
+"win_rate": 14.3,
+"win_rate_ci": [
+2.6,
+51.3
+],
+"lift": null,
+"lift_n": 7,
+"tier": "D"
+},
+{
+"id": "TIMES_UP",
+"offered": 28,
+"picked": 2,
+"pick_rate": 7.1,
+"pick_rate_by_act": [
+25.0,
+4.2,
+null
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "TOOLS_OF_THE_TRADE",
+"offered": 44,
+"picked": 25,
+"pick_rate": 56.8,
+"pick_rate_by_act": [
+0.0,
+58.1,
+null
+],
+"win_rate": 23.5,
+"win_rate_ci": [
+12.4,
+40.0
+],
+"lift": -10.3,
+"lift_n": 34,
+"tier": "C"
+},
+{
+"id": "TRACKING",
+"offered": 49,
+"picked": 5,
+"pick_rate": 10.2,
+"pick_rate_by_act": [
+0.0,
+9.1,
+100.0
+],
+"win_rate": 55.6,
+"win_rate_ci": [
+26.7,
+81.1
+],
+"lift": null,
+"lift_n": 9,
+"tier": "B"
+},
+{
+"id": "TRANSFIGURE",
+"offered": 33,
+"picked": 21,
+"pick_rate": 63.6,
+"pick_rate_by_act": [
+50.0,
+63.0,
+75.0
+],
+"win_rate": 29.6,
+"win_rate_ci": [
+15.9,
+48.5
+],
+"lift": -10.9,
+"lift_n": 27,
+"tier": "C"
+},
+{
+"id": "TRASH_TO_TREASURE",
+"offered": 2865,
+"picked": 1129,
+"pick_rate": 39.4,
+"pick_rate_by_act": [
+40.5,
+37.7,
+38.1
+],
+"win_rate": 31.7,
+"win_rate_ci": [
+29.2,
+34.3
+],
+"lift": 0.8,
+"lift_n": 1249,
+"tier": "A"
+},
+{
+"id": "TREMBLE",
+"offered": 103,
+"picked": 23,
+"pick_rate": 22.3,
+"pick_rate_by_act": [
+26.1,
+22.4,
+15.4
+],
+"win_rate": 15.4,
+"win_rate_ci": [
+6.2,
+33.5
+],
+"lift": -14.1,
+"lift_n": 26,
+"tier": "D"
+},
+{
+"id": "TRUE_GRIT",
+"offered": 104,
+"picked": 31,
+"pick_rate": 29.8,
+"pick_rate_by_act": [
+31.7,
+30.5,
+0.0
+],
+"win_rate": 17.1,
+"win_rate_ci": [
+8.1,
+32.7
+],
+"lift": -11.7,
+"lift_n": 35,
+"tier": "D"
+},
+{
+"id": "TURBO",
+"offered": 20954,
+"picked": 6171,
+"pick_rate": 29.5,
+"pick_rate_by_act": [
+27.6,
+33.0,
+29.2
+],
+"win_rate": 23.6,
+"win_rate_ci": [
+22.6,
+24.6
+],
+"lift": -4.6,
+"lift_n": 6762,
+"tier": "C"
+},
+{
+"id": "TWIN_STRIKE",
+"offered": 112,
+"picked": 2,
+"pick_rate": 1.8,
+"pick_rate_by_act": [
+2.9,
+1.5,
+0.0
+],
+"win_rate": 0.0,
+"win_rate_ci": [
+0.0,
+65.8
+],
+"lift": null,
+"lift_n": 2,
+"tier": "D"
+},
+{
+"id": "TYRANNY",
+"offered": 37,
+"picked": 12,
+"pick_rate": 32.4,
+"pick_rate_by_act": [
+0.0,
+41.4,
+0.0
+],
+"win_rate": 36.8,
+"win_rate_ci": [
+19.1,
+59.0
+],
+"lift": null,
+"lift_n": 19,
+"tier": "B"
+},
+{
+"id": "ULTIMATE_DEFEND",
+"offered": 1043,
+"picked": 56,
+"pick_rate": 5.4,
+"pick_rate_by_act": [
+6.8,
+6.5,
+0.0
+],
+"win_rate": 31.5,
+"win_rate_ci": [
+27.3,
+36.0
+],
+"lift": 0.2,
+"lift_n": 432,
+"tier": "A"
+},
+{
+"id": "ULTIMATE_STRIKE",
+"offered": 1016,
+"picked": 11,
+"pick_rate": 1.1,
+"pick_rate_by_act": [
+1.6,
+0.9,
+0.0
+],
+"win_rate": 22.4,
+"win_rate_ci": [
+19.0,
+26.3
+],
+"lift": -9.1,
+"lift_n": 504,
+"tier": "C"
+},
+{
+"id": "UNDEATH",
+"offered": 22,
+"picked": 8,
+"pick_rate": 36.4,
+"pick_rate_by_act": [
+0.0,
+42.1,
+0.0
+],
+"win_rate": 18.8,
+"win_rate_ci": [
+6.6,
+43.0
+],
+"lift": null,
+"lift_n": 16,
+"tier": "D"
+},
+{
+"id": "UNMOVABLE",
+"offered": 41,
+"picked": 29,
+"pick_rate": 70.7,
+"pick_rate_by_act": [
+100.0,
+66.7,
+100.0
+],
+"win_rate": 39.5,
+"win_rate_ci": [
+25.6,
+55.3
+],
+"lift": 5.7,
+"lift_n": 38,
+"tier": "B"
+},
+{
+"id": "UNRELENTING",
+"offered": 55,
+"picked": 19,
+"pick_rate": 34.5,
+"pick_rate_by_act": [
+69.2,
+24.3,
+20.0
+],
+"win_rate": 17.4,
+"win_rate_ci": [
+7.0,
+37.1
+],
+"lift": -11.9,
+"lift_n": 23,
+"tier": "D"
+},
+{
+"id": "UNTOUCHABLE",
+"offered": 104,
+"picked": 0,
+"pick_rate": 0.0,
+"pick_rate_by_act": [
+0.0,
+0.0,
+0.0
+],
+"win_rate": 50.0,
+"win_rate_ci": [
+9.5,
+90.5
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "UPPERCUT",
+"offered": 56,
+"picked": 26,
+"pick_rate": 46.4,
+"pick_rate_by_act": [
+66.7,
+35.3,
+50.0
+],
+"win_rate": 20.7,
+"win_rate_ci": [
+9.8,
+38.4
+],
+"lift": -9.9,
+"lift_n": 29,
+"tier": "C"
+},
+{
+"id": "UPROAR",
+"offered": 20999,
+"picked": 2490,
+"pick_rate": 11.9,
+"pick_rate_by_act": [
+14.8,
+8.3,
+7.9
+],
+"win_rate": 16.3,
+"win_rate_ci": [
+14.7,
+17.9
+],
+"lift": -7.0,
+"lift_n": 2084,
+"tier": "D"
+},
+{
+"id": "UP_MY_SLEEVE",
+"offered": 43,
+"picked": 8,
+"pick_rate": 18.6,
+"pick_rate_by_act": [
+37.5,
+7.7,
+0.0
+],
+"win_rate": 12.5,
+"win_rate_ci": [
+2.2,
+47.1
+],
+"lift": null,
+"lift_n": 8,
+"tier": "D"
+},
+{
+"id": "VEILPIERCER",
+"offered": 40,
+"picked": 7,
+"pick_rate": 17.5,
+"pick_rate_by_act": [
+60.0,
+10.0,
+20.0
+],
+"win_rate": 30.0,
+"win_rate_ci": [
+10.8,
+60.3
+],
+"lift": null,
+"lift_n": 10,
+"tier": "C"
+},
+{
+"id": "VICIOUS",
+"offered": 45,
+"picked": 1,
+"pick_rate": 2.2,
+"pick_rate_by_act": [
+7.7,
+0.0,
+0.0
+],
+"win_rate": 100.0,
+"win_rate_ci": [
+34.2,
+100.0
+],
+"lift": null,
+"lift_n": 2,
+"tier": "C"
+},
+{
+"id": "VOID_FORM",
+"offered": 33,
+"picked": 20,
+"pick_rate": 60.6,
+"pick_rate_by_act": [
+57.1,
+68.8,
+50.0
+],
+"win_rate": 37.5,
+"win_rate_ci": [
+21.2,
+57.3
+],
+"lift": 2.7,
+"lift_n": 24,
+"tier": "B"
+},
+{
+"id": "VOLLEY",
+"offered": 1076,
+"picked": 21,
+"pick_rate": 2.0,
+"pick_rate_by_act": [
+3.1,
+0.9,
+0.0
+],
+"win_rate": 18.9,
+"win_rate_ci": [
+12.6,
+27.4
+],
+"lift": -5.7,
+"lift_n": 106,
+"tier": "D"
+},
+{
+"id": "VOLTAIC",
+"offered": 3025,
+"picked": 720,
+"pick_rate": 23.8,
+"pick_rate_by_act": [
+25.4,
+21.9,
+20.1
+],
+"win_rate": 24.4,
+"win_rate_ci": [
+21.7,
+27.2
+],
+"lift": -5.2,
+"lift_n": 939,
+"tier": "C"
+},
+{
+"id": "WELL_LAID_PLANS",
+"offered": 53,
+"picked": 30,
+"pick_rate": 56.6,
+"pick_rate_by_act": [
+75.0,
+56.2,
+0.0
+],
+"win_rate": 36.1,
+"win_rate_ci": [
+22.5,
+52.4
+],
+"lift": 0.7,
+"lift_n": 36,
+"tier": "B"
+},
+{
+"id": "WHIRLWIND",
+"offered": 50,
+"picked": 12,
+"pick_rate": 24.0,
+"pick_rate_by_act": [
+61.5,
+11.8,
+0.0
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+4.7,
+44.8
+],
+"lift": null,
+"lift_n": 12,
+"tier": "D"
+},
+{
+"id": "WHITE_NOISE",
+"offered": 7165,
+"picked": 2676,
+"pick_rate": 37.3,
+"pick_rate_by_act": [
+39.2,
+34.8,
+35.7
+],
+"win_rate": 21.9,
+"win_rate_ci": [
+20.4,
+23.5
+],
+"lift": -6.5,
+"lift_n": 2808,
+"tier": "C"
+},
+{
+"id": "WISP",
+"offered": 77,
+"picked": 21,
+"pick_rate": 27.3,
+"pick_rate_by_act": [
+34.3,
+23.5,
+12.5
+],
+"win_rate": 16.7,
+"win_rate_ci": [
+6.7,
+35.9
+],
+"lift": -9.2,
+"lift_n": 24,
+"tier": "D"
+},
+{
+"id": "WROUGHT_IN_WAR",
+"offered": 79,
+"picked": 15,
+"pick_rate": 19.0,
+"pick_rate_by_act": [
+40.0,
+3.1,
+0.0
+],
+"win_rate": 27.8,
+"win_rate_ci": [
+12.5,
+50.9
+],
+"lift": null,
+"lift_n": 18,
+"tier": "C"
+}
+]
+}
