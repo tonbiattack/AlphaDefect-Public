@@ -42,6 +42,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | — | [Mentor mode settings: character, ascension, seed (Japanese)](ja/mentor.md) | `local mentor` options, how run_config is answered, what is verified |
 | — | [Evaluating deck strength with the model (Japanese)](ja/deck-eval.md) | feasibility study for #6: value head vs rollouts, what is unverified |
 | — | [Fidelity audit of the real-game link (Japanese)](ja/fidelity-audit.md) | which decisions the model makes, which rules override it, and the fidelity counters |
+| — | [Candidates for upstream contribution (Japanese)](ja/upstream-contributions.md) | what could go back to the forks, with evidence and drafts (not posted) |
 | — | [Third-party code and data (Japanese)](ja/third-party.md) | what is used (spire-mentor, BaseLib), what is never committed (game assets), attribution rules |
 | — | [Measuring runs in the real game (Japanese)](ja/measure.md) | batch runs, recorded fields, caveats |
 | — | [In-game control panel (Japanese)](ja/panel.md) | speed, pause, single-step, manual mode, confirm mode, shortcuts |
