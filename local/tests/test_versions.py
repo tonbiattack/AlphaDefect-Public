@@ -43,6 +43,20 @@ class LineTest(unittest.TestCase):
     def test_supported_lines(self):
         self.assertEqual(line_for("v0.111.0").tree, "game-v0.111.0")
         self.assertEqual(line_for("v0.113.1").tree, "")
+        self.assertEqual(line_for("v0.114.0").tree, "game-v0.114.0")
+
+    def test_v0114_is_its_own_line_with_no_search(self):
+        line = line_for("v0.114.0")
+        self.assertEqual(line.catalog, "v0.114.0")
+        self.assertFalse(line.search)          # sts2-sim が v0.114.0 未対応
+        self.assertEqual(set(line.characters),
+                         {"FOOL", "IRONCLAD", "NECROBINDER", "DEFECT", "SILENT", "REGENT"})
+        self.assertFalse(is_patch_alias("v0.114.0"))
+
+    def test_v0114_characters_are_untested(self):
+        line = line_for("v0.114.0")
+        for c in line.characters:
+            self.assertEqual(character_status(line, c), "untested")
 
     def test_patch_alias_uses_base_tree(self):
         line = line_for("v0.111.1")
