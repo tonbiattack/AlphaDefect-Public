@@ -412,7 +412,7 @@ internal static class MentorClient
                 "card_select" => BuildCardSelectDecision(me, root),
                 "treasure" => BuildTreasureDecisionFromRequest(root, run, me),
                 "card_bundle" => BuildCardBundleDecision(root),
-                "reward_screen" => LiveRewards.Active ? LiveRewards.Build(me) : null,
+                "reward_screen" => RewardScreenDecision(me),
                 _ => null,
             };
             if (d == null || d.Choices.Count == 0)
@@ -457,6 +457,22 @@ internal static class MentorClient
     }
 
     /// <summary>休息所の選択肢を読むだけ（押さない）。</summary>
+    static int _rewardMissLogged;
+
+    /// <summary>報酬画面の判断（こちらの捕捉が無いときは理由を残す。#68）。</summary>
+    static Decision? RewardScreenDecision(Player me)
+    {
+        if (LiveRewards.Active)
+        {
+            var d = LiveRewards.Build(me);
+            if (d != null && d.Choices.Count > 0) return d;
+            if (_rewardMissLogged++ < 3) Bridge.LogEvent("[mentor] reward_screen: capture active but no candidates");
+            return null;
+        }
+        if (_rewardMissLogged++ < 3) Bridge.LogEvent("[mentor] reward_screen: no live capture (patch not active)");
+        return null;
+    }
+
     static Decision? BuildRestDecision()
     {
         try
@@ -1143,12 +1159,12 @@ internal static class MentorClient
                 var me = run?.Players[0];
                 if (me != null)
                 {
+                    // スロットは「空きを含む」並びで数える（me.Potions は詰められているので index がずれる）
                     int slot = -1;
-                    int slotCount = 0;
-                    foreach (var p in me.Potions)
+                    var slots = me.PotionSlots;
+                    for (int i = 0; i < slots.Count; i++)
                     {
-                        if (ReferenceEquals(p, potion)) { slot = slotCount; break; }
-                        slotCount++;
+                        if (ReferenceEquals(slots[i], potion)) { slot = i; break; }
                     }
                     if (slot >= 0)
                     {
