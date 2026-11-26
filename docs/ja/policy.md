@@ -56,9 +56,13 @@ UI に項目があることと、その設定が実際に効くことは別な�
 
 ## 3. ランチャー設定の一覧（モード別）
 
+キャラの一覧は固定ではなく、起動時に `local mentor --choices`（JSON: 版・キャラ・状態）を呼んで作ります。
+この環境（v0.111.1）では `auto, DEFECT, REGENT, SILENT, select`。v0.113.1 では 6 キャラが出て、
+未検証のものには「（未検証）」が付き、選ぶと `--allow-untested` が付きます。
+
 | 設定 | 通常プレイ | AI 観戦（独自 MOD） | Mentor 観戦 | 備考 |
 |---|---|---|---|---|
-| キャラ | 無視 | `--character` として渡る | `mentor.json` の `character` になる | `auto` は**その版で動くキャラの先頭**（ランダムではない） |
+| キャラ | 無視 | `--character` として渡る | `mentor.json` の `character` になる | 一覧は**ゲーム版に合わせて動的に**作る（`local mentor --choices`）。`auto` は**その版で動くキャラの先頭**（ランダムではない） |
 | アセンション | 無視 | **渡らない**（0 固定） | `mentor.json` の `ascension` | ゲーム側プロファイルが未解放だと A0 になる |
 | シード（乱数） | 無視 | `--seed` | `mentor.json` の `seed`（`null` で乱数） | 実際の seed はゲーム側が決める |
 | 速度 | 無視 | `--speed`（TimeScale） | **GUI からは渡らない**（起動後に `launch --set-speed` で変更可） | Mentor では速度欄は効かない |
