@@ -10,6 +10,11 @@
     <ゲーム>/mods/AlphaDefectAutopilot/ に置くと、ゲームが起動時に読み込む
     （読み込みの仕組みは MegaCrit.Sts2.Core.Modding.ModManager）。
   -->
+  <PropertyGroup Condition="'$(Sts2V114)' == 'true'">
+    <!-- v0.114.0 では、いくつかの API の形が変わっている（#73） -->
+    <DefineConstants>$(DefineConstants);STS2_V114</DefineConstants>
+  </PropertyGroup>
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>

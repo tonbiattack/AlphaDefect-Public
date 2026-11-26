@@ -79,6 +79,12 @@ internal static class Launcher
             var actRng = new Rng(StringHelper.GetDeterministicHashCode(seed), "act_selection");
             var acts = ActModel.GetRandomList(actRng, UnlockState.all, isMultiplayer: false).ToList();
 
+#if STS2_V114
+            // v0.114.0 では StartNewSingleplayerRun の形が変わり、レガシーの自前開始は保守しない（#71/#73）。
+            // Mentor 連携では spire-mentor がランを開始するため、ここは通らない。
+            Bridge.LogLine("legacy auto-start is not available on v0.114.0; start the run through spire-mentor");
+            return;
+#else
             Bridge.LogLine($"starting run {characterId} A{ascension} seed={seed} encounter={encounter}");
             OutOfCombat.ResetForNewRun();
             LiveCardSelect.Reset();
@@ -95,6 +101,7 @@ internal static class Launcher
             var enc = PickEncounter(state, seed, encounter);
             Bridge.LogLine($"entering combat: {enc.Id.Entry} ({enc.RoomType})");
             await RunManager.Instance.EnterRoomDebug(enc.RoomType, model: enc.ToMutable(), showTransition: false);
+#endif
         }
         catch (Exception e)
         {
