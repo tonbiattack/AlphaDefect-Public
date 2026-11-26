@@ -164,6 +164,11 @@ class Autopilot:
         out.append(P.command("step"))
         return out
 
+    def command_handover(self) -> list[dict]:
+        """AI を降りて、そのまま人が遊べる状態にする（spire-mentor の autopilot も止める）。"""
+        self.log("handover", {})
+        return [P.command("handover")]
+
     def set_mode(self, mode: str) -> list[dict]:
         """auto / manual を切り替える（手動では AI が操作しない）。"""
         mode = mode.lower()

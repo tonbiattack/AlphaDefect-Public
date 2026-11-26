@@ -125,6 +125,7 @@ internal static class ControlPanel
         controls.AddChild(_pause);
         controls.AddChild(_mode);
         controls.AddChild(MakeButton("1手", () => PanelState.Apply("step")));
+        controls.AddChild(MakeButton("手動で遊ぶ", () => PanelState.Apply("handover")));
         controls.AddChild(MakeButton("確認", () => PanelState.Apply("confirm")));
         controls.AddChild(MakeButton("戦闘終了で停止", () => PanelState.Apply("stopcombat")));
         root.AddChild(controls);

@@ -115,7 +115,9 @@ class Launcher(tk.Tk):
         self.b_pause = ttk.Button(btn, text="一時停止/再開", command=lambda: self.control("pause-toggle"))
         self.b_step = ttk.Button(btn, text="1 手", command=lambda: self.control("step"))
         self.b_manual = ttk.Button(btn, text="手動（推奨のみ）", command=lambda: self.control("manual"))
-        for b in (self.b_start, self.b_stop, self.b_status, self.b_pause, self.b_step, self.b_manual):
+        self.b_handover = ttk.Button(btn, text="手動で遊ぶ", command=self.handover)
+        for b in (self.b_start, self.b_stop, self.b_status, self.b_pause, self.b_step,
+                  self.b_manual, self.b_handover):
             b.pack(side="left", padx=4)
 
         ttk.Checkbutton(self, text="MOD を外して起動（元のセーブで遊ぶ）",
@@ -283,6 +285,20 @@ class Launcher(tk.Tk):
                 self.queue.put((r.stdout or "").strip() or "(状態を取得できません)")
             except Exception as exc:  # noqa: BLE001
                 self.queue.put(f"状態の取得に失敗: {exc.__class__.__name__}")
+        threading.Thread(target=work, daemon=True).start()
+
+    def handover(self) -> None:
+        """AI を降りて、そのまま自分で操作する（spire-mentor の autopilot も止める）。"""
+        self.log("手動に切り替えます（AI を停止して人に渡します）")
+
+        def work() -> None:
+            try:
+                r = wsl("./play.sh launch --handover", timeout=60)
+                for line in (r.stdout or "").splitlines():
+                    self.queue.put(line)
+                self.queue.put("終わりました。ゲームの画面をそのまま操作できます。")
+            except Exception as exc:  # noqa: BLE001
+                self.queue.put(f"切り替えに失敗: {exc.__class__.__name__}")
         threading.Thread(target=work, daemon=True).start()
 
     def control(self, what: str) -> None:
