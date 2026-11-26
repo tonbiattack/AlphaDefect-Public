@@ -72,6 +72,7 @@ class Launcher(tk.Tk):
         self.speed = tk.DoubleVar(value=1.0)
         self.pacing = tk.StringVar(value="1500")
         self.runs = tk.IntVar(value=1)
+        self.no_mods = tk.BooleanVar(value=False)
 
         self._build()
         self._load_characters()
@@ -116,6 +117,9 @@ class Launcher(tk.Tk):
         self.b_manual = ttk.Button(btn, text="手動（推奨のみ）", command=lambda: self.control("manual"))
         for b in (self.b_start, self.b_stop, self.b_status, self.b_pause, self.b_step, self.b_manual):
             b.pack(side="left", padx=4)
+
+        ttk.Checkbutton(self, text="MOD を外して起動（元のセーブで遊ぶ）",
+                        variable=self.no_mods).pack(anchor="w", padx=14)
 
         out = ttk.LabelFrame(self, text="ログ")
         out.pack(fill="both", expand=True, **pad)
@@ -230,10 +234,23 @@ class Launcher(tk.Tk):
                 r = wsl("./play.sh launch --safe-mode", timeout=90)
                 for line in (r.stdout or "").splitlines():
                     self.queue.put(line)
+                if self.no_mods.get():
+                    r = wsl("./play.sh mod off", timeout=120)
+                    for line in (r.stdout or "").splitlines():
+                        self.queue.put(line)
+                    self.queue.put("MOD を外しました（元のプロファイルで起動します）")
+                else:
+                    r = wsl("./play.sh mod on", timeout=120)   # 前回外していたら戻す
+                    for line in (r.stdout or "").splitlines():
+                        self.queue.put(line)
                 subprocess.run(["cmd.exe", "/c", "start", "", "steam://rungameid/2868840"],
                                capture_output=True, text=True)
                 self.queue.put("__done__")
                 return
+            r = wsl("./play.sh mod on", timeout=120)   # MOD を外していたら戻す
+            for line in (r.stdout or "").splitlines():
+                if "戻しました" in line:
+                    self.queue.put(line)
             if mode == "ai":
                 cmd = f"./play.sh launch ai --character '{char}' --speed {self.speed.get()} --pacing {self.pacing.get()}"
                 if seed:
