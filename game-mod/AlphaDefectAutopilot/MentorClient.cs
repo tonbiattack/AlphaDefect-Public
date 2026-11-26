@@ -382,6 +382,12 @@ internal static class MentorClient
             var run = RunManager.Instance.DebugOnlyGetState();
             if (run == null || run.Players.Count == 0) return;
             var me = run.Players[0];
+            if (!CheckCharacter(me))
+            {
+                // 要求と違うキャラで始まった（spire-mentor が黙って別キャラを選ぶことがある）。
+                // 観測もモデルも変わるので、そのまま続けない。
+                return;
+            }
             if (kind == "rest_site")
             {
                 // 診断: 休憩所の候補と HP を残す（休憩を選ばない理由の切り分け）
@@ -754,6 +760,7 @@ internal static class MentorClient
         string seedText = cfg.Seed is int si ? si.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null";
         string reply = "{\"action\":\"start_run\",\"character\":\"" + character + "\",\"ascension\":" + ascension
                        + ",\"seed\":" + (cfg.Seed is int ? seedText : "null") + "}";
+        _charChecked = false;
         RunCharacter = character;
         RunAscension = ascension;
         RunSeed = cfg.Seed;
@@ -953,6 +960,21 @@ internal static class MentorClient
         {
             return null;
         }
+    }
+
+    static bool _charChecked;
+
+    /// <summary>要求したキャラと実際に始まったキャラが一致するか。違えば安全停止する（#72）。</summary>
+    static bool CheckCharacter(Player me)
+    {
+        if (_charChecked || RunCharacter.Length == 0) return true;
+        _charChecked = true;
+        string actual = me.Character?.Id?.Entry ?? "";
+        if (actual.Length == 0 || string.Equals(actual, RunCharacter, StringComparison.OrdinalIgnoreCase))
+            return true;
+        Bridge.LogEvent($"[mentor] character mismatch: requested {RunCharacter}, the game started {actual}; stopping");
+        PanelState.AutoStop($"mentor: started character {actual} differs from the request {RunCharacter}");
+        return false;
     }
 
     static int ReadInt(JsonElement root, string name)
