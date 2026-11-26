@@ -594,6 +594,45 @@ def stop_server(log=print) -> int:
     return 0
 
 
+def close_game(log=print, timeout: float = 20.0) -> int:
+    """ゲームを安全に閉じる（AI を止めてから、まず正常終了 → だめなら強制）。"""
+    import subprocess as _sp
+
+    if not game_running():
+        log("ゲームは動いていません。")
+        return 0
+    # まず MOD 経由で正常終了（セーブしてから終わる）。MOD が無い/未接続なら次の手段へ。
+    if control("quit-game") is not None:
+        log("MOD に終了を要求しました（保存して閉じます）")
+        t0 = time.time()
+        while time.time() - t0 < 20:
+            if not game_running():
+                log("ゲームを閉じました。")
+                return 0
+            time.sleep(1.0)
+    # MOD が居なければ（または応答しなければ）AI を止めてからウィンドウを閉じる
+    try:
+        stop_server(log=lambda *_a, **_k: None)
+    except (OSError, RuntimeError) as e:      # 止められなくても閉じる処理は続ける
+        log(f"推論サーバの停止に失敗（続行します）: {e}")
+    log("ウィンドウを閉じる要求を送ります")
+    _sp.run(["cmd.exe", "/c", "taskkill /IM SlayTheSpire2.exe"], capture_output=True, check=False)
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        if not game_running():
+            log("ゲームを閉じました。")
+            return 0
+        time.sleep(1.0)
+    log(f"{timeout:.0f} 秒たっても閉じないので、強制終了します。")
+    _sp.run(["cmd.exe", "/c", "taskkill /IM SlayTheSpire2.exe /F"], capture_output=True, check=False)
+    time.sleep(2.0)
+    if game_running():
+        log("ゲームを閉じられませんでした。手動で終了してください。")
+        return 1
+    log("ゲームを強制終了しました。")
+    return 0
+
+
 def status_text(d: Detection | None = None) -> str:
     d = d or detect()
     st = control_status()
