@@ -120,6 +120,14 @@ internal static class MentorClient
     public static void Tick()
     {
         if (!Enabled) return;
+        if (PanelState.HandoverPending)
+        {
+            // 保留中の返答を 1 つ送ってから autopilot を止める（相手が待ち続けて固まらないように）
+            if (_readyReply != null) SendReply(_readyReply);
+            _readyReply = null;
+            PanelState.CompleteHandover();
+            Bridge.LogEvent("[mentor] handed the game over to the player");
+        }
         Watchdog(Environment.TickCount64);
         PumpReady();
         // 推論の返答待ちの間は、次のメッセージを処理しない（pending を上書きしない）

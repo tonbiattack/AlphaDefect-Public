@@ -116,7 +116,7 @@ internal static class PanelState
                 Step();
                 break;
             case "handover":
-                HandOverToPlayer("operator");
+                RequestHandover("operator");
                 break;
             case "manual":
                 SetMode(RunMode.Manual, "operator");
@@ -381,6 +381,26 @@ internal static class PanelState
         Log("auto stop: " + reason);
         Changed?.Invoke();
         Report();
+    }
+
+    /// <summary>手動に切り替える要求。保留中の返答を送ってから stop する（spire が待ち続けないように）。</summary>
+    public static bool HandoverPending { get; private set; }
+
+    public static void RequestHandover(string why)
+    {
+        _paused = false;               // 保留中の 1 手を送れるように、いったん解除
+        _stepOnce = false;
+        HandoverPending = true;
+        Log("手動に切り替えます (" + why + ")");
+        Changed?.Invoke();
+        Report();
+    }
+
+    public static void CompleteHandover()
+    {
+        HandoverPending = false;
+        _paused = true;
+        HandOverToPlayer("operator");
     }
 
     /// <summary>
