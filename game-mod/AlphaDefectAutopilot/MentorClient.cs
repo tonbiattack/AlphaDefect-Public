@@ -1063,6 +1063,15 @@ internal static class MentorClient
                         Take(CardIndexInMessage(other));
                         if (pickedIndices.Count >= _pendingMinSelect) break;
                     }
+                    // 念のため: 枚数が足りないときは有効な index を順に補う（拒否されるより進める）
+                    int need = _pendingMinSelect;
+                    for (int i = 0; pickedIndices.Count < need; i++)
+                    {
+                        if (!pickedIndices.Contains(i)) pickedIndices.Add(i);
+                        if (i > 64) break;
+                    }
+                    if (_multiSelectReplies++ < 10)
+                        Bridge.LogEvent($"[mentor] card_select multi reply: indices=[{string.Join(",", pickedIndices)}] need={need}");
                     _pendingMinSelect = 0;
                     return "{\"action\":\"choose\",\"indices\":[" + string.Join(",", pickedIndices) + "]}";
                 }
