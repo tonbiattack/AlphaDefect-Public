@@ -36,6 +36,7 @@ internal static class LiveRewards
     }
 
     static readonly HashSet<object> _logged = new();
+    static int _rewardOnlyProceedLog;
 
     public static void Forget()
     {
@@ -66,7 +67,15 @@ internal static class LiveRewards
             _logged.Add(set);
             Bridge.LogLine("reward candidates: " + string.Join(", ", set.Rewards.Select(r => (r.SuccessfullySelected ? "*" : "") + Label(r))));
         }
-        if (nothingLeft) d.Add(ActionKind.Leave, "离开", Leave);
+        // 取れる報酬が 1 つも無い（残りがカード報酬だけ等）なら「進む」しかない。
+        // ここを出さないと候補ゼロになり、ルール既定に落ちてモデルの判断が使えなくなる（#68）。
+        bool onlyProceed = d.Choices.Count == 0;
+        if (nothingLeft || onlyProceed)
+        {
+            if (onlyProceed && _rewardOnlyProceedLog++ < 3)
+                Bridge.LogEvent("[mentor] reward_screen: only card rewards left; offering proceed");
+            d.Add(ActionKind.Leave, "离开", Leave);
+        }
         return d;
     }
 
