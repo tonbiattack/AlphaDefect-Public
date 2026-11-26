@@ -346,6 +346,13 @@ class Autopilot:
                 "mismatch": getattr(self.decider, "label_mismatch", 0),
                 "first": getattr(self.decider, "label_first", None),
             })
+            hdr = getattr(self.decider, "header_checked", 0)
+            if hdr:
+                self.log("header-check", {
+                    "checked": hdr,
+                    "mismatch": getattr(self.decider, "header_mismatch", 0),
+                    "first": getattr(self.decider, "header_first", None),
+                })
 
         answer = P.action(
             seq,

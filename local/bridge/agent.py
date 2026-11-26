@@ -27,6 +27,9 @@ class ModelDecider:
         self.label_checked = 0       # ラベル比較した回数（#28）
         self.label_mismatch = 0
         self.label_first: dict | None = None
+        self.header_checked = 0       # ヘッダ値の一致確認（#28）
+        self.header_mismatch = 0
+        self.header_first: dict | None = None
         self.character = policy.character
 
     @classmethod
@@ -47,6 +50,24 @@ class ModelDecider:
         return self.policy.asset.obs_format
 
     # -- 観測・候補の一致確認（#28） --------------------------------------
+
+    def check_header(self, frame: P.Frame, obs) -> None:
+        """ヘッダの値（階・HP・ゴールド）を MOD の申告と突き合わせる（#28）。"""
+        meta = frame.meta
+        checks = {"floor": obs.floor, "hp": obs.hp, "max_hp": obs.max_hp, "gold": obs.gold}
+        self.header_checked += 1
+        for key, got in checks.items():
+            raw = meta.get(key)
+            if raw is None:
+                continue
+            try:
+                want = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if want != got:
+                self.header_mismatch += 1
+                if self.header_first is None:
+                    self.header_first = {"field": key, "mod": want, "headless": got}
 
     def check_labels(self, frame: P.Frame, obs) -> None:
         """MOD が作った候補ラベルと、こちら（ヘッドレス系）のデコード結果を突き合わせる。"""
@@ -83,6 +104,7 @@ class ModelDecider:
                 f"食い違っている可能性があります（{e}）"
             ) from e
         self.check_labels(frame, obs)
+        self.check_header(frame, obs)
         character = str(frame.meta.get("character") or "").upper()
         if character and character != self.policy.character:
             raise LocalError(
@@ -152,6 +174,18 @@ class AutoDecider:
     @property
     def label_first(self):
         return None if self._inner is None else self._inner.label_first
+
+    @property
+    def header_checked(self) -> int:
+        return 0 if self._inner is None else self._inner.header_checked
+
+    @property
+    def header_mismatch(self) -> int:
+        return 0 if self._inner is None else self._inner.header_mismatch
+
+    @property
+    def header_first(self):
+        return None if self._inner is None else self._inner.header_first
 
     def __call__(self, frame: P.Frame) -> Decision:
         ch = str(frame.meta.get("character") or "").upper()
