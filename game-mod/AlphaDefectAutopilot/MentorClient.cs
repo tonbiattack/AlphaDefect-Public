@@ -353,7 +353,9 @@ internal static class MentorClient
                             if (action == "proceed") { last = i; continue; }
                             if (firstCell < 0) firstCell = i;
                         }
-                        index = last >= 0 ? last : Math.Max(0, firstCell);
+                        // 未公開セルがあればセルを選ぶ（proceed は「セルが無いとき」だけ）。
+                        // proceed を選ぶと、返答が届く前にボタンが無効化されて拒否されることがある。
+                        index = firstCell >= 0 ? firstCell : Math.Max(0, last);
                         _crystalCells = Math.Max(1, last >= 0 ? last : firstCell + 1);
                     }
                 }

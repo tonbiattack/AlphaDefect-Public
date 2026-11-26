@@ -115,6 +115,9 @@ internal static class PanelState
             case "step":
                 Step();
                 break;
+            case "handover":
+                HandOverToPlayer("operator");
+                break;
             case "manual":
                 SetMode(RunMode.Manual, "operator");
                 break;
@@ -376,6 +379,30 @@ internal static class PanelState
         _paused = true;
         _stepOnce = false;
         Log("auto stop: " + reason);
+        Changed?.Invoke();
+        Report();
+    }
+
+    /// <summary>
+    /// 手動で遊べるように、AI を完全に降ろす（spire-mentor の autopilot も止める）。
+    /// 画面の途中で人が操作しても、こちらが同じ画面を押し続けて落ちないようにする。
+    /// </summary>
+    public static void HandOverToPlayer(string why)
+    {
+        _paused = true;
+        _stepOnce = false;
+        Log("手動に切り替えます (" + why + ")");
+        try
+        {
+            var t = Type.GetType("SpireMentor.MainFile, SpireMentor");
+            var m = t?.GetMethod("StopAutopilot", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            m?.Invoke(null, null);
+            Log("spire-mentor の autopilot も止めました");
+        }
+        catch (Exception e)
+        {
+            Log("autopilot の停止に失敗: " + e.GetType().Name);
+        }
         Changed?.Invoke();
         Report();
     }
