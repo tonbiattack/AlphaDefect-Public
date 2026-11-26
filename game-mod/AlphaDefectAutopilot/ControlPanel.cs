@@ -87,8 +87,8 @@ internal static class ControlPanel
         var panel = new PanelContainer
         {
             Name = "AlphaDefectPanel",
-            // 上部バー（HP・ゴールド・遺物）のすぐ下の左に置く。カードや報酬の操作は中央・下部なので重ならない
-            Position = new Vector2(16, 178),
+            // 上部バー（HP・ゴールド・遺物）のすぐ下の左に置く（ドラッグで動かせて、位置は保存される）
+            Position = LoadPanelPosition(),
             MouseFilter = Control.MouseFilterEnum.Stop,
         };
         var bg = new StyleBoxFlat
@@ -105,6 +105,7 @@ internal static class ControlPanel
         panel.AddChild(root);
 
         var top = new HBoxContainer();
+        EnableDrag(panel, top);
         _head = MakeLabel(14, new Color(0.8f, 0.9f, 1f));
         _head.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         top.AddChild(_head);
@@ -227,5 +228,80 @@ internal static class ControlPanel
             _pause.Text = PanelState.Paused || PanelState.Mode == PanelState.RunMode.Manual ? "再開" : "一時停止";
         if (_mode != null && GodotObject.IsInstanceValid(_mode))
             _mode.Text = PanelState.Mode == PanelState.RunMode.Auto ? "手動にする" : "AIにする";
+    }
+
+    // ---------------------------------------------------------- パネルの移動
+    // ヘッダ（上段）をドラッグして好きな位置へ動かせる。位置は MOD の隣の panel_pos.txt に保存する。
+
+    static string PanelPosFile()
+    {
+        try
+        {
+            string modDir = Path.GetDirectoryName(typeof(ControlPanel).Assembly.Location) ?? ".";
+            return Path.Combine(modDir, "panel_pos.txt");
+        }
+        catch (Exception)
+        {
+            return "";
+        }
+    }
+
+    static Vector2 LoadPanelPosition()
+    {
+        var def = new Vector2(16, 178);
+        try
+        {
+            string file = PanelPosFile();
+            if (file.Length == 0 || !File.Exists(file)) return def;
+            var parts = File.ReadAllText(file).Trim().Split(',');
+            if (parts.Length != 2) return def;
+            if (!float.TryParse(parts[0], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out float x)) return def;
+            if (!float.TryParse(parts[1], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out float y)) return def;
+            return new Vector2(x, y);
+        }
+        catch (Exception)
+        {
+            return def;
+        }
+    }
+
+    static void SavePanelPosition(Vector2 pos)
+    {
+        try
+        {
+            string file = PanelPosFile();
+            if (file.Length == 0) return;
+            File.WriteAllText(file, $"{pos.X:0},{pos.Y:0}");
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    static void EnableDrag(PanelContainer panel, Control handle)
+    {
+        bool dragging = false;
+        handle.MouseFilter = Control.MouseFilterEnum.Stop;
+        handle.GuiInput += (InputEvent e) =>
+        {
+            if (e is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left)
+            {
+                dragging = mb.Pressed;
+                if (!dragging) SavePanelPosition(panel.Position);
+                return;
+            }
+            if (e is InputEventMouseMotion mm && dragging)
+            {
+                var next = panel.Position + mm.Relative;
+                // 画面外へ出ないように軽く制限する
+                var size = panel.Size;
+                var view = panel.GetViewportRect().Size;
+                next.X = Mathf.Clamp(next.X, 0, Mathf.Max(0, view.X - size.X));
+                next.Y = Mathf.Clamp(next.Y, 0, Mathf.Max(0, view.Y - size.Y));
+                panel.Position = next;
+            }
+        };
     }
 }
