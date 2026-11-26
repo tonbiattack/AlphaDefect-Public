@@ -118,6 +118,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dry-run", action="store_true", help="起動内容を表示するだけ")
     p.add_argument("--status", action="store_true", help="いまの状態を表示する")
     p.add_argument("--stop", action="store_true", help="推論サーバを止める")
+    p.add_argument("--game-running", action="store_true", help="ゲームが動いているかを表示する")
+    p.add_argument("--close-game", action="store_true",
+                   help="起動中のゲームを安全に閉じる（AI を止めて正常終了 → だめなら強制）")
     p.add_argument("--safe-mode", action="store_true",
                    help="AI を止めて素の状態にする（サーバ停止・autopilot 無効・Mentor のフラグ削除）")
     p.add_argument("--pause", action="store_true")
@@ -600,7 +603,13 @@ def cmd_launch(a) -> int:
     if a.install_shortcuts:
         L.install_shortcuts()
         return 0
-    if a.status or (a.mode is None and not (a.stop or a.safe_mode or a.pause or a.resume
+    if a.game_running:
+        print("running" if L.game_running() else "stopped")
+        return 0 if L.game_running() else 1
+    if a.close_game:
+        return L.close_game()
+    if a.status or (a.mode is None and not (a.stop or a.safe_mode or a.game_running or a.close_game
+                                             or a.pause or a.resume
                                              or a.set_speed is not None or a.step or a.manual)):
         print(L.status_text())
         if a.mode is None and not a.json:

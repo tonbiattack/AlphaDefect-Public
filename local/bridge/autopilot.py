@@ -164,6 +164,11 @@ class Autopilot:
         out.append(P.command("step"))
         return out
 
+    def command_quit_game(self) -> list[dict]:
+        """ゲームを正常終了させる（セーブして閉じる）。"""
+        self.log("quit-game", {})
+        return [P.command("quit-game")]
+
     def command_handover(self) -> list[dict]:
         """AI を降りて、そのまま人が遊べる状態にする（spire-mentor の autopilot も止める）。"""
         self.log("handover", {})

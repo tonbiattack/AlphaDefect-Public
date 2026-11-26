@@ -115,6 +115,9 @@ internal static class PanelState
             case "step":
                 Step();
                 break;
+            case "quit-game":
+                QuitGame();
+                break;
             case "handover":
                 RequestHandover("operator");
                 break;
@@ -536,4 +539,33 @@ internal static class PanelState
     }
 
     static void Log(string message) => Bridge.LogEvent("[panel] " + message);
+
+    /// <summary>
+    /// ゲームを正常終了させる（ウィンドウを閉じるのと同じ経路。セーブしてから終わる）。
+    /// ランチャーの「ゲームを閉じる」から使う。
+    /// </summary>
+    static void QuitGame()
+    {
+        Log("ゲームを終了します");
+        try
+        {
+            if (Engine.GetMainLoop() is SceneTree tree)
+            {
+                tree.Quit();
+                return;
+            }
+        }
+        catch (Exception e)
+        {
+            Log("終了要求に失敗: " + e.GetType().Name);
+        }
+        try
+        {
+            if (Engine.GetMainLoop() is SceneTree t2) t2.Quit(0);
+        }
+        catch (Exception e)
+        {
+            Log("終了要求その2に失敗: " + e.GetType().Name);
+        }
+    }
 }

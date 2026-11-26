@@ -116,8 +116,9 @@ class Launcher(tk.Tk):
         self.b_step = ttk.Button(btn, text="1 手", command=lambda: self.control("step"))
         self.b_manual = ttk.Button(btn, text="手動（推奨のみ）", command=lambda: self.control("manual"))
         self.b_handover = ttk.Button(btn, text="手動で遊ぶ", command=self.handover)
+        self.b_close = ttk.Button(btn, text="ゲームを閉じる", command=self.close_game)
         for b in (self.b_start, self.b_stop, self.b_status, self.b_pause, self.b_step,
-                  self.b_manual, self.b_handover):
+                  self.b_manual, self.b_handover, self.b_close):
             b.pack(side="left", padx=4)
 
         ttk.Checkbutton(self, text="MOD を外して起動（元のセーブで遊ぶ）",
@@ -162,6 +163,9 @@ class Launcher(tk.Tk):
         try:
             while True:
                 line = self.queue.get_nowait()
+                if line == "__done__":
+                    self._busy(False)
+                    continue
                 if line.startswith("__chars__"):
                     items = json.loads(line[len("__chars__"):])
                     self.cb_char.configure(values=items)
@@ -228,7 +232,18 @@ class Launcher(tk.Tk):
         threading.Thread(target=self._start_worker, args=(mode, char, untested, seed), daemon=True).start()
 
     def _start_worker(self, mode: str, char: str, untested: bool, seed: str) -> None:
+        # 前のセッションを止める → ゲームが残っていたら安全に閉じる → 起動
+        self.queue.put("前のセッションを片付けます")
         self._stop_everything(quiet=True)
+        try:
+            r = wsl("./play.sh launch --game-running", timeout=60)
+            if (r.stdout or "").strip().endswith("running"):
+                self.queue.put("ゲームが残っているので安全に閉じます")
+                r = wsl("./play.sh launch --close-game", timeout=120)
+                for line in (r.stdout or "").splitlines():
+                    self.queue.put(line)
+        except Exception as exc:  # noqa: BLE001
+            self.queue.put(f"片付けでエラー: {exc.__class__.__name__}")
         time.sleep(1.0)
         try:
             if mode == "normal":
@@ -285,6 +300,22 @@ class Launcher(tk.Tk):
                 self.queue.put((r.stdout or "").strip() or "(状態を取得できません)")
             except Exception as exc:  # noqa: BLE001
                 self.queue.put(f"状態の取得に失敗: {exc.__class__.__name__}")
+        threading.Thread(target=work, daemon=True).start()
+
+    def close_game(self) -> None:
+        """ゲームを安全に閉じる（AI を止めて正常終了 → だめなら強制）。"""
+        self.log("ゲームを閉じます")
+        self._busy(True)
+
+        def work() -> None:
+            try:
+                r = wsl("./play.sh launch --close-game", timeout=120)
+                for line in (r.stdout or "").splitlines():
+                    self.queue.put(line)
+            except Exception as exc:  # noqa: BLE001
+                self.queue.put(f"終了に失敗: {exc.__class__.__name__}")
+            finally:
+                self.queue.put("__done__")
         threading.Thread(target=work, daemon=True).start()
 
     def handover(self) -> None:

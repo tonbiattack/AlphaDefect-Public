@@ -108,6 +108,8 @@ class _Controls:
                 self._send(self.ap.set_speed(float(parts[1])))
             elif cmd == "step":
                 self._send(self.ap.step())
+            elif cmd in ("quit-game", "quitgame", "close-game"):
+                self._send(self.ap.command_quit_game())
             elif cmd in ("handover", "hand-over", "manual-takeover"):
                 self._send(self.ap.command_handover())
             elif cmd in ("manual", "auto"):
