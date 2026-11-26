@@ -19,6 +19,15 @@ Win rates (%) at Ascension 10 in the headless engine, greedy play and with searc
 
 In 866 runs of the released game, played through a mod on a public livestream (to 2026-11-22 08:38 CET), the networks won 645 against 642.5 expected from these headless results.
 
+## Playing in the real game
+
+The standard way to let a network play the real game is **through Spire Mentor**
+(a MIT-licensed mod that drives the game's screens) with this repository's model
+answering every decision; the bundled `game-mod/` bridge remains for comparison
+and diagnosis. Launcher and CLI usage, every setting's real behaviour, and the
+constraints are documented in Japanese: [docs/ja/policy.md](docs/ja/policy.md)
+([docs/ja/](docs/ja/) for the rest).
+
 ## Repository layout
 
 | Path | Content |

@@ -1,5 +1,10 @@
 # `AlphaDefectAutopilot` — game-side bridge mod
 
+> **Position (issue #71):** real-game AI play is standardised on **Spire Mentor**;
+> this mod is kept as the **legacy / comparison / diagnosis** path and also hosts the
+> Mentor client (`mentor.txt`). New real-game features should not be implemented twice —
+> add them on the Mentor side. Policy and launcher details: `docs/ja/policy.md`.
+
 A Slay the Spire 2 mod (game **v0.111.x** line, .NET 9) that connects the running game to the
 AlphaDefect inference server in WSL. It is the Windows half of the watch-the-AI-play feature
 (issue #5); the WSL half is `local/bridge/`.

@@ -36,6 +36,7 @@ These documents were written while the project ran (2026-10-24 to 11-21) for inv
 | 25 | [The livestream setup of 2026-11-17](25_live_fool_search_and_engine.md) (branch `game-v0.113.0`) | the Fool at v24,181, tree search in boss and elite fights and its measurements, the live adapter, the v0.113.1 engine with state cloning and speed patches |
 | 26 | [The Ironclad and the Necrobinder](26_ironclad_and_necrobinder.md) (branch `game-v0.113.0`) | the two v0.113.1 lines behind `weights-v6`, observation format 28 (and 29), recycling, how to run the networks, the checks of the code |
 | — | [Windows one-click launcher (Japanese)](ja/launcher.md) | normal play vs AI watch mode from a double click, detection, safety, controls |
+| — | **[Policy: Mentor-first for the real game, and the launcher's real behaviour (Japanese)](ja/policy.md)** | recommended start, every setting per mode, what is verified |
 | — | [Survey of OSS game-operation layers (Japanese)](ja/oss-operation-layer.md) | candidates, licences, PoC with spire-mentor, partial-reuse decision |
 | — | [Mentor mode settings: character, ascension, seed (Japanese)](ja/mentor.md) | `local mentor` options, how run_config is answered, what is verified |
 | — | [Evaluating deck strength with the model (Japanese)](ja/deck-eval.md) | feasibility study for #6: value head vs rollouts, what is unverified |
