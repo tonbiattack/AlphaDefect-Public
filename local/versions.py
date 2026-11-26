@@ -55,6 +55,21 @@ LINES: dict[str, GameLine] = {
         greedy_tool="tools/ability_test.py",
         note="論文の表 3・表 4 の 3 キャラ。探索あり（PIMC）は外部の sts2-sim を別途ビルドする必要があるため、このローカル実行系では扱わない。",
     ),
+    "v0.114.0": GameLine(
+        key="v0.114.0",
+        tree="game-v0.114.0",
+        catalog="v0.114.0",
+        characters=("FOOL", "IRONCLAD", "NECROBINDER", "DEFECT", "SILENT", "REGENT"),
+        search=False,
+        search_tool="",
+        greedy_tool="tools/ability_test.py",
+        note=(
+            "v0.114.0（2026-11-25 の公開ベータ）。愚者のカード改訂（OPTIMISM 追加、TWIN_SHOT が RAPID_SHOT の別名）と"
+            "ダメージ計算の変更に、v0.113.1 のエンジンを適応したもの。語彙は 2,557→2,559（旧 ID は不変）。"
+            "v0.114.0 で学習した公開モデルはまだ無いため、既存チェックポイントを特徴量の再整列つきで使う（未検証扱い）。"
+            "sts2-sim が未対応のため探索（PIMC）は使えない。"
+        ),
+    ),
     "v0.113.1": GameLine(
         key="v0.113.1",
         tree="",
@@ -78,6 +93,14 @@ PATCH_COMPAT: dict[str, str] = {
 # 根拠: 論文 表 3・表 4（v0.111.0 の 3 キャラ）、3.2 節（v0.113.1 上の Defect）、付録 E（v0.113.1 上の Silent）。
 VALIDATION: dict[str, dict[str, str]] = {
     "v0.111.0": {"DEFECT": "validated", "REGENT": "validated", "SILENT": "validated"},
+    "v0.114.0": {
+        "FOOL": "untested",
+        "IRONCLAD": "untested",
+        "NECROBINDER": "untested",
+        "DEFECT": "untested",
+        "SILENT": "untested",
+        "REGENT": "untested",
+    },
     "v0.113.1": {
         "FOOL": "validated",
         "IRONCLAD": "validated",
