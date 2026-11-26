@@ -211,6 +211,21 @@ MOD 自体を外したい場合は、ゲームの「設定 → Modding」で個�
 
 ---
 
+## 11.1 手動で遊んでから AI に戻す
+
+```bash
+./play.sh launch --handover    # AI を降りて人が操作する（保留中の返答は 1 つ送ってから停止）
+./play.sh launch --ai-return   # いまのランのまま AI に戻す
+```
+
+- 「手動で遊ぶ」で AI が画面から手を離れ、**同じランをそのまま**操作できます
+- 「AI に戻す」で、**ランをやり直さずに** spire-mentor の autopilot を現在のランへ付け直します
+  （実装: spire-mentor fork に `SimAutoSlayer.StartAttached()` / `MainFile.StartAutopilotAttached()` を追加）
+- 実機確認: `handed the game over to the player` → `AI に戻します` → `Attached to the run in progress`
+  → `autopilot をいまのランに付け直しました` → その後もモデルの判断が続く
+
+ランチャーの「手動で遊ぶ」「AI に戻す」ボタンが同じ操作です。
+
 ## 11.2 ゲームを安全に閉じる
 
 ```bash

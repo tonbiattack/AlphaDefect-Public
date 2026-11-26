@@ -115,6 +115,9 @@ internal static class PanelState
             case "step":
                 Step();
                 break;
+            case "ai-return":
+                ReturnToAi();
+                break;
             case "quit-game":
                 QuitGame();
                 break;
@@ -539,6 +542,28 @@ internal static class PanelState
     }
 
     static void Log(string message) => Bridge.LogEvent("[panel] " + message);
+
+    /// <summary>
+    /// 手動から AI に戻す（いまのランのまま spire-mentor の autopilot を付け直す）。
+    /// </summary>
+    static void ReturnToAi()
+    {
+        Log("AI に戻します");
+        try
+        {
+            var t = Type.GetType("SpireMentor.MainFile, SpireMentor");
+            var m = t?.GetMethod("StartAutopilotAttached",
+                                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            object? ok = m?.Invoke(null, null);
+            bool attached = ok is bool b && b;
+            Log(attached ? "autopilot をいまのランに付け直しました" : "autopilot を付け直せませんでした");
+            if (attached) SetPaused(false, "ai-return");
+        }
+        catch (Exception e)
+        {
+            Log("AI への復帰に失敗: " + e.GetType().Name);
+        }
+    }
 
     /// <summary>
     /// ゲームを正常終了させる（ウィンドウを閉じるのと同じ経路。セーブしてから終わる）。

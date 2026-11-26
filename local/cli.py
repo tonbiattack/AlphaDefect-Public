@@ -126,6 +126,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--pause", action="store_true")
     p.add_argument("--step", action="store_true", help="1 手だけ実行する")
     p.add_argument("--manual", action="store_true", help="手動（AI は推奨のみ表示）")
+    p.add_argument("--ai-return", action="store_true",
+                   help="手動から AI に戻す（いまのランのまま autopilot を付け直す）")
     p.add_argument("--handover", action="store_true", help="AI を降りて人が操作する（spire-mentor の autopilot も停止）")
     p.add_argument("--resume", action="store_true")
     p.add_argument("--set-speed", type=float, default=None, help="動いている推論サーバの速度を変える")
@@ -640,7 +642,8 @@ def cmd_launch(a) -> int:
         print("AI を止めました（サーバ停止・autopilot 無効・Mentor フラグ削除）。"
               "Steam から起動すれば普通に遊べます。")
         return 0
-    if a.pause or a.resume or a.set_speed is not None or a.step or a.manual or a.handover:
+    if (a.pause or a.resume or a.set_speed is not None or a.step or a.manual or a.handover
+            or a.ai_return):
         if a.pause:
             cmd = "pause"
         elif a.resume:
@@ -651,6 +654,8 @@ def cmd_launch(a) -> int:
             cmd = "manual"
         elif a.handover:
             cmd = "handover"
+        elif a.ai_return:
+            cmd = "ai-return"
         else:
             cmd = f"speed {a.set_speed}"
         got = L.control(cmd)

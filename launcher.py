@@ -117,8 +117,9 @@ class Launcher(tk.Tk):
         self.b_manual = ttk.Button(btn, text="手動（推奨のみ）", command=lambda: self.control("manual"))
         self.b_handover = ttk.Button(btn, text="手動で遊ぶ", command=self.handover)
         self.b_close = ttk.Button(btn, text="ゲームを閉じる", command=self.close_game)
+        self.b_return = ttk.Button(btn, text="AI に戻す", command=self.ai_return)
         for b in (self.b_start, self.b_stop, self.b_status, self.b_pause, self.b_step,
-                  self.b_manual, self.b_handover, self.b_close):
+                  self.b_manual, self.b_handover, self.b_close, self.b_return):
             b.pack(side="left", padx=4)
 
         ttk.Checkbutton(self, text="MOD を外して起動（元のセーブで遊ぶ）",
@@ -300,6 +301,19 @@ class Launcher(tk.Tk):
                 self.queue.put((r.stdout or "").strip() or "(状態を取得できません)")
             except Exception as exc:  # noqa: BLE001
                 self.queue.put(f"状態の取得に失敗: {exc.__class__.__name__}")
+        threading.Thread(target=work, daemon=True).start()
+
+    def ai_return(self) -> None:
+        """手動から AI に戻す（いまのランのまま）。"""
+        self.log("AI に戻します")
+
+        def work() -> None:
+            try:
+                r = wsl("./play.sh launch --ai-return", timeout=60)
+                for line in (r.stdout or "").splitlines():
+                    self.queue.put(line)
+            except Exception as exc:  # noqa: BLE001
+                self.queue.put(f"AI に戻せませんでした: {exc.__class__.__name__}")
         threading.Thread(target=work, daemon=True).start()
 
     def close_game(self) -> None:
