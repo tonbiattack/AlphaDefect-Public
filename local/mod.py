@@ -88,11 +88,26 @@ def build(install: GameInstall, log=print, force: bool = False) -> Path:
     out = src / "bin" / "Release"
     if force:
         shutil.rmtree(out, ignore_errors=True)
+    # 観測エンコーダは、インストールされている版の系統から取る（v0.114.0 なら game-v0.114.0）
+    from . import versions as V
+
+    try:
+        line = V.line_for(install.version)
+        obs_tree = line.root / "engine" / "Sts2Headless"
+    except Exception:                       # 版が引けないときは csproj の既定に任せる
+        obs_tree = None
     cmd = [
         str(dotnet), "build", str(proj), "-c", "Release", "--nologo",
         f"-p:Sts2GameDir={game_dir}",
         "-o", str(out),
     ]
+    if obs_tree is not None and obs_tree.is_dir():
+        cmd.append(f"-p:ObsTree={obs_tree}")
+    try:
+        if V.line_for(install.version).key == "v0.114.0":
+            cmd.append("-p:Sts2V114=true")
+    except Exception:
+        pass
     log(f"  MOD: ビルド中（ゲーム {install.version} のアセンブリを参照）")
     r = subprocess.run(cmd, env=env, capture_output=True, text=True, check=False)
     if r.returncode != 0:

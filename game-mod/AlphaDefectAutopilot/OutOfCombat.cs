@@ -617,7 +617,11 @@ internal static class OutOfCombat
         {
             var sync = RunManager.Instance.TreasureRoomRelicSynchronizer;
             sync.PickRelicLocally(index);
+#if STS2_V114
+            await RunManager.Instance.ProceedFromTerminalRewardsScreenAsync();
+#else
             await RunManager.Instance.ProceedFromTerminalRewardsScreen();
+#endif
             Bridge.LogLine($"picked treasure relic {index}");
         }
         catch (Exception e)
@@ -632,7 +636,11 @@ internal static class OutOfCombat
         try
         {
             RunManager.Instance.TreasureRoomRelicSynchronizer.CompleteWithNoRelics();
+#if STS2_V114
+            _ = RunManager.Instance.ProceedFromTerminalRewardsScreenAsync();
+#else
             _ = RunManager.Instance.ProceedFromTerminalRewardsScreen();
+#endif
             Bridge.LogLine("skipped treasure relic");
         }
         catch (Exception e)
@@ -648,7 +656,11 @@ internal static class OutOfCombat
         if (run.CurrentRoom is not MerchantRoom room) return null;
         try
         {
+#if STS2_V114
+            var inv = RunManager.Instance.MerchantSynchronizer.GetLocalInventory();
+#else
             var inv = room.GetLocalInventory();
+#endif
             var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
             foreach (var entry in inv.AllEntries)
             {
@@ -681,7 +693,11 @@ internal static class OutOfCombat
             _shopOptionsLogged = true;
             Bridge.LogEvent("[shop] gold=" + me.Gold);
         }
+#if STS2_V114
+        var inv = RunManager.Instance.MerchantSynchronizer.GetLocalInventory();
+#else
         var inv = room.GetLocalInventory();
+#endif
         var d = new Decision(DecisionKind.Shop) { Context = $"金币 {me.Gold}" };
         foreach (var entry in inv.AllEntries)
         {
@@ -705,7 +721,11 @@ internal static class OutOfCombat
         Bridge.LogEvent($"[shop] buy {label} for {cost}g (gold {goldBefore})");
         AsyncGate.Run("buy " + label, async () =>
         {
+#if STS2_V114
+            bool ok = await entry.OnTryPurchaseUnsynchronized(inv);
+#else
             bool ok = await entry.OnTryPurchaseWrapper(inv);
+#endif
             int goldAfter = RunManager.Instance.DebugOnlyGetState()?.Players[0]?.Gold ?? 0;
             Bridge.LogEvent($"[shop] buy {label}: {(ok ? "ok" : "failed")}, gold {goldBefore} -> {goldAfter}"
                            + $", stocked={entry.IsStocked}");
