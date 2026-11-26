@@ -231,6 +231,7 @@ internal static class MentorClient
     // 忠実性の集計（#68）: モデル判断・ルール代替・拒否・タイムアウトを種別ごとに数える
     static readonly Dictionary<string, int> ModelCounts = new();
     static readonly Dictionary<string, int> RuleCounts = new();
+    static readonly Dictionary<string, int> NoopCounts = new();
     static int _rejects;
     static int _errorLogged;
     static int _timeouts;
@@ -418,9 +419,14 @@ internal static class MentorClient
             if (d == null || d.Choices.Count == 0)
             {
                 _unmapped++;
-                RuleCounts[kind] = RuleCounts.TryGetValue(kind, out int rc) ? rc + 1 : 1;
+                // 判断の余地が無い画面（終わったイベントの「進む」など）は、モデルの上書きではなく noop として数える
+                bool nothingToDecide = kind == "event" && NothingToDecideForEvent();
+                var counts = nothingToDecide ? NoopCounts : RuleCounts;
+                counts[kind] = counts.TryGetValue(kind, out int rc) ? rc + 1 : 1;
                 if (_unmapped <= 5 || _unmapped % 50 == 0)
-                    Bridge.LogEvent($"[mentor] '{kind}' has no model decision yet ({_unmapped}); replying with a legal default");
+                    Bridge.LogEvent(nothingToDecide
+                        ? $"[mentor] '{kind}': nothing to decide (event already finished); replying with a legal default"
+                        : $"[mentor] '{kind}' has no model decision yet ({_unmapped}); replying with a legal default");
                 SendReply(DefaultReply(kind, root, requestId));
                 return;
             }
@@ -458,6 +464,20 @@ internal static class MentorClient
 
     /// <summary>休息所の選択肢を読むだけ（押さない）。</summary>
     static int _rewardMissLogged;
+
+    /// <summary>イベントが終わっていて選ぶものが無い（＝モデルの判断を上書きしているわけではない）。</summary>
+    static bool NothingToDecideForEvent()
+    {
+        try
+        {
+            var ev = RunManager.Instance.EventSynchronizer.GetLocalEvent();
+            return ev == null || ev.IsFinished || ev.CurrentOptions.Count == 0;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
 
     /// <summary>報酬画面の判断（こちらの捕捉が無いときは理由を残す。#68）。</summary>
     static Decision? RewardScreenDecision(Player me)
@@ -758,7 +778,9 @@ internal static class MentorClient
         {
             string model = string.Join(",", ModelCounts.Select(kv => $"{kv.Key}={kv.Value}"));
             string rule = string.Join(",", RuleCounts.Select(kv => $"{kv.Key}={kv.Value}"));
-            Bridge.LogEvent($"[mentor] fidelity: model[{model}] rule[{rule}] rejects={_rejects} timeouts={_timeouts} stale={_stale}");
+            string noop = string.Join(",", NoopCounts.Select(kv => $"{kv.Key}={kv.Value}"));
+            Bridge.LogEvent($"[mentor] fidelity: model[{model}] rule[{rule}] noop[{noop}]"
+                            + $" rejects={_rejects} timeouts={_timeouts} stale={_stale}");
         }
         catch (Exception)
         {
