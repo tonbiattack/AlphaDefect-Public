@@ -122,8 +122,7 @@ internal static class MentorClient
         if (!Enabled) return;
         if (PanelState.HandoverPending)
         {
-            // 保留中の返答を 1 つ送ってから autopilot を止める（相手が待ち続けて固まらないように）
-            if (_readyReply != null) SendReply(_readyReply);
+            // 保留中の返答は捨てる（上流 7f0fa3b1 で StopAutopilot が確実に戻るようになった）
             _readyReply = null;
             PanelState.CompleteHandover();
             Bridge.LogEvent("[mentor] handed the game over to the player");

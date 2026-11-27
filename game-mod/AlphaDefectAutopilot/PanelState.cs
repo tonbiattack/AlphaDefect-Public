@@ -394,7 +394,6 @@ internal static class PanelState
 
     public static void RequestHandover(string why)
     {
-        _paused = false;               // 保留中の 1 手を送れるように、いったん解除
         _stepOnce = false;
         HandoverPending = true;
         Log("手動に切り替えます (" + why + ")");
@@ -552,16 +551,38 @@ internal static class PanelState
         try
         {
             var t = Type.GetType("SpireMentor.MainFile, SpireMentor");
-            var m = t?.GetMethod("StartAutopilotAttached",
-                                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            object? ok = m?.Invoke(null, null);
+            if (t == null)
+            {
+                Log("spire-mentor が見つかりません");
+                return;
+            }
+            var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
+            // 新しい API（上流 7f0fa3b1 以降）: 失敗理由が enum で返る（null が成功）
+            var attach = t.GetMethod("AttachAutopilot", flags);
+            if (attach != null)
+            {
+                object? refusal = attach.Invoke(null, null);
+                if (refusal == null)
+                {
+                    Log("autopilot をいまのランに付け直しました");
+                    SetPaused(false, "ai-return");
+                }
+                else
+                {
+                    Log("autopilot を付け直せませんでした（理由: " + refusal + "）");
+                }
+                return;
+            }
+            // 旧 API（こちらの fork 版）
+            var legacy = t.GetMethod("StartAutopilotAttached", flags);
+            object? ok = legacy?.Invoke(null, null);
             bool attached = ok is bool b && b;
             Log(attached ? "autopilot をいまのランに付け直しました" : "autopilot を付け直せませんでした");
             if (attached) SetPaused(false, "ai-return");
         }
         catch (Exception e)
         {
-            Log("AI への復帰に失敗: " + e.GetType().Name);
+            Log("AI への復帰に失敗: " + e.GetType().Name + ": " + e.Message);
         }
     }
 

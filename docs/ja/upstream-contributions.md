@@ -60,5 +60,13 @@
 |---|---|---|
 | A（形式不一致） | **投稿済み**（2026-11-26） | hmty-CHEN/AlphaDefect-Public#1 |
 | B（停止で戻らない） | **投稿済み**（2026-11-26） | tfriedel/spire-mentor#53 |
-| C（attach API） | **PR 提出済み**（2026-11-26） | tfriedel/spire-mentor#54 |
+| C（attach API） | **上流が独自実装で採用**（PR は上流版に置き換えてクローズ）。フォークは上流 main に同期済み | tfriedel/spire-mentor#54 |
+| B'（attach 後の map タイムアウト） | **投稿済み**（2026-11-27、再現 2 回） | tfriedel/spire-mentor#55 |
+
+### 2026-11-27 の追記
+
+- B（停止で固まる）は上流が**真因を特定して修正**（`7f0fa3b1`）: `SimAgentGate.RequestActionAsync` のハートビートがトークンを見ておらず、停止後も 1 コアで回り続けて Not Responding になっていた。修正後は停止時に確実に戻る（10/10 の F8 で確認と上流が報告）
+- C（attach）は上流がより完全な実装（`MainFile.AttachAutopilot()` / `spirementor attach`、`AttachRefusal` で理由を返す）を採用。こちらの PR はその版に置き換えられてクローズ
+- こちら側の対応: フォークを上流 main に同期（`a7d5f4d2`）、SpireMentor を再ビルドして配置、MOD は `AttachAutopilot()` を優先して呼び（旧 `StartAutopilotAttached` はフォールバック）、手動切り替え時の「返答を 1 つ送る」処理を削除（上流修正で不要に）
+- 新たに見つけた不具合: attach 直後に map ハンドラがタイムアウトしてランが中断（#55 として報告）
 
